@@ -1,0 +1,62 @@
+import {
+  Landmark,
+  Moon,
+  IdCard,
+  Plane,
+  Hotel,
+  Globe2,
+  ShieldCheck,
+  CalendarDays,
+  Users,
+  Wallet,
+  Headphones,
+  BedDouble,
+  HeartHandshake,
+  Package,
+  BookOpen,
+  ClipboardList,
+  HelpCircle,
+  Stamp,
+  Building2,
+  Newspaper,
+  Info,
+  Handshake,
+  Briefcase,
+  Star,
+  Award,
+  type LucideIcon,
+} from 'lucide-react';
+
+const map: Record<string, LucideIcon> = {
+  kaaba: Landmark,
+  moon: Moon,
+  passport: IdCard,
+  plane: Plane,
+  building: Hotel,
+  globe: Globe2,
+  shield: ShieldCheck,
+  calendar: CalendarDays,
+  users: Users,
+  wallet: Wallet,
+  hotel: BedDouble,
+  headset: Headphones,
+  // navigation / branches
+  heart: HeartHandshake,
+  package: Package,
+  book: BookOpen,
+  clipboard: ClipboardList,
+  help: HelpCircle,
+  stamp: Stamp,
+  company: Building2,
+  newspaper: Newspaper,
+  info: Info,
+  handshake: Handshake,
+  briefcase: Briefcase,
+  star: Star,
+  award: Award,
+};
+
+export function Icon({ name, className }: { name: string; className?: string }) {
+  const Cmp = map[name] ?? Landmark;
+  return <Cmp className={className} />;
+}

@@ -1,0 +1,45 @@
+<svg viewBox="0 0 420 470" xmlns="http://www.w3.org/2000/svg">
+  <!-- Inter Gulf Air Travels — I (blue) A (green) O (red) monogram with a jet overhead -->
+  <defs>
+    <linearGradient id="jet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef1f5"/>
+      <stop offset="1" stop-color="#c2c8d0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- passenger jet flying left -->
+  <g stroke="#8a909a" stroke-width="2.5" stroke-linejoin="round">
+    <!-- fuselage -->
+    <path d="M40 96 C 70 80 150 78 250 86 L300 84 C 312 84 314 92 304 96 L250 102 C 150 108 78 112 52 110 C 38 108 34 100 40 96 Z" fill="url(#jet)"/>
+    <!-- tail fin -->
+    <path d="M252 86 L300 50 L312 52 L276 96 Z" fill="url(#jet)"/>
+    <!-- tailplane -->
+    <path d="M268 90 L300 74 L312 78 L286 96 Z" fill="#d3d8df"/>
+    <!-- wing -->
+    <path d="M150 100 L96 138 L120 138 L186 104 Z" fill="#aeb5bf"/>
+    <!-- engine -->
+    <ellipse cx="150" cy="108" rx="20" ry="9" fill="#9aa1ab"/>
+    <!-- cockpit windows -->
+    <path d="M52 100 l16 -6 l8 4 l-14 6 Z" fill="#5b6470" stroke="none"/>
+  </g>
+  <!-- window dots -->
+  <g fill="#7b828d">
+    <circle cx="110" cy="95" r="2.4"/><circle cx="128" cy="94" r="2.4"/><circle cx="146" cy="93" r="2.4"/>
+    <circle cx="164" cy="92" r="2.4"/><circle cx="182" cy="91.5" r="2.4"/><circle cx="200" cy="91" r="2.4"/>
+    <circle cx="218" cy="90.5" r="2.4"/>
+  </g>
+
+  <!-- Letter I (blue) -->
+  <g fill="#14307c">
+    <rect x="150" y="180" width="36" height="180" rx="2"/>
+    <rect x="124" y="180" width="88" height="26" rx="2"/>
+    <rect x="124" y="334" width="88" height="26" rx="2"/>
+  </g>
+
+  <!-- Letter A (green) -->
+  <path d="M300 172 L356 360 L322 360 L312 322 L286 322 L276 360 L242 360 Z M294 292 L304 292 L299 256 Z"
+        fill="#1f9d36" fill-rule="evenodd"/>
+
+  <!-- Letter O (red ring) overlapping bottoms -->
+  <circle cx="214" cy="338" r="58" fill="none" stroke="#e21f26" stroke-width="28"/>
+</svg>

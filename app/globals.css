@@ -1,0 +1,243 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ *
+ *  Inter Gulf Travels — design tokens
+ *  Everything is derived from the logo: emerald (brand) + gold (accent)
+ *  + deep-forest ink. The admin Theme editor can override the --primary
+ *  / --accent variables at runtime.
+ * ------------------------------------------------------------------ */
+:root {
+  --background: 251 249 243;        /* sand.soft  */
+  --foreground: 10 20 16;           /* ink        */
+  --primary: 14 124 90;             /* brand.600  */
+  --accent: 201 162 75;             /* gold.500   */
+  --card: 255 255 255;
+  --card-foreground: 10 20 16;
+  --muted: 240 237 228;
+  --muted-foreground: 70 84 76;
+  --border: 224 220 206;
+
+  --ring: 14 124 90;
+  --radius: 0.9rem;
+
+  --scrollbar-from: #0e7c5a;
+  --scrollbar-to: #c9a24b;
+
+  color-scheme: light;
+}
+
+.dark {
+  --background: 6 18 14;
+  --foreground: 244 246 243;
+  --primary: 52 211 153;            /* brand.400 reads better on dark */
+  --accent: 231 201 122;            /* gold.400 */
+  --card: 11 26 21;
+  --card-foreground: 244 246 243;
+  --muted: 18 36 29;
+  --muted-foreground: 156 176 167;
+  --border: 28 48 40;
+  color-scheme: dark;
+}
+
+* {
+  border-color: rgb(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Lenis smooth-scroll is mounted globally; disable native smooth so they don't fight */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+body {
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
+  font-feature-settings: 'ss01', 'cv01', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(14, 124, 90, 0.22);
+  color: #06402b;
+}
+
+/* ----------------------------- custom scrollbar ----------------------------- */
+/* Brand gradient scrollbar that reads like the page scroll-progress bar */
+@media (pointer: fine) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-from) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(6, 64, 43, 0.06);
+  }
+  ::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: linear-gradient(180deg, var(--scrollbar-from), var(--scrollbar-to));
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #0a6248, #b1853a);
+    background-clip: padding-box;
+  }
+}
+
+/* ------------------------------- utilities -------------------------------- */
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(120deg, #0e7c5a 0%, #1aa173 35%, #c9a24b 95%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .text-gradient-gold {
+    background: linear-gradient(120deg, #e7c97a 0%, #c9a24b 55%, #8c6530 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .shimmer-text {
+    background: linear-gradient(
+      110deg,
+      #06402b 0%,
+      #0e7c5a 25%,
+      #e7c97a 50%,
+      #0e7c5a 75%,
+      #06402b 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 4s linear infinite;
+  }
+  .glass {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+  }
+  .dark .glass {
+    background: rgba(11, 26, 21, 0.6);
+  }
+  .glass-dark {
+    background: rgba(6, 64, 43, 0.55);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+  }
+  .ring-gradient {
+    position: relative;
+  }
+  .ring-gradient::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(14, 124, 90, 0.6), rgba(201, 162, 75, 0.6));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  .mask-fade-r {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  }
+  .balance {
+    text-wrap: balance;
+  }
+  .perspective {
+    perspective: 1400px;
+  }
+}
+
+@layer base {
+  h1, h2, h3, h4 {
+    font-family: var(--font-display), Georgia, serif;
+    letter-spacing: -0.01em;
+  }
+  ::placeholder {
+    color: rgb(var(--muted-foreground) / 0.7);
+  }
+  a, button {
+    -webkit-tap-highlight-color: transparent;
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--ring));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Rich blog content (rendered HTML) */
+.prose-igt {
+  color: rgb(var(--foreground));
+  line-height: 1.78;
+  font-size: 1.075rem;
+}
+.prose-igt > * + * { margin-top: 1.15em; }
+.prose-igt h2 {
+  font-size: 1.75rem;
+  margin-top: 2.2em;
+  margin-bottom: 0.6em;
+  color: #06402b;
+}
+.dark .prose-igt h2 { color: #6ee7b3; }
+.prose-igt h3 { font-size: 1.35rem; margin-top: 1.7em; margin-bottom: 0.4em; }
+.prose-igt p { margin: 1.05em 0; }
+.prose-igt a { color: #0e7c5a; text-decoration: underline; text-underline-offset: 3px; }
+.prose-igt ul, .prose-igt ol { padding-left: 1.4em; }
+.prose-igt ul { list-style: disc; }
+.prose-igt ol { list-style: decimal; }
+.prose-igt li { margin: 0.45em 0; }
+.prose-igt blockquote {
+  border-left: 4px solid #c9a24b;
+  padding: 0.4em 1.2em;
+  background: rgba(201, 162, 75, 0.08);
+  border-radius: 0 0.6rem 0.6rem 0;
+  font-style: italic;
+}
+.prose-igt img { border-radius: 1rem; margin: 1.6em 0; }
+.prose-igt code {
+  background: rgba(6, 64, 43, 0.08);
+  padding: 0.12em 0.4em;
+  border-radius: 0.35em;
+  font-size: 0.9em;
+}
+.prose-igt strong { color: #06402b; }
+.dark .prose-igt strong { color: #a7f3cf; }
