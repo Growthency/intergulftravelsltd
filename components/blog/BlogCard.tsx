@@ -1,7 +1,7 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowUpRight, CalendarDays, Clock } from 'lucide-react';
-import { type BlogPost, toneGradient } from '@/lib/blog-types';
-import { Icon } from '@/components/ui/Icon';
+import { type BlogPost, coverFor } from '@/lib/blog-types';
 import { formatDate, cn } from '@/lib/utils';
 
 export function BlogCard({ post, className }: { post: BlogPost; className?: string }) {
@@ -13,20 +13,17 @@ export function BlogCard({ post, className }: { post: BlogPost; className?: stri
         className,
       )}
     >
-      <div className={cn('relative aspect-[16/10] overflow-hidden bg-gradient-to-br', toneGradient(post.tone))}>
-        {/* vector cover — no raster image, stays WebP-rule clean unless an admin uploads one */}
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage:
-              'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.5) 0, transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.35) 0, transparent 45%)',
-          }}
+      <div className="relative aspect-[16/10] overflow-hidden bg-brand-950">
+        <Image
+          src={coverFor(post)}
+          alt={post.title}
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
         <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-brand-800">
           {post.categoryLabel}
-        </div>
-        <div className="absolute inset-0 grid place-items-center text-white/85 transition-transform duration-500 group-hover:scale-110">
-          <Icon name={post.category === 'others' ? 'globe' : 'moon'} className="h-16 w-16" />
         </div>
       </div>
 

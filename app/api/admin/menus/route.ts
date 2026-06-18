@@ -1,137 +1,156 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
-import { requireAdmin } from '../_lib/guard';
+import { requireStaff } from '@/lib/management/guard';
+import { logActivity } from '@/lib/management/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const baseSchema = z.object({
-  label: z.string().trim().min(1, 'A label is required.').max(120),
-  href: z.string().trim().min(1, 'A link is required.').max(300),
-  parent_id: z.string().uuid().nullable().optional(),
-  sort_order: z.coerce.number().int().min(0).max(9999).optional().default(0),
-  location: z.string().trim().max(40).optional().default('header'),
+/**
+ * Header menu builder payload. Each row references its parent by the row INDEX
+ * within this same array (`parent_index`), or null for a top-level item. The
+ * client guarantees parents appear before their children, but we resolve ids
+ * after insert so ordering of the request is not relied upon.
+ */
+const itemSchema = z.object({
+  label: z.string().trim().min(1).max(120),
+  href: z.string().trim().min(1).max(300),
+  parent_index: z.number().int().min(0).nullable().optional().default(null),
+});
+
+const bodySchema = z.object({
+  items: z.array(itemSchema).max(200),
 });
 
 export async function POST(request: Request) {
-  const guard = await requireAdmin();
+  const guard = await requireStaff();
   if (!guard.ok) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: guard.status });
   }
 
-  let payload: unknown;
+  let raw: unknown;
   try {
-    payload = await request.json();
+    raw = await request.json();
   } catch {
     return NextResponse.json({ ok: false, error: 'Invalid request body.' }, { status: 400 });
   }
 
-  const parsed = baseSchema.safeParse(payload);
+  const parsed = bodySchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
-      { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the details.' },
+      { ok: false, error: 'Each item needs a label and a link.' },
       { status: 400 },
     );
   }
 
+  const items = parsed.data.items;
+
+  // Sanity-check parent references and that a child is not itself a parent
+  // (enforce the two-level limit at the API boundary too).
+  for (let i = 0; i < items.length; i += 1) {
+    const p = items[i].parent_index;
+    if (p == null) continue;
+    if (p < 0 || p >= items.length || p === i) {
+      return NextResponse.json({ ok: false, error: 'Invalid menu nesting.' }, { status: 400 });
+    }
+    if (items[p].parent_index != null) {
+      return NextResponse.json(
+        { ok: false, error: 'Menus support two levels only.' },
+        { status: 400 },
+      );
+    }
+  }
+
   try {
     const supabase = createAdminClient();
-    const { data, error } = await supabase
+
+    // Replace the whole header menu.
+    const { error: delError } = await supabase
       .from('menu_items')
-      .insert({
-        label: parsed.data.label,
-        href: parsed.data.href,
-        parent_id: parsed.data.parent_id ?? null,
-        sort_order: parsed.data.sort_order ?? 0,
-        location: parsed.data.location || 'header',
-      })
-      .select('id')
-      .single();
-
-    if (error) {
-      console.error('[admin/menus] insert failed:', error.message);
-      return NextResponse.json({ ok: false, error: 'Could not add the menu item.' }, { status: 500 });
+      .delete()
+      .eq('location', 'header');
+    if (delError) {
+      console.error('[admin/menus] delete failed:', delError.message);
+      return NextResponse.json({ ok: false, error: 'Could not update the menu.' }, { status: 500 });
     }
-    return NextResponse.json({ ok: true, id: data.id });
-  } catch (err) {
-    console.error('[admin/menus] unexpected error:', err);
-    return NextResponse.json({ ok: false, error: 'Unexpected error.' }, { status: 500 });
-  }
-}
 
-export async function PATCH(request: Request) {
-  const guard = await requireAdmin();
-  if (!guard.ok) {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: guard.status });
-  }
+    if (items.length === 0) {
+      await logActivity({
+        user_id: guard.user.id,
+        user_email: guard.user.email,
+        action: 'menu.replace',
+        entity: 'menu_items',
+        detail: { count: 0 },
+      });
+      return NextResponse.json({ ok: true });
+    }
 
-  let payload: any;
-  try {
-    payload = await request.json();
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Invalid request body.' }, { status: 400 });
-  }
+    // Insert top-level items first so we can resolve their generated ids,
+    // then insert children pointing at the right parent_id.
+    const topIndexes: number[] = [];
+    items.forEach((it, i) => {
+      if (it.parent_index == null) topIndexes.push(i);
+    });
 
-  const id = typeof payload?.id === 'string' ? payload.id : '';
-  if (!id) {
-    return NextResponse.json({ ok: false, error: 'Missing menu item id.' }, { status: 400 });
-  }
+    const topRows = topIndexes.map((i, order) => ({
+      label: items[i].label,
+      href: items[i].href,
+      parent_id: null as string | null,
+      sort_order: (order + 1) * 10,
+      location: 'header',
+    }));
 
-  const parsed = baseSchema.safeParse(payload);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the details.' },
-      { status: 400 },
-    );
-  }
-
-  try {
-    const supabase = createAdminClient();
-    const { error } = await supabase
+    const { data: insertedTop, error: topError } = await supabase
       .from('menu_items')
-      .update({
-        label: parsed.data.label,
-        href: parsed.data.href,
-        parent_id: parsed.data.parent_id ?? null,
-        sort_order: parsed.data.sort_order ?? 0,
-        location: parsed.data.location || 'header',
+      .insert(topRows)
+      .select('id');
+    if (topError || !insertedTop) {
+      console.error('[admin/menus] top insert failed:', topError?.message);
+      return NextResponse.json({ ok: false, error: 'Could not save the menu.' }, { status: 500 });
+    }
+
+    // Map each original top-level item index → its new uuid.
+    const indexToId = new Map<number, string>();
+    topIndexes.forEach((origIndex, k) => {
+      const row = insertedTop[k] as { id: string } | undefined;
+      if (row?.id) indexToId.set(origIndex, row.id);
+    });
+
+    // Build child rows, keeping per-parent ordering by source position.
+    const childCounters = new Map<number, number>();
+    const childRows = items
+      .filter((it) => it.parent_index != null)
+      .map((it) => {
+        const parentIndex = it.parent_index as number;
+        const order = (childCounters.get(parentIndex) ?? 0) + 1;
+        childCounters.set(parentIndex, order);
+        return {
+          label: it.label,
+          href: it.href,
+          parent_id: indexToId.get(parentIndex) ?? null,
+          sort_order: order * 10,
+          location: 'header',
+        };
       })
-      .eq('id', id);
+      .filter((row) => row.parent_id != null);
 
-    if (error) {
-      console.error('[admin/menus] update failed:', error.message);
-      return NextResponse.json({ ok: false, error: 'Could not update the menu item.' }, { status: 500 });
+    if (childRows.length > 0) {
+      const { error: childError } = await supabase.from('menu_items').insert(childRows);
+      if (childError) {
+        console.error('[admin/menus] child insert failed:', childError.message);
+        return NextResponse.json({ ok: false, error: 'Could not save sub-items.' }, { status: 500 });
+      }
     }
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error('[admin/menus] unexpected error:', err);
-    return NextResponse.json({ ok: false, error: 'Unexpected error.' }, { status: 500 });
-  }
-}
 
-export async function DELETE(request: Request) {
-  const guard = await requireAdmin();
-  if (!guard.ok) {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: guard.status });
-  }
+    await logActivity({
+      user_id: guard.user.id,
+      user_email: guard.user.email,
+      action: 'menu.replace',
+      entity: 'menu_items',
+      detail: { top: topRows.length, children: childRows.length },
+    });
 
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get('id');
-  if (!id) {
-    return NextResponse.json({ ok: false, error: 'Missing menu item id.' }, { status: 400 });
-  }
-
-  try {
-    const supabase = createAdminClient();
-    // Detach any children so they are not orphaned by a missing parent.
-    await supabase.from('menu_items').update({ parent_id: null }).eq('parent_id', id);
-    const { error } = await supabase.from('menu_items').delete().eq('id', id);
-
-    if (error) {
-      console.error('[admin/menus] delete failed:', error.message);
-      return NextResponse.json({ ok: false, error: 'Could not delete the menu item.' }, { status: 500 });
-    }
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('[admin/menus] unexpected error:', err);

@@ -1,0 +1,204 @@
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { mgmtDb, chargeParty, getSystemHead, INCOME_HEAD, logActivity } from '@/lib/management/server';
+import { requireStaff } from '@/lib/management/guard';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const schema = z.object({
+  action: z.enum(['assign-package', 'status', 'edit']),
+  // assign-package
+  package_id: z.string().uuid().optional().nullable(),
+  // status
+  status: z.enum(['active', 'cancelled', 'completed']).optional(),
+  // edit (a curated, safe subset)
+  name: z.string().trim().min(1).optional(),
+  name_bn: z.string().trim().optional().nullable(),
+  father_name: z.string().trim().optional().nullable(),
+  mother_name: z.string().trim().optional().nullable(),
+  nid: z.string().trim().optional().nullable(),
+  passport_no: z.string().trim().optional().nullable(),
+  dob: z.string().trim().optional().nullable(),
+  gender: z.string().trim().optional().nullable(),
+  phone: z.string().trim().optional().nullable(),
+  address: z.string().trim().optional().nullable(),
+  district: z.string().trim().optional().nullable(),
+  pre_reg_no: z.string().trim().optional().nullable(),
+  govt_serial: z.string().trim().optional().nullable(),
+  photo_url: z.string().trim().optional().nullable(),
+  note: z.string().trim().optional().nullable(),
+});
+
+const clean = (v: unknown) => {
+  const s = typeof v === 'string' ? v.trim() : v;
+  return s === '' || s === undefined ? null : s;
+};
+
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+  const guard = await requireStaff();
+  if (!guard.ok) {
+    return NextResponse.json(
+      { ok: false, error: guard.status === 401 ? 'Not signed in.' : 'Staff access required.' },
+      { status: guard.status },
+    );
+  }
+
+  let payload: unknown;
+  try {
+    payload = await request.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: 'Invalid request body.' }, { status: 400 });
+  }
+
+  const parsed = schema.safeParse(payload);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: parsed.error.issues[0]?.message ?? 'Please check the form.' },
+      { status: 400 },
+    );
+  }
+  const d = parsed.data;
+
+  try {
+    const db = mgmtDb();
+
+    const { data: pilgrim, error: loadErr } = await db
+      .from('hajj_pilgrims')
+      .select('id, account_head_id, branch, package_id')
+      .eq('id', params.id)
+      .maybeSingle();
+
+    if (loadErr || !pilgrim) {
+      return NextResponse.json({ ok: false, error: 'Pilgrim not found.' }, { status: 404 });
+    }
+
+    // -------------------------------------------------------- assign package
+    if (d.action === 'assign-package') {
+      if (!d.package_id) {
+        return NextResponse.json({ ok: false, error: 'Select a package.' }, { status: 400 });
+      }
+
+      const { data: pkg } = await db
+        .from('mgmt_packages')
+        .select('id, name, price, type')
+        .eq('id', d.package_id)
+        .maybeSingle();
+
+      if (!pkg) {
+        return NextResponse.json({ ok: false, error: 'Package not found.' }, { status: 404 });
+      }
+
+      const { error: upErr } = await db
+        .from('hajj_pilgrims')
+        .update({ package_id: pkg.id, reg_type: 'registered' })
+        .eq('id', pilgrim.id);
+
+      if (upErr) {
+        console.error('[admin/hajj/:id] assign update failed:', upErr.message);
+        return NextResponse.json({ ok: false, error: 'Could not assign the package.' }, { status: 500 });
+      }
+
+      // Charge the price once. Guard against a double-charge: only charge when
+      // no package-income journal already exists for this pilgrim.
+      const price = Number(pkg.price ?? 0);
+      if (price > 0 && pilgrim.account_head_id) {
+        const incomeHead = await getSystemHead(INCOME_HEAD.hajj);
+        let alreadyCharged = false;
+        if (incomeHead) {
+          const { data: existing } = await db
+            .from('transactions')
+            .select('id')
+            .eq('ref_table', 'hajj_pilgrims')
+            .eq('ref_id', pilgrim.id)
+            .eq('credit_account_id', incomeHead.id)
+            .limit(1);
+          alreadyCharged = (existing?.length ?? 0) > 0;
+        }
+
+        if (!alreadyCharged) {
+          await chargeParty({
+            customer_head_id: pilgrim.account_head_id,
+            packageType: 'hajj',
+            amount: price,
+            branch: pilgrim.branch,
+            narration: `Hajj package — ${pkg.name}`,
+            ref_table: 'hajj_pilgrims',
+            ref_id: pilgrim.id,
+            created_by: guard.user.id,
+          });
+        }
+      }
+
+      await logActivity({
+        user_id: guard.user.id,
+        user_email: guard.user.email,
+        action: 'assign-package',
+        entity: 'hajj_pilgrim',
+        entity_id: pilgrim.id,
+        detail: { package_id: pkg.id, package: pkg.name },
+        branch: pilgrim.branch,
+      });
+
+      return NextResponse.json({ ok: true });
+    }
+
+    // ----------------------------------------------------------- status change
+    if (d.action === 'status') {
+      if (!d.status) {
+        return NextResponse.json({ ok: false, error: 'Select a status.' }, { status: 400 });
+      }
+      const { error: upErr } = await db
+        .from('hajj_pilgrims')
+        .update({ status: d.status })
+        .eq('id', pilgrim.id);
+      if (upErr) {
+        console.error('[admin/hajj/:id] status update failed:', upErr.message);
+        return NextResponse.json({ ok: false, error: 'Could not update status.' }, { status: 500 });
+      }
+      await logActivity({
+        user_id: guard.user.id,
+        user_email: guard.user.email,
+        action: 'status',
+        entity: 'hajj_pilgrim',
+        entity_id: pilgrim.id,
+        detail: { status: d.status },
+        branch: pilgrim.branch,
+      });
+      return NextResponse.json({ ok: true });
+    }
+
+    // ------------------------------------------------------------------- edit
+    const fields = [
+      'name', 'name_bn', 'father_name', 'mother_name', 'nid', 'passport_no',
+      'dob', 'gender', 'phone', 'address', 'district', 'pre_reg_no',
+      'govt_serial', 'photo_url', 'note',
+    ] as const;
+
+    const update: Record<string, unknown> = {};
+    for (const f of fields) {
+      if (f in (payload as object)) update[f] = f === 'name' ? d.name : clean((d as Record<string, unknown>)[f]);
+    }
+    if (Object.keys(update).length === 0) {
+      return NextResponse.json({ ok: false, error: 'Nothing to update.' }, { status: 400 });
+    }
+
+    const { error: upErr } = await db.from('hajj_pilgrims').update(update).eq('id', pilgrim.id);
+    if (upErr) {
+      console.error('[admin/hajj/:id] edit update failed:', upErr.message);
+      return NextResponse.json({ ok: false, error: 'Could not save changes.' }, { status: 500 });
+    }
+    await logActivity({
+      user_id: guard.user.id,
+      user_email: guard.user.email,
+      action: 'edit',
+      entity: 'hajj_pilgrim',
+      entity_id: pilgrim.id,
+      branch: pilgrim.branch,
+    });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('[admin/hajj/:id] unexpected error:', err);
+    return NextResponse.json({ ok: false, error: 'Unexpected error. Please try again.' }, { status: 500 });
+  }
+}

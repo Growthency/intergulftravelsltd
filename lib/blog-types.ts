@@ -27,3 +27,18 @@ const tones: Record<BlogPost['tone'], string> = {
 export function toneGradient(tone: BlogPost['tone']) {
   return tones[tone];
 }
+
+/** Site photos used as blog covers until an admin uploads a featured image. */
+const FALLBACK_COVERS = [
+  '/gallery/pilgrims-haram.webp',
+  '/gallery/group-haram.webp',
+  '/gallery/office-handover.webp',
+];
+
+/** Resolve a cover image for a post: its uploaded cover, else a stable site photo. */
+export function coverFor(post: Pick<BlogPost, 'slug' | 'cover'>): string {
+  if (post.cover) return post.cover;
+  let h = 0;
+  for (let i = 0; i < post.slug.length; i++) h = (h * 31 + post.slug.charCodeAt(i)) >>> 0;
+  return FALLBACK_COVERS[h % FALLBACK_COVERS.length];
+}

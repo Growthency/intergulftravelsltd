@@ -53,7 +53,9 @@ it is never pushed to GitHub). Open it and paste the values below.
    `supabase/` in this order (copy/paste each, click *Run*):
    1. `supabase/migrations/0001_schema.sql` — tables, triggers, profile auto-create
    2. `supabase/migrations/0002_policies.sql` — row-level security + storage buckets (`media`, `vault`)
-   3. `supabase/seed.sql` — blog posts, site settings, menus, gallery (optional but recommended)
+   3. `supabase/migrations/0003_management.sql` — the accounting + Hajj/Umrah ERP (chart of accounts, double-entry ledger, pilgrims, packages, payments, loans, activity log). Auto-seeds the system account heads (Cash, incomes, expenses, loans, capital).
+   4. `supabase/migrations/0004_site_content.sql` — Videos + flight/hotel Affiliations (seeds the partner list).
+   5. `supabase/seed.sql` — blog posts, site settings, menus, gallery (optional but recommended)
 
    *(Prefer the CLI? `supabase db push` works too — see `supabase/README.md`.)*
 4. **Storage buckets** `media` (public) and `vault` (private) are created by the

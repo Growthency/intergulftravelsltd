@@ -24,6 +24,8 @@ import {
   Briefcase,
   Star,
   Award,
+  Images,
+  Video,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -54,6 +56,8 @@ const map: Record<string, LucideIcon> = {
   briefcase: Briefcase,
   star: Star,
   award: Award,
+  photo: Images,
+  video: Video,
 };
 
 export function Icon({ name, className }: { name: string; className?: string }) {

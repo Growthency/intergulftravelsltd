@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Landmark, Moon, Users, GraduationCap, Mountain, Plane, MapPin, Building2 } from 'lucide-react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 type Category = 'makkah' | 'madinah' | 'pilgrims' | 'training' | 'ziyarat' | 'tours';
@@ -14,6 +15,9 @@ type Tile = {
   icon: 'kaaba' | 'mosque' | 'pilgrims' | 'training' | 'mountain' | 'plane' | 'pin' | 'city';
   tone: string;
   span?: boolean; // taller tile for masonry variety
+  image?: string; // real photo (WebP) — overrides the gradient tile
+  aspect?: string; // tailwind aspect class override
+  fit?: 'cover' | 'contain';
 };
 
 const categories: { id: Category | 'all'; label: string }[] = [
@@ -38,6 +42,45 @@ const iconMap = {
 };
 
 const tiles: Tile[] = [
+  {
+    caption: 'Our Hajj pilgrims before the Holy Kaaba',
+    location: 'Masjid al-Haram, Makkah',
+    category: 'pilgrims',
+    icon: 'pilgrims',
+    tone: '',
+    image: '/gallery/pilgrims-haram.webp',
+    aspect: 'aspect-[4/3]',
+    span: true,
+  },
+  {
+    caption: 'Inter Gulf Hajj group at the Haram',
+    location: 'Masjid al-Haram, Makkah',
+    category: 'makkah',
+    icon: 'kaaba',
+    tone: '',
+    image: '/gallery/group-haram.webp',
+    aspect: 'aspect-[16/10]',
+  },
+  {
+    caption: 'Handing over travel documents to our Hujjaj',
+    location: 'Inter Gulf Office, Purana Paltan, Dhaka',
+    category: 'training',
+    icon: 'training',
+    tone: '',
+    image: '/gallery/office-handover.webp',
+    aspect: 'aspect-[4/3]',
+  },
+  {
+    caption: 'Hajj 2027 — pre-registration now open',
+    location: 'Inter Gulf Travels Ltd · License No. 071',
+    category: 'training',
+    icon: 'training',
+    tone: '',
+    image: '/gallery/hajj-2027-mokbul.webp',
+    fit: 'contain',
+    aspect: 'aspect-[3/4]',
+    span: true,
+  },
   {
     caption: 'Tawaf at the Holy Kaaba',
     location: 'Masjid al-Haram, Makkah',
@@ -219,37 +262,52 @@ export function GalleryGrid() {
               >
                 <div
                   className={cn(
-                    'relative w-full bg-gradient-to-br',
-                    tile.tone,
-                    tile.span ? 'aspect-[4/5]' : 'aspect-[4/3]',
+                    'relative w-full',
+                    tile.aspect ?? (tile.span ? 'aspect-[4/5]' : 'aspect-[4/3]'),
+                    tile.image ? 'bg-brand-950' : cn('bg-gradient-to-br', tile.tone),
                   )}
                 >
-                  {/* Decorative vector texture */}
-                  <div
-                    aria-hidden
-                    className="absolute inset-0 opacity-20 transition-opacity duration-500 group-hover:opacity-30"
-                    style={{
-                      backgroundImage:
-                        'radial-gradient(circle at 22% 28%, rgba(255,255,255,0.5) 0, transparent 35%), radial-gradient(circle at 82% 78%, rgba(255,255,255,0.3) 0, transparent 40%)',
-                    }}
-                  />
-                  <div
-                    aria-hidden
-                    className="absolute inset-0 opacity-[0.12]"
-                    style={{
-                      backgroundImage:
-                        'linear-gradient(30deg,#fff 1px,transparent 1px),linear-gradient(-30deg,#fff 1px,transparent 1px)',
-                      backgroundSize: '30px 30px',
-                    }}
-                  />
-                  {/* Centerpiece glyph */}
-                  <div className="absolute inset-0 grid place-items-center">
-                    <span className="grid h-20 w-20 place-items-center rounded-3xl bg-white/12 text-white/90 ring-1 ring-white/20 backdrop-blur-sm transition-transform duration-500 group-hover:scale-110">
-                      <Glyph className="h-9 w-9" />
-                    </span>
-                  </div>
+                  {tile.image ? (
+                    <Image
+                      src={tile.image}
+                      alt={tile.caption}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className={cn(
+                        'transition-transform duration-500 group-hover:scale-105',
+                        tile.fit === 'contain' ? 'object-contain' : 'object-cover',
+                      )}
+                    />
+                  ) : (
+                    <>
+                      {/* Decorative vector texture */}
+                      <div
+                        aria-hidden
+                        className="absolute inset-0 opacity-20 transition-opacity duration-500 group-hover:opacity-30"
+                        style={{
+                          backgroundImage:
+                            'radial-gradient(circle at 22% 28%, rgba(255,255,255,0.5) 0, transparent 35%), radial-gradient(circle at 82% 78%, rgba(255,255,255,0.3) 0, transparent 40%)',
+                        }}
+                      />
+                      <div
+                        aria-hidden
+                        className="absolute inset-0 opacity-[0.12]"
+                        style={{
+                          backgroundImage:
+                            'linear-gradient(30deg,#fff 1px,transparent 1px),linear-gradient(-30deg,#fff 1px,transparent 1px)',
+                          backgroundSize: '30px 30px',
+                        }}
+                      />
+                      {/* Centerpiece glyph */}
+                      <div className="absolute inset-0 grid place-items-center">
+                        <span className="grid h-20 w-20 place-items-center rounded-3xl bg-white/12 text-white/90 ring-1 ring-white/20 backdrop-blur-sm transition-transform duration-500 group-hover:scale-110">
+                          <Glyph className="h-9 w-9" />
+                        </span>
+                      </div>
+                    </>
+                  )}
                   {/* Caption gradient */}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 via-black/25 to-transparent p-5 pt-12">
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-5 pt-12">
                     <figcaption className="font-display text-lg font-semibold leading-tight text-white drop-shadow-sm">
                       {tile.caption}
                     </figcaption>

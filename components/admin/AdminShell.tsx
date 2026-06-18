@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -15,54 +15,104 @@ import {
   PanelsTopLeft,
   Settings,
   Users,
+  Users2,
   ExternalLink,
   LogOut,
   X,
+  Wallet,
+  NotebookPen,
+  Receipt,
+  Landmark,
+  Banknote,
+  HandCoins,
+  ScrollText,
+  ArrowLeftRight,
+  Package,
+  Moon,
+  BarChart3,
+  History,
+  ChevronDown,
+  Video,
+  Handshake,
   type LucideIcon,
 } from 'lucide-react';
 import { LogoMark } from '@/components/brand/Logo';
 import { cn } from '@/lib/utils';
 
 type NavLink = { label: string; href: string; icon: LucideIcon };
+type NavGroup = { group: string; items: NavLink[]; adminOnly?: boolean };
 
-const NAV: { group: string; items: NavLink[] }[] = [
+const NAV: NavGroup[] = [
   {
     group: 'Overview',
     items: [{ label: 'Dashboard', href: '/admin', icon: LayoutDashboard }],
   },
   {
-    group: 'Content',
+    group: 'Accounting',
+    items: [
+      { label: 'Accounts Home', href: '/admin/accounts', icon: Wallet },
+      { label: 'Daily Entry', href: '/admin/accounts/entry', icon: NotebookPen },
+      { label: 'Vouchers', href: '/admin/accounts/vouchers', icon: Receipt },
+      { label: 'Account Heads', href: '/admin/accounts/heads', icon: Landmark },
+      { label: 'Cash & Bank', href: '/admin/accounts/cash-bank', icon: Banknote },
+      { label: 'Customer Dues', href: '/admin/accounts/due', icon: HandCoins },
+      { label: 'Expenses', href: '/admin/accounts/expenses', icon: ScrollText },
+      { label: 'Loans', href: '/admin/accounts/loans', icon: ArrowLeftRight },
+    ],
+  },
+  {
+    group: 'Hajj',
+    items: [
+      { label: 'Hajj Pilgrims', href: '/admin/hajj', icon: Users },
+      { label: 'Hajj Packages', href: '/admin/hajj/packages', icon: Package },
+    ],
+  },
+  {
+    group: 'Umrah',
+    items: [
+      { label: 'Umrah Passengers', href: '/admin/umrah', icon: Moon },
+      { label: 'Umrah Packages', href: '/admin/umrah/packages', icon: Package },
+    ],
+  },
+  {
+    group: 'Reports',
+    items: [{ label: 'Reports & Export', href: '/admin/reports', icon: BarChart3 }],
+  },
+  {
+    group: 'Website',
+    adminOnly: true,
     items: [
       { label: 'Blog Posts', href: '/admin/posts', icon: FileText },
       { label: 'Media Library', href: '/admin/media', icon: Images },
       { label: 'Gallery', href: '/admin/gallery', icon: GalleryHorizontalEnd },
-    ],
-  },
-  {
-    group: 'Enquiries',
-    items: [
+      { label: 'Videos', href: '/admin/videos', icon: Video },
+      { label: 'Affiliations', href: '/admin/affiliations', icon: Handshake },
       { label: 'Contact Requests', href: '/admin/contacts', icon: Inbox },
       { label: 'Estimate Requests', href: '/admin/estimates', icon: Calculator },
       { label: 'Document Vault', href: '/admin/vault', icon: ShieldCheck },
     ],
   },
   {
-    group: 'Configuration',
+    group: 'System',
+    adminOnly: true,
     items: [
       { label: 'Navigation', href: '/admin/menus', icon: MenuIcon },
       { label: 'Footer', href: '/admin/footer', icon: PanelsTopLeft },
       { label: 'Site Settings', href: '/admin/settings', icon: Settings },
-      { label: 'Users', href: '/admin/users', icon: Users },
+      { label: 'Staff & Roles', href: '/admin/users', icon: Users2 },
+      { label: 'Activity Log', href: '/admin/activity', icon: History },
     ],
   },
 ];
 
 export function AdminShell({
   user,
+  isAdmin,
   signOutAction,
   children,
 }: {
-  user: { email: string; name: string | null; avatarUrl: string | null };
+  user: { email: string; name: string | null; avatarUrl: string | null; role?: string };
+  isAdmin: boolean;
   signOutAction: () => void;
   children: React.ReactNode;
 }) {
@@ -73,7 +123,7 @@ export function AdminShell({
     <div className="min-h-screen bg-sand-soft text-ink">
       {/* ---------- Desktop sidebar ---------- */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 flex-col bg-brand-900 text-white lg:flex">
-        <SidebarContent pathname={pathname} />
+        <SidebarContent pathname={pathname} isAdmin={isAdmin} />
       </aside>
 
       {/* ---------- Mobile drawer ---------- */}
@@ -92,7 +142,7 @@ export function AdminShell({
             >
               <X className="h-5 w-5" />
             </button>
-            <SidebarContent pathname={pathname} onNavigate={() => setDrawerOpen(false)} />
+            <SidebarContent pathname={pathname} isAdmin={isAdmin} onNavigate={() => setDrawerOpen(false)} />
           </aside>
         </div>
       )}
@@ -155,11 +205,28 @@ export function AdminShell({
 
 function SidebarContent({
   pathname,
+  isAdmin,
   onNavigate,
 }: {
   pathname: string;
+  isAdmin: boolean;
   onNavigate?: () => void;
 }) {
+  const visibleGroups = NAV.filter((section) => !section.adminOnly || isAdmin);
+  const groupOf = (path: string) =>
+    visibleGroups.find((g) => g.items.some((i) => isActive(path, i.href)))?.group;
+  const [openGroups, setOpenGroups] = useState<string[]>(() => {
+    const g = groupOf(pathname);
+    return g ? [g] : ['Overview'];
+  });
+  useEffect(() => {
+    const g = groupOf(pathname);
+    if (g) setOpenGroups((prev) => (prev.includes(g) ? prev : [...prev, g]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+  const toggle = (name: string) =>
+    setOpenGroups((p) => (p.includes(name) ? p.filter((x) => x !== name) : [...p, name]));
+
   return (
     <>
       <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
@@ -172,43 +239,57 @@ function SidebarContent({
         </div>
       </div>
 
-      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
-        {NAV.map((section) => (
-          <div key={section.group}>
-            <p className="px-3 pb-2 text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-white/40">
-              {section.group}
-            </p>
-            <ul className="space-y-1">
-              {section.items.map((item) => {
-                const active = isActive(pathname, item.href);
-                const Icon = item.icon;
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={onNavigate}
-                      aria-current={active ? 'page' : undefined}
-                      className={cn(
-                        'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
-                        active
-                          ? 'bg-white/10 text-white shadow-[inset_3px_0_0_0_theme(colors.gold.400)]'
-                          : 'text-white/65 hover:bg-white/5 hover:text-white',
-                      )}
-                    >
-                      <Icon
-                        className={cn(
-                          'h-[18px] w-[18px] shrink-0 transition',
-                          active ? 'text-gold-300' : 'text-white/55 group-hover:text-white',
-                        )}
-                      />
-                      {item.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5">
+        {visibleGroups.map((section) => {
+          const isOpen = openGroups.includes(section.group);
+          const hasActive = section.items.some((i) => isActive(pathname, i.href));
+          return (
+            <div key={section.group}>
+              <button
+                type="button"
+                onClick={() => toggle(section.group)}
+                aria-expanded={isOpen}
+                className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-[0.65rem] font-semibold uppercase tracking-[0.22em] transition hover:bg-white/5"
+              >
+                <span className={cn(hasActive ? 'text-gold-300' : 'text-white/45')}>{section.group}</span>
+                <ChevronDown
+                  className={cn('h-3.5 w-3.5 text-white/40 transition-transform', isOpen && 'rotate-180')}
+                />
+              </button>
+              {isOpen && (
+                <ul className="space-y-1 pb-2 pt-0.5">
+                  {section.items.map((item) => {
+                    const active = isActive(pathname, item.href);
+                    const Icon = item.icon;
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={onNavigate}
+                          aria-current={active ? 'page' : undefined}
+                          className={cn(
+                            'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
+                            active
+                              ? 'bg-white/10 text-white shadow-[inset_3px_0_0_0_theme(colors.gold.400)]'
+                              : 'text-white/65 hover:bg-white/5 hover:text-white',
+                          )}
+                        >
+                          <Icon
+                            className={cn(
+                              'h-[18px] w-[18px] shrink-0 transition',
+                              active ? 'text-gold-300' : 'text-white/55 group-hover:text-white',
+                            )}
+                          />
+                          {item.label}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       <div className="border-t border-white/10 px-5 py-4">

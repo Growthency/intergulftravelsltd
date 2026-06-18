@@ -1,11 +1,14 @@
+import { unstable_cache } from 'next/cache';
 import type { BlogPost } from '@/lib/blog-types';
 import { seedPosts } from '@/lib/blog-seed';
 
 export type { BlogPost } from '@/lib/blog-types';
-export { toneGradient } from '@/lib/blog-types';
+export { toneGradient, coverFor } from '@/lib/blog-types';
 
 const supabaseConfigured = () =>
-  Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+const COVERS = ['/gallery/pilgrims-haram.webp', '/gallery/group-haram.webp', '/gallery/office-handover.webp'];
 
 /** Map a DB row to our BlogPost shape (gracefully handles missing columns). */
 function mapRow(row: any): BlogPost {
@@ -28,49 +31,40 @@ function mapRow(row: any): BlogPost {
   };
 }
 
-/** Fetch published posts (Supabase if configured, else the bundled seed). */
-export async function getPosts(opts?: { category?: string; limit?: number }): Promise<BlogPost[]> {
-  let posts = seedPosts;
-
-  if (supabaseConfigured()) {
+/** Cached, cookieless fetch of all published posts (keeps pages static). */
+const loadAllPosts = unstable_cache(
+  async (): Promise<BlogPost[]> => {
+    if (!supabaseConfigured()) return seedPosts;
     try {
-      const { createClient } = await import('@/lib/supabase/server');
-      const supabase = createClient();
+      const { createAdminClient } = await import('@/lib/supabase/server');
+      const supabase = createAdminClient();
       const { data } = await supabase
         .from('blog_posts')
         .select('*')
         .eq('status', 'published')
         .order('published_at', { ascending: false });
-      if (data && data.length) posts = data.map(mapRow);
+      if (data && data.length) return data.map(mapRow);
     } catch {
-      // fall back to seed
+      // fall through to seed
     }
-  }
+    return seedPosts;
+  },
+  ['all-blog-posts-v1'],
+  { revalidate: 120, tags: ['blog'] },
+);
 
-  if (opts?.category && opts.category !== 'all') {
-    posts = posts.filter((p) => p.category === opts.category);
-  }
+export async function getPosts(opts?: { category?: string; limit?: number }): Promise<BlogPost[]> {
+  // Every post gets a distinct cover (uploaded image kept; others cycle site photos).
+  let posts = (await loadAllPosts()).map((p, i) =>
+    p.cover ? p : { ...p, cover: COVERS[i % COVERS.length] },
+  );
+  if (opts?.category && opts.category !== 'all') posts = posts.filter((p) => p.category === opts.category);
   if (opts?.limit) posts = posts.slice(0, opts.limit);
   return posts;
 }
 
 export async function getPost(slug: string): Promise<BlogPost | null> {
-  const fromSeed = seedPosts.find((p) => p.slug === slug) ?? null;
-
-  if (supabaseConfigured()) {
-    try {
-      const { createClient } = await import('@/lib/supabase/server');
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('slug', slug)
-        .eq('status', 'published')
-        .maybeSingle();
-      if (data) return mapRow(data);
-    } catch {
-      // fall back
-    }
-  }
-  return fromSeed;
+  const all = await loadAllPosts();
+  const found = all.find((p) => p.slug === slug);
+  return found ?? seedPosts.find((p) => p.slug === slug) ?? null;
 }

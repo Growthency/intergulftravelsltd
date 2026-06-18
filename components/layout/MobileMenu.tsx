@@ -4,14 +4,22 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, Phone, X } from 'lucide-react';
-import { navigation, contact } from '@/lib/site';
+import { navigation, contact, type NavItem } from '@/lib/site';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/brand/Logo';
 import { Icon } from '@/components/ui/Icon';
 import { cn } from '@/lib/utils';
 
-export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function MobileMenu({
+  open,
+  onClose,
+  items = navigation,
+}: {
+  open: boolean;
+  onClose: () => void;
+  items?: NavItem[];
+}) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return (
@@ -43,7 +51,7 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
             </div>
 
             <nav className="flex-1 overflow-y-auto px-3 py-4">
-              {navigation.map((item) => (
+              {items.map((item) => (
                 <div key={item.label} className="border-b border-border/60">
                   {item.children ? (
                     <>

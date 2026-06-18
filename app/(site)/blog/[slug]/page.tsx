@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import DOMPurify from 'isomorphic-dompurify';
 import { ArrowLeft, ArrowRight, CalendarDays, Clock, UserRound } from 'lucide-react';
-import { getPost, getPosts, toneGradient } from '@/lib/blog';
+import { getPost, getPosts, toneGradient, coverFor } from '@/lib/blog';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/Reveal';
@@ -12,6 +12,13 @@ import { BlogCard } from '@/components/blog/BlogCard';
 import { ShareButtons } from '@/components/blog/ShareButtons';
 import { cn, formatDate } from '@/lib/utils';
 import { siteConfig } from '@/lib/site';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { articleSchema, breadcrumbSchema } from '@/lib/seo';
+
+export async function generateStaticParams() {
+  const posts = await getPosts();
+  return posts.map((p) => ({ slug: p.slug }));
+}
 
 export async function generateMetadata({
   params,
@@ -38,11 +45,13 @@ export async function generateMetadata({
       publishedTime: post.publishedAt,
       authors: [post.author],
       tags: post.tags,
+      images: [coverFor(post), '/og.png'],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
       description: post.excerpt,
+      images: [coverFor(post)],
     },
   };
 }
@@ -61,6 +70,16 @@ export default async function ArticlePage({ params }: { params: { slug: string }
 
   return (
     <article>
+      <JsonLd
+        data={[
+          articleSchema(post),
+          breadcrumbSchema([
+            { name: 'Home', url: '/' },
+            { name: 'Blog', url: '/blog' },
+            { name: post.title, url },
+          ]),
+        ]}
+      />
       {/* Tone-gradient article header */}
       <header
         className={cn(

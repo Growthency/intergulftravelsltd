@@ -33,21 +33,44 @@ export const metadata: Metadata = {
     'Saudi visa Bangladesh',
     'air ticket Dhaka',
   ],
-  authors: [{ name: siteConfig.name }],
+  authors: [{ name: siteConfig.name, url: siteConfig.url }],
+  creator: siteConfig.name,
+  publisher: siteConfig.legalName,
+  applicationName: siteConfig.name,
+  category: 'travel',
+  alternates: { canonical: '/' },
+  formatDetection: { telephone: true, email: true, address: true },
+  manifest: '/manifest.webmanifest',
   openGraph: {
     type: 'website',
+    url: siteConfig.url,
     title: `${siteConfig.name} — Trusted Hajj & Umrah since 2002`,
     description: siteConfig.description,
     siteName: siteConfig.name,
     locale: 'en_GB',
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Inter Gulf Travels Ltd — Hajj & Umrah' }],
   },
-  twitter: { card: 'summary_large_image', title: siteConfig.name, description: siteConfig.description },
-  icons: { icon: '/favicon.svg', apple: '/favicon.svg' },
-  robots: { index: true, follow: true },
+  twitter: {
+    card: 'summary_large_image',
+    title: siteConfig.name,
+    description: siteConfig.description,
+    images: ['/og.png'],
+  },
+  icons: {
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 },
+  },
+  verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION },
 };
 
 export const viewport: Viewport = {
   themeColor: '#06402b',
+  colorScheme: 'light',
   width: 'device-width',
   initialScale: 1,
 };

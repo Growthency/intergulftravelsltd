@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { siteConfig } from '@/lib/site';
+import { siteConfig, branches } from '@/lib/site';
 import { getPosts } from '@/lib/blog';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -10,7 +10,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/hajj', '/hajj/benefit', '/hajj/packages', '/hajj/guide', '/hajj/guideline', '/hajj/faq',
     '/umrah', '/umrah/benefit', '/umrah/packages', '/umrah/guide', '/umrah/guideline', '/umrah/faq',
     '/services', '/services/visa', '/services/air-ticket', '/services/hotel-booking', '/services/tour',
-    '/gallery', '/blog', '/contact', '/estimate', '/terms', '/privacy',
+    '/branches', ...branches.map((b) => `/branches/${b.slug}`),
+    '/gallery', '/videos', '/blog', '/contact', '/estimate', '/terms', '/privacy',
   ];
 
   const staticEntries: MetadataRoute.Sitemap = staticPaths.map((path) => ({

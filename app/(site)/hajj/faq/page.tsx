@@ -7,6 +7,8 @@ import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Accordion } from '@/components/ui/Accordion';
 import { hajjFaqs } from '@/lib/site';
 import { CtaBand } from '@/components/hajj-umrah/shared';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { faqSchema } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Hajj FAQ — Your Questions About Hajj 2026 Answered',
@@ -53,6 +55,7 @@ const extraFaqs = [
 export default function HajjFaqPage() {
   return (
     <>
+      <JsonLd data={faqSchema([...hajjFaqs, ...extraFaqs])} />
       <PageHero
         eyebrow="FAQ of Hajj"
         title={<>Your Hajj questions, honestly answered</>}

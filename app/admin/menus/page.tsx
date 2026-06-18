@@ -1,39 +1,37 @@
 import { createAdminClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/admin/ui';
-import { MenusManager, type MenuItem } from '@/components/admin/MenusManager';
+import { MenuBuilder, type BuilderItem } from '@/components/admin/MenuBuilder';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Navigation' };
+export const metadata = { title: 'Menu Builder' };
 
-async function loadMenus(): Promise<MenuItem[]> {
+async function loadHeaderItems(): Promise<BuilderItem[]> {
   try {
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from('menu_items')
       .select('id, label, href, parent_id, sort_order, location')
+      .eq('location', 'header')
       .order('sort_order', { ascending: true });
 
-    if (error) {
-      console.error('[admin/menus] load failed:', error.message);
-      return [];
-    }
-    return (data ?? []) as MenuItem[];
-  } catch (err) {
-    console.error('[admin/menus] unexpected error:', err);
+    if (error || !data) return [];
+    return data as BuilderItem[];
+  } catch {
+    // menu_items may not exist yet — builder simply starts empty.
     return [];
   }
 }
 
 export default async function MenusPage() {
-  const items = await loadMenus();
+  const items = await loadHeaderItems();
 
   return (
     <>
       <PageHeader
-        title="Navigation"
-        description="Manage the site's navigation links. Nest items under a parent to create dropdown submenus."
+        title="Menu Builder"
+        description="Build your header menu. Add pages or custom links, reorder, and nest one item under another. Empty menu = the automatic default nav."
       />
-      <MenusManager items={items} />
+      <MenuBuilder initial={items} />
     </>
   );
 }

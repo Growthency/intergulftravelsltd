@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, Mail, Menu, Phone } from 'lucide-react';
-import { navigation, contact, social } from '@/lib/site';
+import { navigation, contact, social, type NavItem } from '@/lib/site';
 import { Logo } from '@/components/brand/Logo';
 import { Button } from '@/components/ui/Button';
 import Image from 'next/image';
@@ -13,10 +13,13 @@ import { MobileMenu } from '@/components/layout/MobileMenu';
 import { Icon } from '@/components/ui/Icon';
 import { cn } from '@/lib/utils';
 
-export function Navbar() {
+export function Navbar({ menu }: { menu?: NavItem[] }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+
+  // Use the admin-managed menu when present, otherwise the built-in default nav.
+  const items = menu && menu.length ? menu : navigation;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -65,7 +68,7 @@ export function Navbar() {
           <Logo href="/" />
 
           <nav className="hidden items-center gap-1 lg:flex">
-            {navigation.map((item) => {
+            {items.map((item) => {
               const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
               return (
                 <div key={item.label} className="group relative">
@@ -129,7 +132,7 @@ export function Navbar() {
         </div>
       </header>
 
-      <MobileMenu open={open} onClose={() => setOpen(false)} />
+      <MobileMenu open={open} onClose={() => setOpen(false)} items={items} />
     </>
   );
 }

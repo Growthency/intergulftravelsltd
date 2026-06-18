@@ -25,8 +25,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // Not signed in → staff portal login.
   if (!user) redirect('/portal');
 
-  // Resolve admin status: email allowlist OR profile role.
+  // Resolve role: email allowlist OR profile role. Admins + accounting staff
+  // (accountant / operator / staff) may use the management console; everyone
+  // else goes to their own customer dashboard.
   let isAdmin = isAdminEmail(user.email);
+  let role = 'user';
   let fullName: string | null = null;
   let avatarUrl: string | null = null;
 
@@ -37,23 +40,22 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       .eq('id', user.id)
       .maybeSingle();
 
-    if (profile?.role === 'admin') isAdmin = true;
+    if (profile?.role) role = profile.role;
+    if (role === 'admin') isAdmin = true;
     fullName = profile?.full_name ?? null;
     avatarUrl = profile?.avatar_url ?? null;
   } catch {
     // profiles unavailable — fall back to email allowlist result above
   }
 
-  // Signed in but not an admin → their own customer dashboard.
-  if (!isAdmin) redirect('/dashboard');
+  const STAFF = ['admin', 'accountant', 'operator', 'staff'];
+  const isStaff = isAdmin || STAFF.includes(role);
+  if (!isStaff) redirect('/dashboard');
 
   return (
     <AdminShell
-      user={{
-        email: user.email ?? '',
-        name: fullName,
-        avatarUrl,
-      }}
+      user={{ email: user.email ?? '', name: fullName, avatarUrl, role }}
+      isAdmin={isAdmin}
       signOutAction={signOut}
     >
       {children}

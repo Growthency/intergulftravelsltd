@@ -89,7 +89,14 @@ export const navigation: NavItem[] = [
       { label: 'Inter Gulf Air Travels', href: '/branches/inter-gulf-air-travels', description: 'Air tickets · tours · hotels', icon: 'plane', image: '/branches/inter-gulf-air-travels.webp' },
     ],
   },
-  { label: 'Gallery', href: '/gallery' },
+  {
+    label: 'Gallery',
+    href: '/gallery',
+    children: [
+      { label: 'Photo Gallery', href: '/gallery', description: 'Moments from our journeys', icon: 'photo' },
+      { label: 'Videos', href: '/videos', description: 'Watch our video guides', icon: 'video' },
+    ],
+  },
   {
     label: 'Blog',
     href: '/blog',

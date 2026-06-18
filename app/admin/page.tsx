@@ -1,194 +1,257 @@
 import Link from 'next/link';
 import {
-  FileText,
+  Wallet,
+  Banknote,
+  HandCoins,
+  TrendingUp,
+  TrendingDown,
+  Users,
+  Moon,
   Inbox,
   Calculator,
-  GalleryHorizontalEnd,
-  Users,
-  ShieldCheck,
-  ArrowUpRight,
-  PenSquare,
-  Image as ImageIcon,
-  Settings,
-  Clock,
+  NotebookPen,
+  BarChart3,
 } from 'lucide-react';
-import { createAdminClient } from '@/lib/supabase/server';
+import { mgmtDb } from '@/lib/management/server';
+import type { AccountHead, Transaction } from '@/lib/management/types';
+import { netDebit, naturalBalance } from '@/lib/management/types';
+import { money } from '@/lib/management/format';
+import { branchLabel } from '@/lib/management/branches';
 import { formatDate } from '@/lib/utils';
-import { PageHeader, Card, Panel, StatusBadge, EmptyState } from '@/components/admin/ui';
+import { PageHeader, Card, StatCard, EmptyState, TableWrap, thClass, tdClass, Money, Badge } from '@/components/manage/ui';
 
 export const dynamic = 'force-dynamic';
-
 export const metadata = { title: 'Dashboard' };
 
-type Counts = {
-  published: number;
-  drafts: number;
-  contacts: number;
-  estimates: number;
-  gallery: number;
-  users: number;
-  vault: number;
+const today = () => new Date().toISOString().slice(0, 10);
+
+type DashData = {
+  cash: number;
+  bank: number;
+  receivable: number;
+  todayIncome: number;
+  todayExpense: number;
+  hajjThisYear: number;
+  umrahThisYear: number;
+  newContacts: number;
+  newEstimates: number;
+  recentTx: { tx: Transaction; debitName: string; creditName: string }[];
+  recentPilgrims: any[];
+  hasManagement: boolean;
 };
 
-async function loadDashboard() {
-  const counts: Counts = {
-    published: 0,
-    drafts: 0,
-    contacts: 0,
-    estimates: 0,
-    gallery: 0,
-    users: 0,
-    vault: 0,
+async function loadDashboard(): Promise<DashData> {
+  const d: DashData = {
+    cash: 0,
+    bank: 0,
+    receivable: 0,
+    todayIncome: 0,
+    todayExpense: 0,
+    hajjThisYear: 0,
+    umrahThisYear: 0,
+    newContacts: 0,
+    newEstimates: 0,
+    recentTx: [],
+    recentPilgrims: [],
+    hasManagement: false,
   };
-  let recentContacts: any[] = [];
-  let recentEstimates: any[] = [];
 
+  const year = new Date().getFullYear();
+  const t = today();
+
+  // --- account heads: cash / bank / receivable balances ---
+  let heads: AccountHead[] = [];
   try {
-    const supabase = createAdminClient();
-    const head = { count: 'exact' as const, head: true };
-
-    const [
-      published,
-      drafts,
-      contacts,
-      estimates,
-      gallery,
-      users,
-      vault,
-      contactsList,
-      estimatesList,
-    ] = await Promise.all([
-      supabase.from('blog_posts').select('id', head).eq('status', 'published'),
-      supabase.from('blog_posts').select('id', head).eq('status', 'draft'),
-      supabase.from('contact_requests').select('id', head).eq('handled', false),
-      supabase.from('estimate_requests').select('id', head).eq('status', 'new'),
-      supabase.from('gallery_images').select('id', head),
-      supabase.from('profiles').select('id', head),
-      supabase.from('vault_items').select('id', head),
-      supabase
-        .from('contact_requests')
-        .select('id, name, email, subject, handled, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5),
-      supabase
-        .from('estimate_requests')
-        .select('id, name, service, pax, status, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5),
-    ]);
-
-    counts.published = published.count ?? 0;
-    counts.drafts = drafts.count ?? 0;
-    counts.contacts = contacts.count ?? 0;
-    counts.estimates = estimates.count ?? 0;
-    counts.gallery = gallery.count ?? 0;
-    counts.users = users.count ?? 0;
-    counts.vault = vault.count ?? 0;
-    recentContacts = contactsList.data ?? [];
-    recentEstimates = estimatesList.data ?? [];
-  } catch (err) {
-    console.error('[admin/overview] load failed:', err);
+    const db = mgmtDb();
+    const { data, error } = await db.from('account_heads').select('*').eq('active', true);
+    if (!error && data) {
+      heads = data as AccountHead[];
+      d.hasManagement = true;
+      for (const h of heads) {
+        if (h.subtype === 'cash') d.cash += netDebit(h);
+        else if (h.subtype === 'bank') d.bank += netDebit(h);
+        else if (h.subtype === 'customer') {
+          const due = naturalBalance(h);
+          if (due > 0) d.receivable += due;
+        }
+      }
+    }
+  } catch {
+    // management tables not present yet
   }
 
-  return { counts, recentContacts, recentEstimates };
+  // --- today's income & expense from today's vouchers ---
+  try {
+    const db = mgmtDb();
+    const { data } = await db.from('transactions').select('*').eq('date', t);
+    const todays = (data ?? []) as Transaction[];
+    if (heads.length) {
+      const byId = new Map(heads.map((h) => [h.id, h]));
+      for (const tx of todays) {
+        const credited = byId.get(tx.credit_account_id);
+        const debited = byId.get(tx.debit_account_id);
+        if (credited?.type === 'income') d.todayIncome += Number(tx.amount);
+        if (debited?.type === 'expense') d.todayExpense += Number(tx.amount);
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  // --- recent transactions (with head names) ---
+  try {
+    const db = mgmtDb();
+    const { data } = await db
+      .from('transactions')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(6);
+    const recent = (data ?? []) as Transaction[];
+    if (recent.length) {
+      const ids = Array.from(
+        new Set(recent.flatMap((tx) => [tx.debit_account_id, tx.credit_account_id])),
+      );
+      const nameOf = new Map(heads.map((h) => [h.id, h.name]));
+      const missing = ids.filter((id) => !nameOf.has(id));
+      if (missing.length) {
+        const { data: extra } = await db.from('account_heads').select('id, name').in('id', missing);
+        for (const h of extra ?? []) nameOf.set(h.id, h.name);
+      }
+      d.recentTx = recent.map((tx) => ({
+        tx,
+        debitName: nameOf.get(tx.debit_account_id) ?? 'Unknown',
+        creditName: nameOf.get(tx.credit_account_id) ?? 'Unknown',
+      }));
+    }
+  } catch {
+    // ignore
+  }
+
+  // --- this-year pilgrim / passenger counts + recent pilgrims ---
+  try {
+    const db = mgmtDb();
+    const head = { count: 'exact' as const, head: true };
+    const [hajjCount, umrahCount, recent] = await Promise.all([
+      db.from('hajj_pilgrims').select('id', head).eq('year', year),
+      db.from('umrah_passengers').select('id', head),
+      db
+        .from('hajj_pilgrims')
+        .select('id, tracking_no, name, reg_type, branch, created_at, year')
+        .order('created_at', { ascending: false })
+        .limit(6),
+    ]);
+    d.hajjThisYear = hajjCount.count ?? 0;
+    d.umrahThisYear = umrahCount.count ?? 0;
+    d.recentPilgrims = recent.data ?? [];
+  } catch {
+    // ignore
+  }
+
+  // --- website enquiries (existing tables) ---
+  try {
+    const db = mgmtDb();
+    const head = { count: 'exact' as const, head: true };
+    const [contacts, estimates] = await Promise.all([
+      db.from('contact_requests').select('id', head).eq('handled', false),
+      db.from('estimate_requests').select('id', head).eq('status', 'new'),
+    ]);
+    d.newContacts = contacts.count ?? 0;
+    d.newEstimates = estimates.count ?? 0;
+  } catch {
+    // ignore
+  }
+
+  return d;
 }
 
-export default async function AdminOverviewPage() {
-  const { counts, recentContacts, recentEstimates } = await loadDashboard();
-
-  const stats = [
-    {
-      label: 'Published posts',
-      value: counts.published,
-      sub: `${counts.drafts} in draft`,
-      icon: FileText,
-      href: '/admin/posts',
-      tone: 'emerald' as const,
-    },
-    {
-      label: 'New contact requests',
-      value: counts.contacts,
-      sub: 'awaiting reply',
-      icon: Inbox,
-      href: '/admin/contacts',
-      tone: 'gold' as const,
-    },
-    {
-      label: 'New estimate requests',
-      value: counts.estimates,
-      sub: 'to be quoted',
-      icon: Calculator,
-      href: '/admin/estimates',
-      tone: 'emerald' as const,
-    },
-    {
-      label: 'Gallery images',
-      value: counts.gallery,
-      sub: 'published to site',
-      icon: GalleryHorizontalEnd,
-      href: '/admin/gallery',
-      tone: 'gold' as const,
-    },
-    {
-      label: 'Registered users',
-      value: counts.users,
-      sub: 'in the directory',
-      icon: Users,
-      href: '/admin/users',
-      tone: 'emerald' as const,
-    },
-    {
-      label: 'Vault documents',
-      value: counts.vault,
-      sub: 'stored securely',
-      icon: ShieldCheck,
-      href: '/admin/vault',
-      tone: 'gold' as const,
-    },
-  ];
+export default async function ManagementDashboard() {
+  const d = await loadDashboard();
+  const year = new Date().getFullYear();
 
   const quickActions = [
-    { label: 'Write a post', href: '/admin/posts/new', icon: PenSquare },
-    { label: 'Upload media', href: '/admin/media', icon: ImageIcon },
-    { label: 'Add gallery image', href: '/admin/gallery', icon: GalleryHorizontalEnd },
-    { label: 'Site settings', href: '/admin/settings', icon: Settings },
+    { label: 'Daily Entry', href: '/admin/accounts/entry', icon: NotebookPen },
+    { label: 'New Hajj Pre-reg', href: '/admin/hajj', icon: Users },
+    { label: 'New Umrah Passenger', href: '/admin/umrah', icon: Moon },
+    { label: 'Reports', href: '/admin/reports', icon: BarChart3 },
   ];
 
   return (
     <>
       <PageHeader
-        title="Dashboard"
-        description="A live overview of content, enquiries and people across Inter Gulf Travels."
+        title="Management Dashboard"
+        subtitle="A live financial and operational overview across Inter Gulf Travels, Mokbul Hajj Overseas and Inter Gulf Air."
+        actions={
+          <Link
+            href="/admin/accounts/entry"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-emerald transition hover:bg-brand-700"
+          >
+            <NotebookPen className="h-4 w-4" /> New Entry
+          </Link>
+        }
       />
 
-      {/* Stat cards */}
+      {!d.hasManagement && (
+        <div className="mb-6 rounded-2xl border border-gold-500/30 bg-gold-50 px-5 py-4 text-sm text-gold-800">
+          The accounting tables are not set up yet. Figures will populate automatically once the
+          management database migration has been applied.
+        </div>
+      )}
+
+      {/* Money stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {stats.map((s) => {
-          const Icon = s.icon;
-          return (
-            <Link
-              key={s.label}
-              href={s.href}
-              className="group relative overflow-hidden rounded-3xl border border-border bg-card p-5 shadow-soft transition hover:-translate-y-0.5 hover:shadow-emerald"
-            >
-              <div className="flex items-start justify-between">
-                <span
-                  className={
-                    s.tone === 'emerald'
-                      ? 'grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 text-brand-600'
-                      : 'grid h-11 w-11 place-items-center rounded-2xl bg-gold-50 text-gold-600'
-                  }
-                >
-                  <Icon className="h-5 w-5" />
-                </span>
-                <ArrowUpRight className="h-4 w-4 text-ink-muted/50 transition group-hover:text-brand-600" />
-              </div>
-              <p className="mt-4 font-display text-3xl font-semibold text-ink">{s.value}</p>
-              <p className="mt-1 text-sm font-medium text-ink">{s.label}</p>
-              <p className="text-xs text-ink-muted">{s.sub}</p>
-            </Link>
-          );
-        })}
+        <StatCard label="Cash in Hand" value={<Money value={d.cash} />} icon={Wallet} accent="emerald" />
+        <StatCard label="Bank Balance" value={<Money value={d.bank} />} icon={Banknote} accent="emerald" />
+        <StatCard
+          label="Total Receivable"
+          value={<Money value={d.receivable} />}
+          icon={HandCoins}
+          accent="gold"
+          hint="Outstanding customer dues"
+        />
+        <StatCard
+          label="Today's Income"
+          value={<Money value={d.todayIncome} />}
+          icon={TrendingUp}
+          accent="emerald"
+          hint={formatDate(today())}
+        />
+        <StatCard
+          label="Today's Expense"
+          value={<Money value={d.todayExpense} />}
+          icon={TrendingDown}
+          accent="red"
+          hint={formatDate(today())}
+        />
+        <StatCard
+          label={`Hajj Pilgrims ${year}`}
+          value={d.hajjThisYear}
+          icon={Users}
+          accent="emerald"
+          hint="Registered this year"
+        />
+      </div>
+
+      {/* Operational stats */}
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <StatCard label="Umrah Passengers" value={d.umrahThisYear} icon={Moon} accent="emerald" hint="Total on record" />
+        <Link href="/admin/contacts" className="block">
+          <StatCard
+            label="Unhandled Contacts"
+            value={d.newContacts}
+            icon={Inbox}
+            accent="gold"
+            hint="Awaiting a reply"
+          />
+        </Link>
+        <Link href="/admin/estimates" className="block">
+          <StatCard
+            label="New Estimates"
+            value={d.newEstimates}
+            icon={Calculator}
+            accent="gold"
+            hint="To be quoted"
+          />
+        </Link>
       </div>
 
       {/* Quick actions */}
@@ -213,76 +276,85 @@ export default async function AdminOverviewPage() {
 
       {/* Recent activity */}
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <Panel>
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 className="font-display text-lg font-semibold text-ink">Recent contact requests</h2>
-            <Link href="/admin/contacts" className="text-sm font-semibold text-brand-700 hover:underline">
+        {/* Recent transactions */}
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold text-ink">Recent transactions</h2>
+            <Link href="/admin/accounts/vouchers" className="text-sm font-semibold text-brand-700 hover:underline">
               View all
             </Link>
           </div>
-          {recentContacts.length === 0 ? (
+          {d.recentTx.length === 0 ? (
             <EmptyState
-              icon={<Inbox className="h-6 w-6" />}
-              title="No contact requests yet"
-              description="Enquiries submitted through the website contact form will appear here."
+              title="No transactions yet"
+              hint="Posted vouchers and daily entries will appear here."
             />
           ) : (
-            <ul className="divide-y divide-border">
-              {recentContacts.map((c) => (
-                <li key={c.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-ink">{c.name}</p>
-                    <p className="truncate text-xs text-ink-muted">{c.subject || c.email}</p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    <StatusBadge status={c.handled ? 'handled' : 'new'} />
-                    <span className="hidden text-xs text-ink-muted sm:flex sm:items-center sm:gap-1">
-                      <Clock className="h-3 w-3" />
-                      {formatDate(c.created_at, { day: 'numeric', month: 'short' })}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <TableWrap className="min-w-0">
+              <thead>
+                <tr>
+                  <th className={thClass}>Voucher</th>
+                  <th className={thClass}>Particulars</th>
+                  <th className={`${thClass} text-right`}>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {d.recentTx.map(({ tx, debitName, creditName }) => (
+                  <tr key={tx.id}>
+                    <td className={`${tdClass} align-top`}>
+                      <p className="font-mono text-xs text-ink">{tx.voucher_no ?? '—'}</p>
+                      <p className="text-xs text-ink-muted">{formatDate(tx.date, { day: 'numeric', month: 'short' })}</p>
+                    </td>
+                    <td className={`${tdClass} align-top`}>
+                      <p className="text-ink">
+                        <span className="font-medium">Dr</span> {debitName}
+                      </p>
+                      <p className="text-ink-muted">
+                        <span className="font-medium">Cr</span> {creditName}
+                      </p>
+                    </td>
+                    <td className={`${tdClass} text-right align-top tabular-nums`}>{money(tx.amount, false)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </TableWrap>
           )}
-        </Panel>
+        </div>
 
-        <Panel>
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 className="font-display text-lg font-semibold text-ink">Recent estimate requests</h2>
-            <Link href="/admin/estimates" className="text-sm font-semibold text-brand-700 hover:underline">
+        {/* Recent pilgrims */}
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold text-ink">Recent pilgrims</h2>
+            <Link href="/admin/hajj" className="text-sm font-semibold text-brand-700 hover:underline">
               View all
             </Link>
           </div>
-          {recentEstimates.length === 0 ? (
+          {d.recentPilgrims.length === 0 ? (
             <EmptyState
-              icon={<Calculator className="h-6 w-6" />}
-              title="No estimate requests yet"
-              description="Quote requests from the website estimate form will appear here."
+              title="No pilgrims yet"
+              hint="New Hajj pre-registrations and registrations will appear here."
             />
           ) : (
-            <ul className="divide-y divide-border">
-              {recentEstimates.map((e) => (
-                <li key={e.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-ink">{e.name}</p>
-                    <p className="truncate text-xs text-ink-muted">
-                      {e.service}
-                      {e.pax ? ` · ${e.pax} traveller${e.pax > 1 ? 's' : ''}` : ''}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    <StatusBadge status={e.status ?? 'new'} />
-                    <span className="hidden text-xs text-ink-muted sm:flex sm:items-center sm:gap-1">
-                      <Clock className="h-3 w-3" />
-                      {formatDate(e.created_at, { day: 'numeric', month: 'short' })}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+              <ul className="divide-y divide-border/70">
+                {d.recentPilgrims.map((p) => (
+                  <li key={p.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-ink">{p.name}</p>
+                      <p className="truncate text-xs text-ink-muted">
+                        {p.tracking_no ? `${p.tracking_no} · ` : ''}
+                        {branchLabel(p.branch)}
+                      </p>
+                    </div>
+                    <Badge tone={p.reg_type === 'registered' ? 'emerald' : 'gold'}>
+                      {p.reg_type === 'registered' ? 'Registered' : 'Pre-reg'}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
-        </Panel>
+        </div>
       </div>
     </>
   );

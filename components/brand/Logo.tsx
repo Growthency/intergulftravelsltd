@@ -43,10 +43,10 @@ export function Logo({
     <span className={cn('group inline-flex items-center gap-3', className)}>
       <LogoMark glow className="h-11 w-11 transition-transform duration-500 group-hover:scale-105" />
       <span className="flex flex-col leading-none">
-        <span className={cn('font-display text-[1.35rem] font-semibold tracking-tight', text)}>
+        <span className={cn('whitespace-nowrap font-display text-[1.3rem] font-semibold leading-[1.05] tracking-tight', text)}>
           Inter <span className="text-gradient">Gulf</span>
         </span>
-        <span className={cn('mt-0.5 text-[0.62rem] font-semibold uppercase tracking-[0.34em]', sub)}>
+        <span className={cn('mt-0.5 whitespace-nowrap text-[0.6rem] font-semibold uppercase tracking-[0.3em]', sub)}>
           Travels Ltd
         </span>
         {withTagline && (

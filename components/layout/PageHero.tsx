@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { WavyDivider } from '@/components/effects/WavyDivider';
 import { Eyebrow } from '@/components/ui/Eyebrow';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbSchema } from '@/lib/seo';
 
 /** Consistent inner-page banner (breadcrumb + eyebrow + title + lead). */
 export function PageHero({
@@ -17,6 +19,9 @@ export function PageHero({
 }) {
   return (
     <section className="relative isolate overflow-hidden bg-brand-900 pb-24 pt-14 text-white sm:pt-16">
+      <JsonLd
+        data={breadcrumbSchema([{ name: 'Home', url: '/' }, ...crumbs.map((c) => ({ name: c.label, url: c.href }))])}
+      />
       <div aria-hidden className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(110%_110%_at_20%_0%,#0e7c5a_0%,#074a37_45%,#06402b_75%,#04261c_100%)]" />
         <div className="absolute -left-10 top-0 h-72 w-72 rounded-full bg-brand-500/25 blur-[110px]" />

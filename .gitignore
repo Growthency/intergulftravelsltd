@@ -16,10 +16,13 @@ next-env.d.ts
 *.pem
 Thumbs.db
 
-# debug
+# debug / logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
+_dev.log
+_build.log
 
 # local env files — keep these private, never commit real keys
 .env

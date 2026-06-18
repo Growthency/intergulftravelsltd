@@ -1,12 +1,13 @@
-import { createAdminClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/admin';
 import { PageHeader } from '@/components/admin/ui';
-import { UsersTable, type ProfileRow } from '@/components/admin/UsersTable';
+import { StaffTable, type StaffRow } from '@/components/manage/StaffTable';
+import { CreateStaff } from '@/components/manage/CreateStaff';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Users' };
+export const metadata = { title: 'Staff & Roles' };
 
-async function loadUsers(): Promise<ProfileRow[]> {
+async function loadStaff(): Promise<StaffRow[]> {
   try {
     const supabase = createAdminClient();
     const { data, error } = await supabase
@@ -33,16 +34,38 @@ async function loadUsers(): Promise<ProfileRow[]> {
   }
 }
 
-export default async function UsersPage() {
-  const rows = await loadUsers();
+async function resolveIsAdmin(): Promise<boolean> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return false;
+    if (isAdminEmail(user.email)) return true;
+    const { data } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+    return data?.role === 'admin';
+  } catch {
+    return false;
+  }
+}
+
+export default async function StaffPage() {
+  const [rows, isAdmin] = await Promise.all([loadStaff(), resolveIsAdmin()]);
 
   return (
     <>
       <PageHeader
-        title="Users"
-        description="Everyone registered with Inter Gulf Travels. Grant or revoke administrator access here."
+        title="Staff & Roles"
+        description="Manage who can access the management console. Assign roles — operator, accountant, staff or administrator — and create new staff logins."
       />
-      <UsersTable rows={rows} />
+
+      {isAdmin && (
+        <div className="mb-6">
+          <CreateStaff />
+        </div>
+      )}
+
+      <StaffTable rows={rows} canEdit={isAdmin} />
     </>
   );
 }
