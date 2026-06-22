@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Landmark, Moon, Users, GraduationCap, Mountain, Plane, MapPin, Building2 } from 'lucide-react';
 import Image from 'next/image';
+import { blurFor } from '@/lib/blur';
 import { cn } from '@/lib/utils';
 
 type Category = 'makkah' | 'madinah' | 'pilgrims' | 'training' | 'ziyarat' | 'tours';
@@ -273,6 +274,8 @@ export function GalleryGrid() {
                       alt={tile.caption}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      placeholder={blurFor(tile.image) ? 'blur' : 'empty'}
+                      blurDataURL={blurFor(tile.image)}
                       className={cn(
                         'transition-transform duration-500 group-hover:scale-105',
                         tile.fit === 'contain' ? 'object-contain' : 'object-cover',

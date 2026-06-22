@@ -17,6 +17,15 @@ const fraunces = Fraunces({
   variable: '--font-display',
 });
 
+/** Origin of the Supabase project (for image preconnect), if configured. */
+const supabaseOrigin = (() => {
+  try {
+    return process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin : null;
+  } catch {
+    return null;
+  }
+})();
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
@@ -38,7 +47,10 @@ export const metadata: Metadata = {
   publisher: siteConfig.legalName,
   applicationName: siteConfig.name,
   category: 'travel',
-  alternates: { canonical: '/' },
+  alternates: {
+    canonical: '/',
+    types: { 'application/rss+xml': [{ url: '/feed.xml', title: `${siteConfig.name} — Blog` }] },
+  },
   formatDetection: { telephone: true, email: true, address: true },
   manifest: '/manifest.webmanifest',
   openGraph: {
@@ -79,6 +91,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
+        {supabaseOrigin && (
+          <>
+            <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href={supabaseOrigin} />
+          </>
+        )}
+        <link rel="preconnect" href="https://i.ytimg.com" crossOrigin="anonymous" />
         {children}
         <Toaster
           position="top-center"

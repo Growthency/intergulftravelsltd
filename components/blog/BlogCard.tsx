@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowUpRight, CalendarDays, Clock } from 'lucide-react';
 import { type BlogPost, coverFor } from '@/lib/blog-types';
+import { blurFor } from '@/lib/blur';
 import { formatDate, cn } from '@/lib/utils';
 
 export function BlogCard({ post, className }: { post: BlogPost; className?: string }) {
@@ -19,6 +20,8 @@ export function BlogCard({ post, className }: { post: BlogPost; className?: stri
           alt={post.title}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          placeholder={blurFor(coverFor(post)) ? 'blur' : 'empty'}
+          blurDataURL={blurFor(coverFor(post))}
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />

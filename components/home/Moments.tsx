@@ -4,6 +4,7 @@ import { Section, SectionHeading } from '@/components/ui/Section';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/Reveal';
+import { blurFor } from '@/lib/blur';
 
 const lead = {
   src: '/gallery/pilgrims-haram.webp',
@@ -32,6 +33,8 @@ export function Moments() {
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 66vw"
+                placeholder={blurFor(lead.src) ? 'blur' : 'empty'}
+                blurDataURL={blurFor(lead.src)}
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent p-6 pt-16">
@@ -49,6 +52,8 @@ export function Moments() {
                     alt={s.caption}
                     fill
                     sizes="(max-width: 1024px) 100vw, 33vw"
+                    placeholder={blurFor(s.src) ? 'blur' : 'empty'}
+                    blurDataURL={blurFor(s.src)}
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-4 pt-12">
