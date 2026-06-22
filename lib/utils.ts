@@ -38,7 +38,25 @@ export function whatsappLink(phone: string, message?: string) {
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
 }
 
+/**
+ * The correct absolute base URL for THIS deployment — used for canonical, Open
+ * Graph, sitemap, RSS, etc. Resolution order:
+ *   1. NEXT_PUBLIC_SITE_URL (your real domain, when set & not localhost)
+ *   2. Vercel's stable production domain (VERCEL_PROJECT_PRODUCTION_URL)
+ *   3. The per-deploy Vercel URL (VERCEL_URL)
+ *   4. The brand domain fallback
+ * This is what makes share previews (og:image) load on whatever domain the site
+ * is actually served from.
+ */
+export function getBaseUrl(): string {
+  const env = process.env.NEXT_PUBLIC_SITE_URL;
+  if (env && !env.includes('localhost')) return env.replace(/\/$/, '');
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return 'https://intergulftravelsltd.com';
+}
+
 export function absoluteUrl(path = '') {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://intergulftravelsltd.com';
-  return `${base.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
+  const base = getBaseUrl();
+  return `${base}${path.startsWith('/') ? path : `/${path}`}`;
 }

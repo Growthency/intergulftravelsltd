@@ -1,5 +1,6 @@
 import { getPosts } from '@/lib/blog';
 import { siteConfig } from '@/lib/site';
+import { getBaseUrl } from '@/lib/utils';
 
 export const revalidate = 3600;
 
@@ -8,7 +9,7 @@ function esc(s: string) {
 }
 
 export async function GET() {
-  const base = siteConfig.url.replace(/\/$/, '');
+  const base = getBaseUrl();
 
   let posts: Awaited<ReturnType<typeof getPosts>> = [];
   try {

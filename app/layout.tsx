@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, Fraunces } from 'next/font/google';
 import { Toaster } from 'sonner';
 import { siteConfig } from '@/lib/site';
+import { getBaseUrl } from '@/lib/utils';
 import './globals.css';
 
 const inter = Inter({
@@ -27,7 +28,7 @@ const supabaseOrigin = (() => {
 })();
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
+  metadataBase: new URL(getBaseUrl()),
   title: {
     default: `${siteConfig.name} — Trusted Hajj & Umrah since 2002`,
     template: `%s · ${siteConfig.name}`,
@@ -55,7 +56,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.webmanifest',
   openGraph: {
     type: 'website',
-    url: siteConfig.url,
+    url: getBaseUrl(),
     title: `${siteConfig.name} — Trusted Hajj & Umrah since 2002`,
     description: siteConfig.description,
     siteName: siteConfig.name,

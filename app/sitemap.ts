@@ -1,9 +1,10 @@
 import type { MetadataRoute } from 'next';
-import { siteConfig, branches } from '@/lib/site';
+import { branches } from '@/lib/site';
 import { getPosts } from '@/lib/blog';
+import { getBaseUrl } from '@/lib/utils';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = siteConfig.url.replace(/\/$/, '');
+  const base = getBaseUrl();
 
   const staticPaths = [
     '', '/about', '/about/associates', '/about/career', '/about/reviews', '/about/awards', '/about/team',

@@ -1,7 +1,8 @@
 import { siteConfig, contact, social } from '@/lib/site';
 import type { BlogPost } from '@/lib/blog-types';
+import { getBaseUrl } from '@/lib/utils';
 
-const BASE = siteConfig.url.replace(/\/$/, '');
+const BASE = getBaseUrl();
 
 const postalAddress = {
   '@type': 'PostalAddress',
