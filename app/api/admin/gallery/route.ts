@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireAdmin } from '../_lib/guard';
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'Could not add the image.' }, { status: 500 });
     }
 
+    revalidateTag('gallery');
     return NextResponse.json({ ok: true, id: data.id });
   } catch (err) {
     console.error('[admin/gallery] unexpected error:', err);
@@ -78,6 +80,7 @@ export async function DELETE(request: Request) {
       console.error('[admin/gallery] delete failed:', error.message);
       return NextResponse.json({ ok: false, error: 'Could not delete the image.' }, { status: 500 });
     }
+    revalidateTag('gallery');
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('[admin/gallery] unexpected error:', err);

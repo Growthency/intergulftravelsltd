@@ -17,6 +17,7 @@ import {
   Check,
 } from 'lucide-react';
 import { Card, Field, inputClass, AdminButton, EmptyState, Badge } from '@/components/admin/ui';
+import { confirmDialog } from '@/components/admin/confirm';
 import { ImageUploader } from '@/components/admin/ImageUploader';
 import { cn } from '@/lib/utils';
 import type { Affiliation } from '@/lib/affiliations';
@@ -204,7 +205,7 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
   }
 
   async function remove(a: Affiliation) {
-    if (!window.confirm(`Remove "${a.name}" from your partners?`)) return;
+    if (!(await confirmDialog({ message: `Remove "${a.name}" from your partners?`, confirmText: 'Delete', danger: true }))) return;
     setBusyId(a.id);
     try {
       const res = await fetch(`/api/admin/affiliations?id=${encodeURIComponent(a.id)}`, {

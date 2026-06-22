@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2, GalleryHorizontalEnd, X } from 'lucide-react';
 import { Card, Field, inputClass, AdminButton, EmptyState, Badge } from '@/components/admin/ui';
+import { confirmDialog } from '@/components/admin/confirm';
 import { ImageUploader } from '@/components/admin/ImageUploader';
 
 export type GalleryImage = {
@@ -71,7 +72,7 @@ export function GalleryManager({ images }: { images: GalleryImage[] }) {
   }
 
   async function remove(image: GalleryImage) {
-    if (!window.confirm(`Remove "${image.title}" from the gallery?`)) return;
+    if (!(await confirmDialog({ message: `Remove "${image.title}" from the gallery?`, confirmText: 'Delete', danger: true }))) return;
     setDeletingId(image.id);
     try {
       const res = await fetch(`/api/admin/gallery?id=${encodeURIComponent(image.id)}`, {

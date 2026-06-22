@@ -18,6 +18,7 @@ import {
   Download,
 } from 'lucide-react';
 import { Card, Field, inputClass, AdminButton, EmptyState } from '@/components/admin/ui';
+import { confirmDialog } from '@/components/admin/confirm';
 import { navigation } from '@/lib/site';
 
 /** Row shape loaded from the DB (`menu_items`, header location). */
@@ -296,7 +297,7 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
     if (nodes.length === 0) {
       // An empty save is allowed — it clears the menu and the site falls back
       // to the default nav. Confirm so it isn't accidental.
-      if (!window.confirm('Save an empty menu? The site will use the default navigation.')) return;
+      if (!(await confirmDialog({ message: 'Save an empty menu? The site will use the default navigation.', confirmText: 'Save', danger: false }))) return;
     }
     // Validate.
     for (const n of nodes) {
@@ -348,9 +349,12 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
   /** Clear the custom menu entirely → the site reverts to the built-in nav. */
   async function resetToDefault() {
     if (
-      !window.confirm(
-        'Reset to the default menu? This clears your custom menu and the site uses the built-in navigation (with Branches and icons) again.',
-      )
+      !(await confirmDialog({
+        message:
+          'Reset to the default menu? This clears your custom menu and the site uses the built-in navigation (with Branches and icons) again.',
+        confirmText: 'Reset',
+        danger: true,
+      }))
     )
       return;
     setSaving(true);

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireAdmin } from '../../_lib/guard';
 import { postSchema, buildPostRow } from '../../_lib/posts';
@@ -49,6 +50,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       return NextResponse.json({ ok: false, error: 'Could not update the post.' }, { status: 500 });
     }
 
+    revalidateTag('blog');
     return NextResponse.json({ ok: true, id: data.id, slug: data.slug });
   } catch (err) {
     console.error('[admin/posts/:id] unexpected error:', err);
@@ -71,6 +73,7 @@ export async function DELETE(_request: Request, { params }: { params: { id: stri
       return NextResponse.json({ ok: false, error: 'Could not delete the post.' }, { status: 500 });
     }
 
+    revalidateTag('blog');
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('[admin/posts/:id] unexpected error:', err);

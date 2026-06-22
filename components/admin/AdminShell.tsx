@@ -37,6 +37,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { LogoMark } from '@/components/brand/Logo';
+import { ConfirmHost } from '@/components/admin/confirm';
 import { cn } from '@/lib/utils';
 
 type NavLink = { label: string; href: string; icon: LucideIcon };
@@ -121,6 +122,7 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-sand-soft text-ink">
+      <ConfirmHost />
       {/* ---------- Desktop sidebar ---------- */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 flex-col bg-brand-900 text-white lg:flex">
         <SidebarContent pathname={pathname} isAdmin={isAdmin} />

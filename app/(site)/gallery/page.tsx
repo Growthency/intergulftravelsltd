@@ -8,6 +8,7 @@ import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/Reveal';
 import { GalleryGrid } from '@/components/gallery/GalleryGrid';
+import { getGalleryImages } from '@/lib/gallery';
 
 export const metadata: Metadata = {
   title: 'Gallery',
@@ -16,7 +17,8 @@ export const metadata: Metadata = {
   alternates: { canonical: '/gallery' },
 };
 
-export default function GalleryPage() {
+export default async function GalleryPage() {
+  const images = await getGalleryImages().catch(() => []);
   return (
     <>
       <PageHero
@@ -32,7 +34,7 @@ export default function GalleryPage() {
 
       <Section className="bg-sand-soft">
         <Container>
-          <GalleryGrid />
+          <GalleryGrid extra={images} />
         </Container>
       </Section>
 

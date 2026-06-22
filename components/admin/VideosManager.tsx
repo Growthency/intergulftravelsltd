@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { Card, Field, inputClass, AdminButton, EmptyState, Badge } from '@/components/admin/ui';
+import { confirmDialog } from '@/components/admin/confirm';
 import { cn } from '@/lib/utils';
 
 export type AdminVideo = {
@@ -160,7 +161,7 @@ export function VideosManager({ initial }: { initial: AdminVideo[] }) {
   }
 
   async function remove(video: AdminVideo) {
-    if (!window.confirm(`Delete "${video.title}"? This cannot be undone.`)) return;
+    if (!(await confirmDialog({ message: `Delete "${video.title}"? This cannot be undone.`, confirmText: 'Delete', danger: true }))) return;
     setBusyId(video.id);
     try {
       const res = await fetch(`/api/admin/videos?id=${encodeURIComponent(video.id)}`, {

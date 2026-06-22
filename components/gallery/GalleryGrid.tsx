@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Landmark, Moon, Users, GraduationCap, Mountain, Plane, MapPin, Building2 } from 'lucide-react';
 import Image from 'next/image';
+import type { GalleryImage } from '@/lib/gallery';
 import { blurFor } from '@/lib/blur';
 import { cn } from '@/lib/utils';
 
@@ -214,12 +215,46 @@ const tiles: Tile[] = [
   },
 ];
 
-export function GalleryGrid() {
+const CATEGORY_MAP: Record<string, Category> = {
+  hajj: 'pilgrims',
+  umrah: 'makkah',
+  makkah: 'makkah',
+  mecca: 'makkah',
+  madinah: 'madinah',
+  medina: 'madinah',
+  pilgrims: 'pilgrims',
+  training: 'training',
+  events: 'training',
+  ziyarat: 'ziyarat',
+  tours: 'tours',
+  tour: 'tours',
+};
+
+/** Turn an admin-uploaded gallery row into a real-photo tile. */
+function dbToTile(g: GalleryImage): Tile {
+  const key = (g.category ?? '').toLowerCase().trim();
+  const category = CATEGORY_MAP[key] ?? 'pilgrims';
+  const label = g.category ? g.category.charAt(0).toUpperCase() + g.category.slice(1) : 'Inter Gulf Travels';
+  return {
+    caption: g.title,
+    location: label,
+    category,
+    icon: 'pilgrims',
+    tone: '',
+    image: g.url,
+    aspect: 'aspect-[4/3]',
+  };
+}
+
+export function GalleryGrid({ extra = [] }: { extra?: GalleryImage[] }) {
   const [active, setActive] = useState<Category | 'all'>('all');
 
+  // Admin-curated DB images first, then the built-in curated tiles.
+  const allTiles = useMemo(() => [...extra.map(dbToTile), ...tiles], [extra]);
+
   const visible = useMemo(
-    () => (active === 'all' ? tiles : tiles.filter((t) => t.category === active)),
-    [active],
+    () => (active === 'all' ? allTiles : allTiles.filter((t) => t.category === active)),
+    [active, allTiles],
   );
 
   return (

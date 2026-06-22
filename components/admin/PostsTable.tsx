@@ -7,6 +7,7 @@ import { Search, Pencil, Trash2, Loader2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDate } from '@/lib/utils';
 import { StatusBadge, Badge, EmptyState, AdminButton } from '@/components/admin/ui';
+import { confirmDialog } from '@/components/admin/confirm';
 
 export type PostRow = {
   id: string;
@@ -49,7 +50,7 @@ export function PostsTable({ posts }: { posts: PostRow[] }) {
   }, [posts, tab, query]);
 
   async function remove(post: PostRow) {
-    if (!window.confirm(`Delete "${post.title}"? This cannot be undone.`)) return;
+    if (!(await confirmDialog({ message: `Delete "${post.title}"? This cannot be undone.`, confirmText: 'Delete', danger: true }))) return;
     setDeletingId(post.id);
     try {
       const res = await fetch(`/api/admin/posts/${post.id}`, { method: 'DELETE' });

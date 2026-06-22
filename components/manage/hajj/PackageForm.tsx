@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Loader2, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { Field, inputClass } from '@/components/manage/ui';
+import { confirmDialog } from '@/components/admin/confirm';
 import { Button } from '@/components/ui/Button';
 import { BRANCHES } from '@/lib/management/branches';
 import type { MgmtPackage } from '@/lib/management/types';
@@ -69,7 +70,7 @@ export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
 
   async function onDelete() {
     if (!pkg || deleting) return;
-    if (!window.confirm(`Delete the package “${pkg.name}”? This cannot be undone.`)) return;
+    if (!(await confirmDialog({ message: `Delete the package “${pkg.name}”? This cannot be undone.`, confirmText: 'Delete', danger: true }))) return;
     setDeleting(true);
     try {
       const res = await fetch('/api/admin/hajj/packages', {

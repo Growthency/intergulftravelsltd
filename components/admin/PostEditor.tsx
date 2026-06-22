@@ -17,6 +17,7 @@ import {
 import Link from 'next/link';
 import { slugify } from '@/lib/utils';
 import { Card, Field, inputClass, AdminButton } from '@/components/admin/ui';
+import { confirmDialog } from '@/components/admin/confirm';
 import { ImageUploader } from '@/components/admin/ImageUploader';
 
 export type PostFormData = {
@@ -140,7 +141,7 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
 
   async function remove() {
     if (!isEdit) return;
-    if (!window.confirm('Delete this post permanently? This cannot be undone.')) return;
+    if (!(await confirmDialog({ message: 'Delete this post permanently? This cannot be undone.', confirmText: 'Delete', danger: true }))) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/admin/posts/${initial!.id}`, { method: 'DELETE' });

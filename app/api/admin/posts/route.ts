@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireAdmin } from '../_lib/guard';
 import { postSchema, buildPostRow } from '../_lib/posts';
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'Could not save the post.' }, { status: 500 });
     }
 
+    revalidateTag('blog');
     return NextResponse.json({ ok: true, id: data.id, slug: data.slug });
   } catch (err) {
     console.error('[admin/posts] unexpected error:', err);

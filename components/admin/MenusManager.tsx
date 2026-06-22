@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Loader2, X, Menu as MenuIcon, CornerDownRight } from 'lucide-react';
 import { Card, Field, inputClass, AdminButton, EmptyState, Badge } from '@/components/admin/ui';
+import { confirmDialog } from '@/components/admin/confirm';
 
 export type MenuItem = {
   id: string;
@@ -111,7 +112,7 @@ export function MenusManager({ items }: { items: MenuItem[] }) {
     const msg = childCount
       ? `Delete "${item.label}"? Its ${childCount} sub-item(s) will become top-level links.`
       : `Delete "${item.label}"?`;
-    if (!window.confirm(msg)) return;
+    if (!(await confirmDialog({ message: msg, confirmText: 'Delete', danger: true }))) return;
     setDeletingId(item.id);
     try {
       const res = await fetch(`/api/admin/menus?id=${encodeURIComponent(item.id)}`, {

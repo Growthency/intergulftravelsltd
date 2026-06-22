@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Loader2, X, PanelsTopLeft } from 'lucide-react';
 import { Card, Field, inputClass, AdminButton, EmptyState } from '@/components/admin/ui';
+import { confirmDialog } from '@/components/admin/confirm';
 
 export type FooterLink = {
   id: string;
@@ -107,7 +108,7 @@ export function FooterManager({ links }: { links: FooterLink[] }) {
   }
 
   async function remove(link: FooterLink) {
-    if (!window.confirm(`Delete "${link.label}"?`)) return;
+    if (!(await confirmDialog({ message: `Delete "${link.label}"?`, confirmText: 'Delete', danger: true }))) return;
     setDeletingId(link.id);
     try {
       const res = await fetch(`/api/admin/footer?id=${encodeURIComponent(link.id)}`, {

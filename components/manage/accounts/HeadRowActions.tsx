@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Loader2, Trash2 } from 'lucide-react';
+import { confirmDialog } from '@/components/admin/confirm';
 
 /** Deactivate (soft-delete) a non-system account head. */
 export function HeadRowActions({ id, name }: { id: string; name: string }) {
@@ -11,7 +12,13 @@ export function HeadRowActions({ id, name }: { id: string; name: string }) {
   const [busy, setBusy] = useState(false);
 
   async function remove() {
-    if (!window.confirm(`Remove "${name}"? Its ledger history is preserved, but it will no longer be selectable.`)) {
+    if (
+      !(await confirmDialog({
+        message: `Remove "${name}"? Its ledger history is preserved, but it will no longer be selectable.`,
+        confirmText: 'Delete',
+        danger: true,
+      }))
+    ) {
       return;
     }
     setBusy(true);
