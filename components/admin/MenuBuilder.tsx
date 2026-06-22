@@ -14,8 +14,11 @@ import {
   Plus,
   Link2,
   ListTree,
+  RotateCcw,
+  Download,
 } from 'lucide-react';
 import { Card, Field, inputClass, AdminButton, EmptyState } from '@/components/admin/ui';
+import { navigation } from '@/lib/site';
 
 /** Row shape loaded from the DB (`menu_items`, header location). */
 export type BuilderItem = {
@@ -91,6 +94,19 @@ function buildInitialNodes(items: BuilderItem[]): Node[] {
     }
   }
 
+  return nodes;
+}
+
+/** The site's built-in default navigation, expressed as builder nodes. */
+function defaultNodes(): Node[] {
+  const nodes: Node[] = [];
+  for (const item of navigation) {
+    const topTemp = nextId();
+    nodes.push({ tempId: topTemp, label: item.label, href: item.href, parentTempId: null });
+    for (const c of item.children ?? []) {
+      nodes.push({ tempId: nextId(), label: c.label, href: c.href, parentTempId: topTemp });
+    }
+  }
   return nodes;
 }
 
@@ -323,9 +339,51 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
     }
   }
 
+  /** Fill the builder with the site's default menu so it can be edited. */
+  function loadDefault() {
+    setNodes(defaultNodes());
+    toast.success('Default menu loaded — edit if you like, then Save to apply.');
+  }
+
+  /** Clear the custom menu entirely → the site reverts to the built-in nav. */
+  async function resetToDefault() {
+    if (
+      !window.confirm(
+        'Reset to the default menu? This clears your custom menu and the site uses the built-in navigation (with Branches and icons) again.',
+      )
+    )
+      return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/menus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: [] }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        toast.error(data?.error ?? 'Could not reset the menu.');
+        return;
+      }
+      setNodes([]);
+      toast.success('Menu reset — the site now uses the default navigation.');
+      router.refresh();
+    } catch {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="space-y-5">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <AdminButton variant="outline" size="sm" onClick={loadDefault} disabled={saving}>
+          <Download className="h-4 w-4" /> Load default
+        </AdminButton>
+        <AdminButton variant="outline" size="sm" onClick={resetToDefault} disabled={saving}>
+          <RotateCcw className="h-4 w-4" /> Reset to default
+        </AdminButton>
         <AdminButton variant="primary" onClick={save} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           Save menu

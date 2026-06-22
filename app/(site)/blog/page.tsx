@@ -1,13 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, ArrowUpRight, CalendarDays, Clock, Mail } from 'lucide-react';
-import { getPosts, toneGradient } from '@/lib/blog';
+import { getPosts, coverFor } from '@/lib/blog';
 import { PageHero } from '@/components/layout/PageHero';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/Reveal';
-import { Icon } from '@/components/ui/Icon';
-import { BlogSearch } from '@/components/blog/BlogSearch';
+import { BlogCard } from '@/components/blog/BlogCard';
+import { BlogSearchBox } from '@/components/blog/BlogSearchBox';
+import { Pagination } from '@/components/blog/Pagination';
 import { cn, formatDate } from '@/lib/utils';
 import { siteConfig } from '@/lib/site';
 
@@ -31,19 +33,57 @@ const tabs = [
   { label: 'Travel & Tips', value: 'others' },
 ] as const;
 
+const FIRST_PAGE_GRID = 6; // page 1: featured + 6 = 7
+const PER_PAGE = 9; // page 2+: 9 (and 9 per page while searching)
+
 export default async function BlogPage({
   searchParams,
 }: {
-  searchParams?: { category?: string };
+  searchParams?: { category?: string; page?: string; search?: string };
 }) {
   const category = searchParams?.category ?? 'all';
   const activeCategory = tabs.some((t) => t.value === category) ? category : 'all';
+  const search = (searchParams?.search ?? '').trim();
+  const searching = search.length > 0;
+  const page = Math.max(1, Number.parseInt(searchParams?.page ?? '1', 10) || 1);
 
-  const posts = await getPosts({ category: activeCategory });
+  const all = await getPosts({ category: activeCategory });
+  const q = search.toLowerCase();
+  const matches = searching
+    ? all.filter(
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          p.excerpt.toLowerCase().includes(q) ||
+          p.tags.some((t) => t.toLowerCase().includes(q)),
+      )
+    : all;
 
-  // The featured post only headlines the unfiltered "All" view.
-  const featured = activeCategory === 'all' ? posts.find((p) => p.featured) : undefined;
-  const gridPosts = featured ? posts.filter((p) => p.slug !== featured.slug) : posts;
+  // Featured headlines page 1 of the unfiltered "All" view only.
+  const featured =
+    !searching && page === 1 && activeCategory === 'all' ? matches.find((p) => p.featured) : undefined;
+  const grid = featured ? matches.filter((p) => p.slug !== featured.slug) : matches;
+
+  let pagePosts: typeof grid;
+  let totalPages: number;
+  if (searching) {
+    totalPages = Math.max(1, Math.ceil(grid.length / PER_PAGE));
+    pagePosts = grid.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  } else {
+    totalPages = grid.length <= FIRST_PAGE_GRID ? 1 : 1 + Math.ceil((grid.length - FIRST_PAGE_GRID) / PER_PAGE);
+    pagePosts =
+      page === 1
+        ? grid.slice(0, FIRST_PAGE_GRID)
+        : grid.slice(FIRST_PAGE_GRID + (page - 2) * PER_PAGE, FIRST_PAGE_GRID + (page - 1) * PER_PAGE);
+  }
+
+  const hrefFor = (p: number) => {
+    const sp = new URLSearchParams();
+    if (activeCategory !== 'all') sp.set('category', activeCategory);
+    if (search) sp.set('search', search);
+    if (p > 1) sp.set('page', String(p));
+    const qs = sp.toString();
+    return qs ? `/blog?${qs}` : '/blog';
+  };
 
   return (
     <>
@@ -58,7 +98,7 @@ export default async function BlogPage({
         crumbs={[{ label: 'Blog' }]}
       />
 
-      {/* Featured article */}
+      {/* Featured article (page 1, unfiltered) */}
       {featured && (
         <section className="relative pt-16 sm:pt-20">
           <Container>
@@ -67,19 +107,18 @@ export default async function BlogPage({
                 href={`/blog/${featured.slug}`}
                 className="group grid overflow-hidden rounded-[2rem] border border-border bg-card shadow-soft transition-all duration-300 hover:shadow-emerald lg:grid-cols-2"
               >
-                <div className={cn('relative min-h-[16rem] overflow-hidden bg-gradient-to-br lg:min-h-full', toneGradient(featured.tone))}>
-                  <div
-                    className="absolute inset-0 opacity-20"
-                    style={{
-                      backgroundImage:
-                        'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.5) 0, transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.35) 0, transparent 45%)',
-                    }}
+                <div className="relative min-h-[16rem] overflow-hidden bg-brand-950 lg:min-h-full">
+                  <Image
+                    src={coverFor(featured)}
+                    alt={featured.title}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                   <div className="absolute left-5 top-5 inline-flex items-center gap-1.5 rounded-full bg-gold-gradient px-3.5 py-1.5 text-[0.7rem] font-bold uppercase tracking-wide text-brand-900 shadow-gold">
                     Featured
-                  </div>
-                  <div className="absolute inset-0 grid place-items-center text-white/85 transition-transform duration-500 group-hover:scale-110">
-                    <Icon name={featured.category === 'others' ? 'globe' : 'moon'} className="h-24 w-24" />
                   </div>
                 </div>
 
@@ -111,7 +150,7 @@ export default async function BlogPage({
         </section>
       )}
 
-      {/* Category tabs + searchable grid */}
+      {/* Tabs + search + paginated grid */}
       <section className="relative py-16 sm:py-20">
         <Container>
           <Reveal className="mb-10 flex flex-wrap items-center justify-center gap-2.5">
@@ -122,7 +161,6 @@ export default async function BlogPage({
                 <Link
                   key={tab.value}
                   href={href}
-                  scroll={false}
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
                     'rounded-full border px-5 py-2.5 text-sm font-semibold transition-all duration-300',
@@ -137,10 +175,30 @@ export default async function BlogPage({
             })}
           </Reveal>
 
-          {gridPosts.length > 0 ? (
-            <BlogSearch posts={gridPosts} />
+          <BlogSearchBox />
+
+          {pagePosts.length > 0 ? (
+            <>
+              {searching && (
+                <p className="mb-8 text-center text-sm text-ink-muted">
+                  {matches.length} result{matches.length === 1 ? '' : 's'} for “{search}”
+                </p>
+              )}
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {pagePosts.map((post, i) => (
+                  <Reveal key={post.slug} delay={(i % 3) * 0.06}>
+                    <BlogCard post={post} />
+                  </Reveal>
+                ))}
+              </div>
+              <Pagination currentPage={page} totalPages={totalPages} hrefFor={hrefFor} />
+            </>
           ) : (
-            <p className="py-16 text-center text-ink-muted">No articles in this category yet — please check back soon.</p>
+            <p className="py-16 text-center text-ink-muted">
+              {searching
+                ? `No articles match “${search}”. Try a different keyword.`
+                : 'No articles in this category yet — please check back soon.'}
+            </p>
           )}
         </Container>
       </section>

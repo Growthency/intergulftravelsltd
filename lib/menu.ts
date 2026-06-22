@@ -1,6 +1,15 @@
 import { unstable_cache } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/server';
-import type { NavItem } from '@/lib/site';
+import { navigation, type NavItem } from '@/lib/site';
+
+/** href → icon/description/image from the built-in nav, so a custom menu
+ *  pointing at the same pages still shows the matching dropdown icons. */
+const CHILD_META = new Map<string, { icon?: string; description?: string; image?: string }>();
+for (const item of navigation) {
+  for (const child of item.children ?? []) {
+    CHILD_META.set(child.href, { icon: child.icon, description: child.description, image: child.image });
+  }
+}
 
 type MenuRow = {
   id: string;
@@ -30,7 +39,11 @@ async function loadHeaderMenu(): Promise<NavItem[] | null> {
     const menu: NavItem[] = tops.map((top) => {
       const children = ordered
         .filter((r) => r.parent_id === top.id && r.label && r.href)
-        .map((c) => ({ label: c.label as string, href: c.href as string }));
+        .map((c) => ({
+          label: c.label as string,
+          href: c.href as string,
+          ...(CHILD_META.get(c.href as string) ?? {}),
+        }));
       const item: NavItem = { label: top.label as string, href: top.href as string };
       if (children.length) item.children = children;
       return item;

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireStaff } from '@/lib/management/guard';
@@ -83,6 +84,7 @@ export async function POST(request: Request) {
         entity: 'menu_items',
         detail: { count: 0 },
       });
+      revalidateTag('header-menu');
       return NextResponse.json({ ok: true });
     }
 
@@ -151,6 +153,7 @@ export async function POST(request: Request) {
       detail: { top: topRows.length, children: childRows.length },
     });
 
+    revalidateTag('header-menu');
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('[admin/menus] unexpected error:', err);
