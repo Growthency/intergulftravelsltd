@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Wallet, Banknote, HandCoins, ArrowDownToLine, ArrowUpFromLine, NotebookPen, Receipt, Landmark } from 'lucide-react';
 import { PageHeader, StatCard, Card, Money, Badge, EmptyState, TableWrap, thClass, tdClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
+import { VoucherRowActions } from '@/components/manage/accounts/VoucherRowActions';
 import { loadActiveHeads, loadTransactions, headMap, headName } from '@/lib/management/accounts-data';
 import { naturalBalance } from '@/lib/management/types';
 import { branchShort } from '@/lib/management/branches';
@@ -28,6 +29,7 @@ export default async function AccountsHomePage() {
   ]);
 
   const map = headMap(heads);
+  const headOptions = heads.map((h) => ({ id: h.id, name: h.name }));
 
   const cashHead = heads.find((h) => h.subtype === 'cash' && h.is_system) ?? heads.find((h) => h.subtype === 'cash');
   const cashBalance = cashHead ? naturalBalance(cashHead) : 0;
@@ -107,6 +109,7 @@ export default async function AccountsHomePage() {
                 <th className={thClass}>Credit</th>
                 <th className={`${thClass} text-right`}>Amount</th>
                 <th className={thClass}>Branch</th>
+                <th className={`${thClass} text-right`}>Manage</th>
               </tr>
             </thead>
             <tbody>
@@ -121,6 +124,22 @@ export default async function AccountsHomePage() {
                   <td className={tdClass}>{headName(map, t.credit_account_id)}</td>
                   <td className={`${tdClass} text-right font-semibold tabular-nums`}>{money(t.amount)}</td>
                   <td className={tdClass}>{branchShort(t.branch)}</td>
+                  <td className={`${tdClass} whitespace-nowrap text-right`}>
+                    <VoucherRowActions
+                      voucher={{
+                        id: t.id,
+                        voucher_no: t.voucher_no,
+                        date: t.date,
+                        type: t.type,
+                        debit_account_id: t.debit_account_id,
+                        credit_account_id: t.credit_account_id,
+                        amount: Number(t.amount),
+                        narration: t.narration,
+                        linked: !!t.ref_table,
+                      }}
+                      heads={headOptions}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>

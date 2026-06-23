@@ -1,5 +1,6 @@
 import { PageHeader, Card, Badge, EmptyState, TableWrap, thClass, tdClass } from '@/components/manage/ui';
 import { ExportBar } from '@/components/manage/ExportBar';
+import { VoucherRowActions } from '@/components/manage/accounts/VoucherRowActions';
 import { loadActiveHeads, loadTransactions, headMap, headName } from '@/lib/management/accounts-data';
 import { BRANCHES, branchShort } from '@/lib/management/branches';
 import { money } from '@/lib/management/format';
@@ -34,6 +35,7 @@ export default async function VouchersPage({ searchParams }: { searchParams: SP 
 
   const [heads, txns] = await Promise.all([loadActiveHeads(), loadTransactions(filters)]);
   const map = headMap(heads);
+  const headOptions = heads.map((h) => ({ id: h.id, name: h.name }));
 
   const total = txns.reduce((s, t) => s + Number(t.amount), 0);
 
@@ -140,6 +142,7 @@ export default async function VouchersPage({ searchParams }: { searchParams: SP 
                 <th className={`${thClass} text-right`}>Amount</th>
                 <th className={thClass}>Branch</th>
                 <th className={thClass}>Narration</th>
+                <th className={`${thClass} text-right`}>Manage</th>
               </tr>
             </thead>
             <tbody>
@@ -156,6 +159,22 @@ export default async function VouchersPage({ searchParams }: { searchParams: SP 
                   <td className={`${tdClass} whitespace-nowrap`}>{branchShort(t.branch)}</td>
                   <td className={`${tdClass} max-w-[16rem] truncate text-ink-muted`} title={t.narration ?? ''}>
                     {t.narration || '—'}
+                  </td>
+                  <td className={`${tdClass} whitespace-nowrap text-right`}>
+                    <VoucherRowActions
+                      voucher={{
+                        id: t.id,
+                        voucher_no: t.voucher_no,
+                        date: t.date,
+                        type: t.type,
+                        debit_account_id: t.debit_account_id,
+                        credit_account_id: t.credit_account_id,
+                        amount: Number(t.amount),
+                        narration: t.narration,
+                        linked: !!t.ref_table,
+                      }}
+                      heads={headOptions}
+                    />
                   </td>
                 </tr>
               ))}
