@@ -1,15 +1,18 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import type { AccountHead, Transaction } from '@/lib/management/types';
 
 /**
- * Server-side read helpers for the accounting pages. Every query is wrapped so
- * that a missing table (migration not yet run) resolves to []/null and the
- * page can render a friendly empty state instead of crashing the build.
+ * Server-side read helpers for the accounting pages. These run only inside the
+ * staff-gated /admin layout, so they read through the service-role client (the
+ * same client the write APIs use) — this keeps reads consistent with writes and
+ * independent of per-row RLS. Every query is wrapped so that a missing table
+ * (migration not yet run) resolves to []/null and the page renders a friendly
+ * empty state instead of crashing the build.
  */
 
 export async function loadActiveHeads(): Promise<AccountHead[]> {
   try {
-    const db = createClient();
+    const db = createAdminClient();
     const { data, error } = await db
       .from('account_heads')
       .select('*')
@@ -25,7 +28,7 @@ export async function loadActiveHeads(): Promise<AccountHead[]> {
 
 export async function loadHead(id: string): Promise<AccountHead | null> {
   try {
-    const db = createClient();
+    const db = createAdminClient();
     const { data } = await db.from('account_heads').select('*').eq('id', id).maybeSingle();
     return (data as AccountHead) ?? null;
   } catch {
@@ -44,7 +47,7 @@ export type TxFilters = {
 
 export async function loadTransactions(filters: TxFilters = {}): Promise<Transaction[]> {
   try {
-    const db = createClient();
+    const db = createAdminClient();
     let q = db.from('transactions').select('*');
 
     if (filters.from) q = q.gte('date', filters.from);

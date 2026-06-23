@@ -4,7 +4,7 @@ import { ExportBar } from '@/components/manage/ExportBar';
 import { LoanForm } from '@/components/manage/accounts/LoanForm';
 import { LoanStatusControl } from '@/components/manage/accounts/LoanStatusControl';
 import type { HeadOption } from '@/components/manage/accounts/VoucherForm';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { loadActiveHeads } from '@/lib/management/accounts-data';
 import type { Loan } from '@/lib/management/types';
 import { branchShort } from '@/lib/management/branches';
@@ -15,7 +15,7 @@ export const metadata = { title: 'Loans' };
 
 async function loadLoans(): Promise<Loan[]> {
   try {
-    const db = createClient();
+    const db = createAdminClient();
     const { data, error } = await db.from('loans').select('*').order('date', { ascending: false });
     if (error) return [];
     return (data ?? []) as Loan[];
