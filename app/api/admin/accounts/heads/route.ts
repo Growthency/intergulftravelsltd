@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireStaff } from '@/lib/management/guard';
 import { logActivity } from '@/lib/management/server';
+import { isCoreHead } from '@/lib/management/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -169,12 +170,19 @@ export async function PATCH(request: Request) {
 
   try {
     const db = createAdminClient();
-    // System heads may be renamed but their core type is protected.
+    // Core control accounts are locked; other system heads may be renamed but
+    // keep their type / subtype.
     const { data: head } = await db
       .from('account_heads')
-      .select('is_system')
+      .select('is_system, name')
       .eq('id', id)
       .maybeSingle();
+    if (head && isCoreHead(head)) {
+      return NextResponse.json(
+        { ok: false, error: 'This is a core control account used by the system and cannot be edited.' },
+        { status: 400 },
+      );
+    }
     if (head?.is_system) {
       delete patch.type;
       delete patch.subtype;
@@ -222,9 +230,9 @@ export async function DELETE(request: Request) {
       .eq('id', id)
       .maybeSingle();
 
-    if (head?.is_system) {
+    if (head && isCoreHead(head)) {
       return NextResponse.json(
-        { ok: false, error: 'System accounts cannot be removed.' },
+        { ok: false, error: 'This is a core control account used by the system and cannot be removed.' },
         { status: 400 },
       );
     }

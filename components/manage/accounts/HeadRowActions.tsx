@@ -127,6 +127,13 @@ export function HeadRowActions({ head }: { head: AccountHead }) {
               </button>
             </div>
 
+            {head.is_system && (
+              <p className="mb-4 rounded-xl bg-muted/60 px-3 py-2 text-xs text-ink-muted">
+                System account — its type &amp; subtype are fixed, but you can rename it, change the code, branch or
+                contact details.
+              </p>
+            )}
+
             <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
               <Field label="Account name" required className="sm:col-span-2">
                 <input name="name" defaultValue={head.name} className={inputClass} placeholder="e.g. City Bank — Current" />
@@ -135,7 +142,7 @@ export function HeadRowActions({ head }: { head: AccountHead }) {
                 <input name="code" defaultValue={head.code ?? ''} className={inputClass} placeholder="Optional" />
               </Field>
               <Field label="Type" required>
-                <select name="type" defaultValue={head.type} className={inputClass}>
+                <select name="type" defaultValue={head.type} className={inputClass} disabled={head.is_system}>
                   {TYPES.map((t) => (
                     <option key={t} value={t} className="capitalize">{t}</option>
                   ))}
@@ -147,6 +154,7 @@ export function HeadRowActions({ head }: { head: AccountHead }) {
                   value={subtype}
                   onChange={(e) => setSubtype(e.target.value as AccountSubtype)}
                   className={inputClass}
+                  disabled={head.is_system}
                 >
                   {SUBTYPES.map((s) => (
                     <option key={s} value={s} className="capitalize">{s}</option>

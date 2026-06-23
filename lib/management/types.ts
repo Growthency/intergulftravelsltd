@@ -147,6 +147,22 @@ export type ActivityLog = {
   created_at: string;
 };
 
+/** Control accounts the app posts to *by name* (cash receipts, package income,
+ *  loans). These must never be renamed or removed or those flows break, so they
+ *  stay locked even though they are system heads. Every other system head can be
+ *  edited or deactivated freely. */
+export const CORE_HEAD_NAMES = [
+  'Cash in Hand',
+  'Hajj Package Income',
+  'Umrah Package Income',
+  'Loan Receivable',
+  'Loan Payable',
+] as const;
+
+export function isCoreHead(h: { name: string; is_system: boolean }): boolean {
+  return h.is_system && (CORE_HEAD_NAMES as readonly string[]).includes(h.name);
+}
+
 /* ---------------------------- balance maths ----------------------------- */
 
 const DEBIT_NORMAL: AccountType[] = ['asset', 'expense'];

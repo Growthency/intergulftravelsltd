@@ -1,9 +1,10 @@
 import Link from 'next/link';
+import { Lock } from 'lucide-react';
 import { PageHeader, Card, Money, Badge, EmptyState, TableWrap, thClass, tdClass } from '@/components/manage/ui';
 import { HeadForm } from '@/components/manage/accounts/HeadForm';
 import { HeadRowActions } from '@/components/manage/accounts/HeadRowActions';
 import { loadActiveHeads } from '@/lib/management/accounts-data';
-import { naturalBalance, type AccountHead, type AccountType } from '@/lib/management/types';
+import { naturalBalance, isCoreHead, type AccountHead, type AccountType } from '@/lib/management/types';
 import { branchShort } from '@/lib/management/branches';
 
 export const dynamic = 'force-dynamic';
@@ -94,8 +95,10 @@ function HeadRow({ head }: { head: AccountHead }) {
         <Money value={balance} />
       </td>
       <td className={`${tdClass} text-right`}>
-        {head.is_system ? (
-          <span className="text-xs text-ink-muted">—</span>
+        {isCoreHead(head) ? (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted" title="Core control account — used by the system, cannot be changed">
+            <Lock className="h-3.5 w-3.5" /> Locked
+          </span>
         ) : (
           <HeadRowActions head={head} />
         )}
