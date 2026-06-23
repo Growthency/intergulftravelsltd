@@ -82,17 +82,10 @@ export function VoucherRowActions({ voucher, heads }: { voucher: VoucherLite; he
 
   async function onDelete() {
     if (busy) return;
-    if (linked) {
-      toast.error('This voucher is linked to a payment/loan/registration — delete it from that record.');
-      return;
-    }
-    if (
-      !(await confirmDialog({
-        message: `Delete voucher ${voucher.voucher_no ?? ''}? Both account balances will be reversed. This cannot be undone.`,
-        confirmText: 'Delete voucher',
-        danger: true,
-      }))
-    ) {
+    const message = linked
+      ? `Delete voucher ${voucher.voucher_no ?? ''}? This also removes the linked payment/loan record and reverses both account balances. This cannot be undone.`
+      : `Delete voucher ${voucher.voucher_no ?? ''}? Both account balances will be reversed. This cannot be undone.`;
+    if (!(await confirmDialog({ message, confirmText: 'Delete voucher', danger: true }))) {
       return;
     }
     setBusy(true);
@@ -124,17 +117,15 @@ export function VoucherRowActions({ voucher, heads }: { voucher: VoucherLite; he
       >
         <Pencil className="h-3.5 w-3.5" /> Edit
       </button>
-      {!linked && (
-        <button
-          type="button"
-          onClick={onDelete}
-          disabled={busy}
-          className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs font-semibold text-ink-muted transition hover:border-red-300 hover:text-red-600 disabled:opacity-50"
-          aria-label="Delete voucher"
-        >
-          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={onDelete}
+        disabled={busy}
+        className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs font-semibold text-ink-muted transition hover:border-red-300 hover:text-red-600 disabled:opacity-50"
+        aria-label="Delete voucher"
+      >
+        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+      </button>
 
       {open && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" role="dialog" aria-modal="true">

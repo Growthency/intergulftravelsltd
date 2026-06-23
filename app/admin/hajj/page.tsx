@@ -11,6 +11,7 @@ import {
   tdClass,
 } from '@/components/manage/ui';
 import { ExportBar } from '@/components/manage/ExportBar';
+import { RecordRowActions } from '@/components/manage/RecordRowActions';
 import { Button } from '@/components/ui/Button';
 import { mgmtDb } from '@/lib/management/server';
 import { loadHeadMap, dueForHead, loadHajjPackages } from '@/lib/management/hajj';
@@ -245,6 +246,7 @@ export default async function HajjPilgrimsPage({ searchParams }: { searchParams:
               <th className={`${thClass} text-right`}>Paid</th>
               <th className={`${thClass} text-right`}>Due</th>
               <th className={thClass}>Status</th>
+              <th className={`${thClass} text-right`}>Manage</th>
             </tr>
           </thead>
           <tbody>
@@ -280,6 +282,14 @@ export default async function HajjPilgrimsPage({ searchParams }: { searchParams:
                   {p.status === 'active' && <Badge tone="blue">Active</Badge>}
                   {p.status === 'completed' && <Badge tone="emerald">Completed</Badge>}
                   {p.status === 'cancelled' && <Badge tone="red">Cancelled</Badge>}
+                </td>
+                <td className={`${tdClass} whitespace-nowrap text-right`}>
+                  <RecordRowActions
+                    editHref={`/admin/hajj/${p.id}/edit`}
+                    deleteEndpoint={`/api/admin/hajj/${p.id}`}
+                    name={p.name}
+                    confirmMessage={`Delete ${p.name}${p.tracking_no ? ` (${p.tracking_no})` : ''}? This permanently removes the pilgrim, their payments and all ledger entries. This cannot be undone.`}
+                  />
                 </td>
               </tr>
             ))}

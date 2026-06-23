@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Pencil, Users, X } from 'lucide-react';
 import { Money, Badge } from '@/components/manage/ui';
 import { PackageForm } from '@/components/manage/umrah/PackageForm';
+import { PackageDelete } from '@/components/manage/PackageDelete';
 import { branchShort } from '@/lib/management/branches';
 import type { MgmtPackage } from '@/lib/management/types';
 
@@ -56,6 +57,7 @@ export function PackageRow({
             {editing ? <X className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
             {editing ? 'Close' : 'Edit'}
           </button>
+          <PackageDelete id={pkg.id} name={pkg.name} endpoint="/api/admin/umrah/packages" />
         </div>
       </div>
 

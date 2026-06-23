@@ -202,3 +202,66 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     return NextResponse.json({ ok: false, error: 'Unexpected error. Please try again.' }, { status: 500 });
   }
 }
+
+export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
+  const guard = await requireStaff();
+  if (!guard.ok) {
+    return NextResponse.json(
+      { ok: false, error: guard.status === 401 ? 'Not signed in.' : 'Staff access required.' },
+      { status: guard.status },
+    );
+  }
+
+  try {
+    const db = mgmtDb();
+    const { data: pilgrim } = await db
+      .from('hajj_pilgrims')
+      .select('id, account_head_id, branch, name')
+      .eq('id', params.id)
+      .maybeSingle();
+    if (!pilgrim) return NextResponse.json({ ok: false, error: 'Pilgrim not found.' }, { status: 404 });
+
+    // Collect the receipt vouchers tied to this pilgrim's payments.
+    const { data: pays } = await db
+      .from('payments')
+      .select('transaction_id')
+      .eq('party_table', 'hajj_pilgrims')
+      .eq('party_id', params.id);
+    const txIds = (pays ?? [])
+      .map((p: { transaction_id: string | null }) => p.transaction_id)
+      .filter(Boolean) as string[];
+
+    // Delete payments first (their FK points at the receipt transactions).
+    await db.from('payments').delete().eq('party_table', 'hajj_pilgrims').eq('party_id', params.id);
+
+    // Delete the package-charge journal(s) + the receipt vouchers — the delete
+    // trigger reverses both account balances automatically.
+    await db.from('transactions').delete().eq('ref_table', 'hajj_pilgrims').eq('ref_id', params.id);
+    if (txIds.length) await db.from('transactions').delete().in('id', txIds);
+
+    // Delete the pilgrim, then its auto-created customer ledger head.
+    const { error: delErr } = await db.from('hajj_pilgrims').delete().eq('id', params.id);
+    if (delErr) {
+      console.error('[admin/hajj/:id] delete failed:', delErr.message);
+      return NextResponse.json({ ok: false, error: 'Could not delete the pilgrim.' }, { status: 500 });
+    }
+    if (pilgrim.account_head_id) {
+      await db.from('account_heads').delete().eq('id', pilgrim.account_head_id).eq('ref_table', 'hajj_pilgrims');
+    }
+
+    await logActivity({
+      user_id: guard.user.id,
+      user_email: guard.user.email,
+      action: 'delete',
+      entity: 'hajj_pilgrim',
+      entity_id: params.id,
+      detail: { name: pilgrim.name },
+      branch: pilgrim.branch,
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('[admin/hajj/:id] delete error:', err);
+    return NextResponse.json({ ok: false, error: 'Unexpected error. Please try again.' }, { status: 500 });
+  }
+}

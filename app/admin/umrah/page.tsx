@@ -11,6 +11,7 @@ import {
   tdClass,
 } from '@/components/manage/ui';
 import { ExportBar } from '@/components/manage/ExportBar';
+import { RecordRowActions } from '@/components/manage/RecordRowActions';
 import { Button } from '@/components/ui/Button';
 import { PassengerFilters } from '@/components/manage/umrah/PassengerFilters';
 import { loadPassengers, loadUmrahPackages, isExpiringSoon, monthsUntil, type PassengerRow } from '@/lib/management/umrah';
@@ -138,6 +139,7 @@ export default async function UmrahPassengersPage({
               <th className={`${thClass} text-right`}>Paid</th>
               <th className={`${thClass} text-right`}>Due</th>
               <th className={thClass}>Branch</th>
+              <th className={`${thClass} text-right`}>Manage</th>
             </tr>
           </thead>
           <tbody>
@@ -188,6 +190,14 @@ export default async function UmrahPassengersPage({
                   </td>
                   <td className={tdClass}>
                     <Badge>{branchShort(r.branch)}</Badge>
+                  </td>
+                  <td className={`${tdClass} whitespace-nowrap text-right`}>
+                    <RecordRowActions
+                      editHref={`/admin/umrah/${r.id}/edit`}
+                      deleteEndpoint={`/api/admin/umrah/${r.id}`}
+                      name={r.name}
+                      confirmMessage={`Delete ${r.name}? This permanently removes the passenger, their payments and all ledger entries. This cannot be undone.`}
+                    />
                   </td>
                 </tr>
               );

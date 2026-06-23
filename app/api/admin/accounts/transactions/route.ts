@@ -127,12 +127,18 @@ export async function DELETE(request: Request) {
     const db = mgmtDb();
     const { data: tx } = await db
       .from('transactions')
-      .select('id, ref_table, voucher_no, branch')
+      .select('id, ref_table, ref_id, voucher_no, branch')
       .eq('id', id)
       .maybeSingle();
     if (!tx) return NextResponse.json({ ok: false, error: 'Voucher not found.' }, { status: 404 });
-    if (tx.ref_table) {
-      return bad('This voucher is linked to a payment, loan or registration. Remove it from that record instead.');
+
+    // Linked vouchers: remove the source row too so the books stay consistent.
+    // A payment receipt removes the payment; a loan voucher removes the loan; a
+    // package-charge journal just gets reversed (the registration stays).
+    if (tx.ref_table === 'payments' && tx.ref_id) {
+      await db.from('payments').delete().eq('id', tx.ref_id);
+    } else if (tx.ref_table === 'loans' && tx.ref_id) {
+      await db.from('loans').delete().eq('id', tx.ref_id);
     }
 
     // The delete trigger reverses both account balances automatically.

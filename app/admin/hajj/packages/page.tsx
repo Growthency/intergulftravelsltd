@@ -12,6 +12,7 @@ import {
 } from '@/components/manage/ui';
 import { ExportBar } from '@/components/manage/ExportBar';
 import { PackageForm } from '@/components/manage/hajj/PackageForm';
+import { PackageDelete } from '@/components/manage/PackageDelete';
 import { mgmtDb } from '@/lib/management/server';
 import { loadHeadMap, dueForHead, loadHajjPackages } from '@/lib/management/hajj';
 import { money } from '@/lib/management/format';
@@ -134,7 +135,10 @@ export default async function HajjPackagesPage({
                     {pkg.active ? <Badge tone="emerald">Active</Badge> : <Badge tone="slate">Inactive</Badge>}
                   </td>
                   <td className={`${tdClass} text-right`}>
-                    <PackageForm pkg={pkg} defaultYear={CURRENT_YEAR + 1} variant="edit" />
+                    <div className="inline-flex items-center justify-end gap-2">
+                      <PackageForm pkg={pkg} defaultYear={CURRENT_YEAR + 1} variant="edit" />
+                      <PackageDelete id={pkg.id} name={pkg.name} endpoint="/api/admin/hajj/packages" />
+                    </div>
                   </td>
                 </tr>
               );

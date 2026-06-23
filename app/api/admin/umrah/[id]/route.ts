@@ -149,3 +149,67 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     return NextResponse.json({ ok: false, error: 'Unexpected error.' }, { status: 500 });
   }
 }
+
+export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
+  const guard = await requireStaff();
+  if (!guard.ok) {
+    return NextResponse.json(
+      { ok: false, error: guard.status === 401 ? 'Not signed in.' : 'Staff access required.' },
+      { status: guard.status },
+    );
+  }
+
+  try {
+    const supabase = createAdminClient();
+    const { data: passenger } = await supabase
+      .from('umrah_passengers')
+      .select('id, account_head_id, branch, name')
+      .eq('id', params.id)
+      .maybeSingle();
+    if (!passenger) return NextResponse.json({ ok: false, error: 'Passenger not found.' }, { status: 404 });
+
+    const { data: pays } = await supabase
+      .from('payments')
+      .select('transaction_id')
+      .eq('party_table', 'umrah_passengers')
+      .eq('party_id', params.id);
+    const txIds = (pays ?? [])
+      .map((p: { transaction_id: string | null }) => p.transaction_id)
+      .filter(Boolean) as string[];
+
+    // Payments first (FK), then the package-charge + receipt vouchers (the
+    // delete trigger reverses both account balances), then the passenger and
+    // its auto-created customer ledger head.
+    await supabase.from('payments').delete().eq('party_table', 'umrah_passengers').eq('party_id', params.id);
+    await supabase.from('transactions').delete().eq('ref_table', 'umrah_passengers').eq('ref_id', params.id);
+    if (txIds.length) await supabase.from('transactions').delete().in('id', txIds);
+
+    const { error: delErr } = await supabase.from('umrah_passengers').delete().eq('id', params.id);
+    if (delErr) {
+      console.error('[admin/umrah/:id] delete failed:', delErr.message);
+      return NextResponse.json({ ok: false, error: 'Could not delete the passenger.' }, { status: 500 });
+    }
+    if (passenger.account_head_id) {
+      await supabase
+        .from('account_heads')
+        .delete()
+        .eq('id', passenger.account_head_id)
+        .eq('ref_table', 'umrah_passengers');
+    }
+
+    await logActivity({
+      user_id: guard.user.id,
+      user_email: guard.user.email,
+      action: 'delete',
+      entity: 'umrah_passengers',
+      entity_id: params.id,
+      detail: { name: passenger.name },
+      branch: passenger.branch,
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('[admin/umrah/:id] delete error:', err);
+    return NextResponse.json({ ok: false, error: 'Unexpected error.' }, { status: 500 });
+  }
+}
