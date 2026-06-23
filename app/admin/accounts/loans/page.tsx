@@ -3,6 +3,7 @@ import { PageHeader, StatCard, Money, Badge, EmptyState, TableWrap, thClass, tdC
 import { ExportBar } from '@/components/manage/ExportBar';
 import { LoanForm } from '@/components/manage/accounts/LoanForm';
 import { LoanStatusControl } from '@/components/manage/accounts/LoanStatusControl';
+import { LoanEdit } from '@/components/manage/accounts/LoanEdit';
 import type { HeadOption } from '@/components/manage/accounts/VoucherForm';
 import { createAdminClient } from '@/lib/supabase/server';
 import { loadActiveHeads } from '@/lib/management/accounts-data';
@@ -116,6 +117,7 @@ export default async function LoansPage() {
                   <div className="flex items-center gap-2">
                     <Badge tone={STATUS_TONE[l.status] ?? 'slate'}>{l.status}</Badge>
                     <LoanStatusControl id={l.id} status={l.status} />
+                    <LoanEdit loan={l} />
                   </div>
                 </td>
               </tr>

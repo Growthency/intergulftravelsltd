@@ -12,6 +12,7 @@ import {
   Wallet,
   Receipt,
   AlertTriangle,
+  Pencil,
 } from 'lucide-react';
 import { PageHeader, Card, Money, Badge, EmptyState, TableWrap, thClass, tdClass } from '@/components/manage/ui';
 import { RecordPayment } from '@/components/manage/umrah/RecordPayment';
@@ -139,12 +140,20 @@ export default async function PassengerProfilePage({ params }: { params: { id: s
         title={passenger.name}
         subtitle={passenger.name_bn ?? branchLabel(passenger.branch)}
         actions={
-          <PrintProfile
-            name={passenger.name}
-            subtitle={`${branchLabel(passenger.branch)} · ${packageName ?? 'Unassigned'}`}
-            info={printInfo}
-            payments={printPayments}
-          />
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/admin/umrah/${passenger.id}/edit`}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3.5 py-2 text-sm font-semibold text-ink shadow-soft transition hover:border-brand-600/40 hover:text-brand-700"
+            >
+              <Pencil className="h-4 w-4" /> Edit
+            </Link>
+            <PrintProfile
+              name={passenger.name}
+              subtitle={`${branchLabel(passenger.branch)} · ${packageName ?? 'Unassigned'}`}
+              info={printInfo}
+              payments={printPayments}
+            />
+          </div>
         }
       />
 

@@ -97,7 +97,7 @@ function HeadRow({ head }: { head: AccountHead }) {
         {head.is_system ? (
           <span className="text-xs text-ink-muted">—</span>
         ) : (
-          <HeadRowActions id={head.id} name={head.name} />
+          <HeadRowActions head={head} />
         )}
       </td>
     </tr>

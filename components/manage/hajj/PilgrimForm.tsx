@@ -8,23 +8,32 @@ import { Loader2, Upload, X } from 'lucide-react';
 import { Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
 import { BRANCHES } from '@/lib/management/branches';
-import type { MgmtPackage } from '@/lib/management/types';
+import type { HajjPilgrim, MgmtPackage } from '@/lib/management/types';
 
 type PkgOption = Pick<MgmtPackage, 'id' | 'name' | 'price' | 'year'>;
 
 export function PilgrimForm({
   packages,
   defaultYear,
+  mode = 'create',
+  pilgrimId,
+  initial,
 }: {
   packages: PkgOption[];
   defaultYear: number;
+  mode?: 'create' | 'edit';
+  pilgrimId?: string;
+  initial?: Partial<HajjPilgrim>;
 }) {
   const router = useRouter();
+  const isEdit = mode === 'edit';
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [regType, setRegType] = useState<'pre-registration' | 'registered'>('pre-registration');
+  const [photoUrl, setPhotoUrl] = useState<string | null>(initial?.photo_url ?? null);
+  const [regType, setRegType] = useState<'pre-registration' | 'registered'>(
+    initial?.reg_type ?? 'pre-registration',
+  );
 
   async function handlePhoto(file: File | undefined) {
     if (!file) return;
@@ -84,18 +93,23 @@ export function PilgrimForm({
 
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/hajj', {
-        method: 'POST',
+      const res = await fetch(isEdit ? `/api/admin/hajj/${pilgrimId}` : '/api/admin/hajj', {
+        method: isEdit ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(isEdit ? { action: 'edit', ...payload } : payload),
       });
       const data = await res.json();
       if (!res.ok || !data?.ok) {
         toast.error(data?.error ?? 'Could not save the pilgrim.');
         return;
       }
-      toast.success(`Saved · ${data.tracking_no ?? ''}`.trim());
-      router.push(`/admin/hajj/${data.id}`);
+      if (isEdit) {
+        toast.success('Pilgrim updated.');
+        router.push(`/admin/hajj/${pilgrimId}`);
+      } else {
+        toast.success(`Saved · ${data.tracking_no ?? ''}`.trim());
+        router.push(`/admin/hajj/${data.id}`);
+      }
       router.refresh();
     } catch {
       toast.error('Network error. Please try again.');
@@ -111,41 +125,41 @@ export function PilgrimForm({
         <h2 className="mb-4 font-display text-base font-semibold text-ink">Pilgrim details</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="Full name" required>
-            <input name="name" className={inputClass} placeholder="As per passport" autoComplete="off" />
+            <input name="name" defaultValue={initial?.name ?? ''} className={inputClass} placeholder="As per passport" autoComplete="off" />
           </Field>
           <Field label="Name (Bangla)">
-            <input name="name_bn" className={inputClass} placeholder="বাংলা নাম" autoComplete="off" />
+            <input name="name_bn" defaultValue={initial?.name_bn ?? ''} className={inputClass} placeholder="বাংলা নাম" autoComplete="off" />
           </Field>
           <Field label="Mobile number">
-            <input name="phone" className={inputClass} placeholder="01XXXXXXXXX" inputMode="tel" />
+            <input name="phone" defaultValue={initial?.phone ?? ''} className={inputClass} placeholder="01XXXXXXXXX" inputMode="tel" />
           </Field>
           <Field label="Father's name">
-            <input name="father_name" className={inputClass} autoComplete="off" />
+            <input name="father_name" defaultValue={initial?.father_name ?? ''} className={inputClass} autoComplete="off" />
           </Field>
           <Field label="Mother's name">
-            <input name="mother_name" className={inputClass} autoComplete="off" />
+            <input name="mother_name" defaultValue={initial?.mother_name ?? ''} className={inputClass} autoComplete="off" />
           </Field>
           <Field label="Date of birth">
-            <input name="dob" type="date" className={inputClass} />
+            <input name="dob" type="date" defaultValue={initial?.dob ?? ''} className={inputClass} />
           </Field>
           <Field label="Gender">
-            <select name="gender" className={inputClass} defaultValue="">
+            <select name="gender" className={inputClass} defaultValue={initial?.gender ?? ''}>
               <option value="">Select…</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
             </select>
           </Field>
           <Field label="NID number">
-            <input name="nid" className={inputClass} autoComplete="off" inputMode="numeric" />
+            <input name="nid" defaultValue={initial?.nid ?? ''} className={inputClass} autoComplete="off" inputMode="numeric" />
           </Field>
           <Field label="Passport number">
-            <input name="passport_no" className={inputClass} autoComplete="off" />
+            <input name="passport_no" defaultValue={initial?.passport_no ?? ''} className={inputClass} autoComplete="off" />
           </Field>
           <Field label="District">
-            <input name="district" className={inputClass} autoComplete="off" />
+            <input name="district" defaultValue={initial?.district ?? ''} className={inputClass} autoComplete="off" />
           </Field>
           <Field label="Address" className="sm:col-span-2">
-            <input name="address" className={inputClass} autoComplete="off" />
+            <input name="address" defaultValue={initial?.address ?? ''} className={inputClass} autoComplete="off" />
           </Field>
         </div>
       </section>
@@ -155,7 +169,7 @@ export function PilgrimForm({
         <h2 className="mb-4 font-display text-base font-semibold text-ink">Registration</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="Hajj year" required>
-            <input name="year" type="number" defaultValue={defaultYear} min={2000} max={2100} className={inputClass} />
+            <input name="year" type="number" defaultValue={initial?.year ?? defaultYear} min={2000} max={2100} className={inputClass} />
           </Field>
           <Field label="Registration type" required>
             <select
@@ -169,7 +183,7 @@ export function PilgrimForm({
             </select>
           </Field>
           <Field label="Branch / concern" required>
-            <select name="branch" className={inputClass} defaultValue="inter-gulf-travels">
+            <select name="branch" className={inputClass} defaultValue={initial?.branch ?? 'inter-gulf-travels'}>
               {BRANCHES.map((b) => (
                 <option key={b.value} value={b.value}>
                   {b.label}
@@ -178,27 +192,40 @@ export function PilgrimForm({
             </select>
           </Field>
           <Field label="Pre-registration no.">
-            <input name="pre_reg_no" className={inputClass} autoComplete="off" />
+            <input name="pre_reg_no" defaultValue={initial?.pre_reg_no ?? ''} className={inputClass} autoComplete="off" />
           </Field>
           <Field label="Govt. serial no.">
-            <input name="govt_serial" className={inputClass} autoComplete="off" />
+            <input name="govt_serial" defaultValue={initial?.govt_serial ?? ''} className={inputClass} autoComplete="off" />
           </Field>
-          <Field label="Package" hint="Assigning a package charges its price as a due.">
-            <select name="package_id" className={inputClass} defaultValue="">
-              <option value="">No package yet</option>
-              {packages.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                  {p.year ? ` · ${p.year}` : ''} · ৳ {Number(p.price).toLocaleString('en-IN')}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Token money (৳)" hint="Recorded as a cash receipt.">
-            <input name="token_money" type="number" min={0} step="any" defaultValue={0} className={inputClass} />
-          </Field>
+          {isEdit ? (
+            <Field label="Package" hint="Change a package from the pilgrim profile so the charge is posted correctly.">
+              <input
+                className={`${inputClass} bg-muted/60`}
+                value={packages.find((p) => p.id === initial?.package_id)?.name ?? 'Manage from profile'}
+                disabled
+                readOnly
+              />
+            </Field>
+          ) : (
+            <Field label="Package" hint="Assigning a package charges its price as a due.">
+              <select name="package_id" className={inputClass} defaultValue="">
+                <option value="">No package yet</option>
+                {packages.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                    {p.year ? ` · ${p.year}` : ''} · ৳ {Number(p.price).toLocaleString('en-IN')}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {!isEdit && (
+            <Field label="Token money (৳)" hint="Recorded as a cash receipt.">
+              <input name="token_money" type="number" min={0} step="any" defaultValue={0} className={inputClass} />
+            </Field>
+          )}
           <Field label="Note" className="sm:col-span-2 lg:col-span-3">
-            <textarea name="note" rows={2} className={inputClass} placeholder="Optional remarks" />
+            <textarea name="note" rows={2} defaultValue={initial?.note ?? ''} className={inputClass} placeholder="Optional remarks" />
           </Field>
         </div>
       </section>
@@ -250,7 +277,7 @@ export function PilgrimForm({
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={saving || uploading}>
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-          {saving ? 'Saving…' : 'Save pilgrim'}
+          {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Save pilgrim'}
         </Button>
         <Button type="button" variant="ghost" onClick={() => router.back()} disabled={saving}>
           Cancel

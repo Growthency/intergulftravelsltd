@@ -7,30 +7,41 @@ import { UploadCloud, Loader2, X, CheckCircle2, User } from 'lucide-react';
 import { Card, Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
 import { BRANCHES } from '@/lib/management/branches';
-import type { MgmtPackage } from '@/lib/management/types';
+import type { MgmtPackage, UmrahPassenger } from '@/lib/management/types';
 import { money } from '@/lib/management/format';
 import { cn } from '@/lib/utils';
 
 type PackageOption = Pick<MgmtPackage, 'id' | 'name' | 'price' | 'year'>;
 
-export function PassengerForm({ packages }: { packages: PackageOption[] }) {
+export function PassengerForm({
+  packages,
+  mode = 'create',
+  passengerId,
+  initial,
+}: {
+  packages: PackageOption[];
+  mode?: 'create' | 'edit';
+  passengerId?: string;
+  initial?: Partial<UmrahPassenger>;
+}) {
   const router = useRouter();
+  const isEdit = mode === 'edit';
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(initial?.photo_url ?? null);
   const [form, setForm] = useState({
-    name: '',
-    name_bn: '',
-    passport_no: '',
-    passport_issue: '',
-    passport_expiry: '',
-    dob: '',
-    phone: '',
-    address: '',
-    branch: 'inter-gulf-travels',
-    package_id: '',
+    name: initial?.name ?? '',
+    name_bn: initial?.name_bn ?? '',
+    passport_no: initial?.passport_no ?? '',
+    passport_issue: initial?.passport_issue ?? '',
+    passport_expiry: initial?.passport_expiry ?? '',
+    dob: initial?.dob ?? '',
+    phone: initial?.phone ?? '',
+    address: initial?.address ?? '',
+    branch: initial?.branch ?? 'inter-gulf-travels',
+    package_id: initial?.package_id ?? '',
     token_money: '',
-    note: '',
+    note: initial?.note ?? '',
   });
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -69,22 +80,41 @@ export function PassengerForm({ packages }: { packages: PackageOption[] }) {
     }
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/umrah', {
-        method: 'POST',
+      // On edit we PATCH only the profile fields. Package + branch are managed
+      // from the profile so the ledger charge stays correct.
+      const editPayload = {
+        name: form.name,
+        name_bn: form.name_bn,
+        passport_no: form.passport_no,
+        passport_issue: form.passport_issue,
+        passport_expiry: form.passport_expiry,
+        dob: form.dob,
+        phone: form.phone,
+        address: form.address,
+        note: form.note,
+        photo_url: photoUrl,
+      };
+
+      const res = await fetch(isEdit ? `/api/admin/umrah/${passengerId}` : '/api/admin/umrah', {
+        method: isEdit ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          token_money: form.token_money ? Number(form.token_money) : 0,
-          photo_url: photoUrl,
-        }),
+        body: JSON.stringify(
+          isEdit
+            ? editPayload
+            : {
+                ...form,
+                token_money: form.token_money ? Number(form.token_money) : 0,
+                photo_url: photoUrl,
+              },
+        ),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
         toast.error(data?.error ?? 'Could not save the passenger.');
         return;
       }
-      toast.success('Passenger added.');
-      router.push(`/admin/umrah/${data.id}`);
+      toast.success(isEdit ? 'Passenger updated.' : 'Passenger added.');
+      router.push(`/admin/umrah/${isEdit ? passengerId : data.id}`);
       router.refresh();
     } catch {
       toast.error('Network error. Please try again.');
@@ -136,36 +166,45 @@ export function PassengerForm({ packages }: { packages: PackageOption[] }) {
           </h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Branch / Concern" required>
-              <select className={inputClass} value={form.branch} onChange={set('branch')}>
+              <select className={inputClass} value={form.branch} onChange={set('branch')} disabled={isEdit}>
                 {BRANCHES.map((b) => (
                   <option key={b.value} value={b.value}>{b.label}</option>
                 ))}
               </select>
             </Field>
-            <Field label="Umrah package" hint="Optional — assigning charges the package price.">
-              <select className={inputClass} value={form.package_id} onChange={set('package_id')}>
-                <option value="">Not assigned yet</option>
-                {packages.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}{p.year ? ` (${p.year})` : ''} — {money(p.price)}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Token money (৳)" hint="Recorded as a received cash payment.">
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                className={inputClass}
-                value={form.token_money}
-                onChange={set('token_money')}
-                placeholder="0"
-              />
-            </Field>
+            {!isEdit && (
+              <Field label="Umrah package" hint="Optional — assigning charges the package price.">
+                <select className={inputClass} value={form.package_id} onChange={set('package_id')}>
+                  <option value="">Not assigned yet</option>
+                  {packages.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}{p.year ? ` (${p.year})` : ''} — {money(p.price)}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
+            {!isEdit && (
+              <Field label="Token money (৳)" hint="Recorded as a received cash payment.">
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className={inputClass}
+                  value={form.token_money}
+                  onChange={set('token_money')}
+                  placeholder="0"
+                />
+              </Field>
+            )}
             <Field label="Note" className="sm:col-span-2">
               <textarea className={inputClass} rows={2} value={form.note} onChange={set('note')} placeholder="Any internal remarks" />
             </Field>
+            {isEdit && (
+              <p className="sm:col-span-2 text-xs text-ink-muted">
+                Package assignment and branch are managed from the passenger profile so the ledger charge stays accurate.
+              </p>
+            )}
           </div>
         </Card>
 
@@ -232,7 +271,7 @@ export function PassengerForm({ packages }: { packages: PackageOption[] }) {
         </Button>
         <Button type="submit" disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {saving ? 'Saving…' : 'Save passenger'}
+          {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Save passenger'}
         </Button>
       </div>
     </form>

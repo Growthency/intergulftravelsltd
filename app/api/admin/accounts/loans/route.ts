@@ -135,9 +135,16 @@ export async function POST(request: Request) {
   }
 }
 
+// Status change and/or metadata edits. The principal, type, date and posting
+// method are tied to the original ledger voucher, so they are intentionally not
+// editable here — only descriptive fields and the repayment status.
 const patchSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(['open', 'partial', 'closed']),
+  status: z.enum(['open', 'partial', 'closed']).optional(),
+  party_name: z.string().trim().min(1, "The lender / borrower's name is required.").max(160).optional(),
+  party_phone: z.string().trim().max(40).optional().nullable(),
+  due_date: z.string().trim().max(10).optional().nullable(),
+  narration: z.string().trim().max(400).optional().nullable(),
 });
 
 export async function PATCH(request: Request) {
@@ -160,26 +167,35 @@ export async function PATCH(request: Request) {
       { status: 400 },
     );
   }
+  const d = parsed.data;
+
+  const update: Record<string, unknown> = {};
+  if (d.status !== undefined) update.status = d.status;
+  if (d.party_name !== undefined) update.party_name = d.party_name;
+  if (d.party_phone !== undefined) update.party_phone = d.party_phone || null;
+  if (d.due_date !== undefined) update.due_date = d.due_date || null;
+  if (d.narration !== undefined) update.narration = d.narration || null;
+
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ ok: false, error: 'Nothing to update.' }, { status: 400 });
+  }
 
   try {
     const db = createAdminClient();
-    const { error } = await db
-      .from('loans')
-      .update({ status: parsed.data.status })
-      .eq('id', parsed.data.id);
+    const { error } = await db.from('loans').update(update).eq('id', d.id);
 
     if (error) {
-      console.error('[accounts/loans] status update failed:', error.message);
-      return NextResponse.json({ ok: false, error: 'Could not update the loan status.' }, { status: 500 });
+      console.error('[accounts/loans] update failed:', error.message);
+      return NextResponse.json({ ok: false, error: 'Could not update the loan.' }, { status: 500 });
     }
 
     await logActivity({
       user_id: guard.user.id,
       user_email: guard.user.email,
-      action: 'update_status',
+      action: d.status && Object.keys(update).length === 1 ? 'update_status' : 'update',
       entity: 'loan',
-      entity_id: parsed.data.id,
-      detail: { status: parsed.data.status },
+      entity_id: d.id,
+      detail: update,
     });
 
     return NextResponse.json({ ok: true });

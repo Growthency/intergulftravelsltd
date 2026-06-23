@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, User } from 'lucide-react';
+import { ArrowLeft, User, Pencil } from 'lucide-react';
 import {
   PageHeader,
   Card,
@@ -127,15 +127,23 @@ export default async function PilgrimProfilePage({ params }: { params: { id: str
           pilgrim.reg_type === 'registered' ? 'Registered' : 'Pre-registration'
         } · ${pilgrim.year}`}
         actions={
-          <ExportBar
-            filename={`hajj-${pilgrim.tracking_no ?? pilgrim.id}-receipt`}
-            title={`Payment History — ${pilgrim.name}`}
-            subtitle={`Tracking ${pilgrim.tracking_no ?? '—'} · Charged ${money(charged)} · Paid ${money(
-              paid,
-            )} · Due ${money(due)}`}
-            headers={['Date', 'Voucher', 'Type', 'Method', 'Amount', 'Narration']}
-            rows={paymentRows}
-          />
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/admin/hajj/${pilgrim.id}/edit`}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3.5 py-2 text-sm font-semibold text-ink shadow-soft transition hover:border-brand-600/40 hover:text-brand-700"
+            >
+              <Pencil className="h-4 w-4" /> Edit
+            </Link>
+            <ExportBar
+              filename={`hajj-${pilgrim.tracking_no ?? pilgrim.id}-receipt`}
+              title={`Payment History — ${pilgrim.name}`}
+              subtitle={`Tracking ${pilgrim.tracking_no ?? '—'} · Charged ${money(charged)} · Paid ${money(
+                paid,
+              )} · Due ${money(due)}`}
+              headers={['Date', 'Voucher', 'Type', 'Method', 'Amount', 'Narration']}
+              rows={paymentRows}
+            />
+          </div>
         }
       />
 
