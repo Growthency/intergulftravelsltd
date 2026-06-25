@@ -14,6 +14,7 @@ import { ExportBar } from '@/components/manage/ExportBar';
 import { RecordRowActions } from '@/components/manage/RecordRowActions';
 import { Button } from '@/components/ui/Button';
 import { mgmtDb } from '@/lib/management/server';
+import { getStaffScope } from '@/lib/management/scope';
 import { loadHeadMap, dueForHead, loadHajjPackages } from '@/lib/management/hajj';
 import { branchShort } from '@/lib/management/branches';
 import { money } from '@/lib/management/format';
@@ -35,10 +36,10 @@ type Search = {
 
 async function loadPilgrims(): Promise<HajjPilgrim[]> {
   try {
-    const { data, error } = await mgmtDb()
-      .from('hajj_pilgrims')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const scope = await getStaffScope();
+    let q = mgmtDb().from('hajj_pilgrims').select('*');
+    if (scope.branch) q = q.eq('branch', scope.branch);
+    const { data, error } = await q.order('created_at', { ascending: false });
     if (error) {
       console.error('[admin/hajj] load failed:', error.message);
       return [];

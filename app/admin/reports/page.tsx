@@ -9,6 +9,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { mgmtDb } from '@/lib/management/server';
+import { getStaffScope } from '@/lib/management/scope';
 import type { AccountHead, Transaction } from '@/lib/management/types';
 import { money } from '@/lib/management/format';
 import { branchLabel } from '@/lib/management/branches';
@@ -157,7 +158,8 @@ export default async function ReportsPage({
   }
 
   // --- Report view ---
-  const branch = searchParams.branch ?? '';
+  const scope = await getStaffScope();
+  const branch = scope.branch ?? (searchParams.branch ?? '');
   const date = searchParams.date || today();
   const from = searchParams.from || `${today().slice(0, 4)}-01-01`;
   const to = searchParams.to || today();

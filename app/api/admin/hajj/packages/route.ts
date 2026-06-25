@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { mgmtDb, logActivity } from '@/lib/management/server';
 import { requireStaff } from '@/lib/management/guard';
+import { enforceBranch } from '@/lib/management/scope';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
         year: d.year ?? null,
         price: d.price,
         seats: d.seats ?? null,
-        branch: d.branch,
+        branch: await enforceBranch(d.branch),
         description: clean(d.description),
         active: d.active,
       })
@@ -123,7 +124,7 @@ export async function PATCH(request: Request) {
         year: d.year ?? null,
         price: d.price,
         seats: d.seats ?? null,
-        branch: d.branch,
+        branch: await enforceBranch(d.branch),
         description: clean(d.description),
         active: d.active,
       })

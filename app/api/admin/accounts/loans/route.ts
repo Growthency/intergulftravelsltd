@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireStaff } from '@/lib/management/guard';
+import { enforceBranch } from '@/lib/management/scope';
 import {
   getSystemHead,
   getCashHead,
@@ -80,7 +81,7 @@ export async function POST(request: Request) {
       credit_account_id: creditId,
       amount: d.principal,
       narration: d.narration || `Loan ${d.type} — ${d.party_name}`,
-      branch: d.branch || 'general',
+      branch: await enforceBranch(d.branch),
       method: d.method,
       ref_table: 'loans',
       created_by: guard.user.id,
@@ -99,7 +100,7 @@ export async function POST(request: Request) {
         due_date: d.due_date || null,
         status: 'open',
         narration: d.narration || null,
-        branch: d.branch || 'general',
+        branch: await enforceBranch(d.branch),
         account_head_id: loanHead.id,
         created_by: guard.user.id,
       })

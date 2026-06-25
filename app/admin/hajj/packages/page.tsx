@@ -14,6 +14,7 @@ import { ExportBar } from '@/components/manage/ExportBar';
 import { PackageForm } from '@/components/manage/hajj/PackageForm';
 import { PackageDelete } from '@/components/manage/PackageDelete';
 import { mgmtDb } from '@/lib/management/server';
+import { getStaffScope } from '@/lib/management/scope';
 import { loadHeadMap, dueForHead, loadHajjPackages } from '@/lib/management/hajj';
 import { money } from '@/lib/management/format';
 import { branchShort } from '@/lib/management/branches';
@@ -26,10 +27,10 @@ const CURRENT_YEAR = new Date().getFullYear();
 
 async function loadPilgrims(): Promise<HajjPilgrim[]> {
   try {
-    const { data } = await mgmtDb()
-      .from('hajj_pilgrims')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const scope = await getStaffScope();
+    let q = mgmtDb().from('hajj_pilgrims').select('*');
+    if (scope.branch) q = q.eq('branch', scope.branch);
+    const { data } = await q.order('created_at', { ascending: false });
     return (data ?? []) as HajjPilgrim[];
   } catch {
     return [];

@@ -6,6 +6,7 @@ import { LoanStatusControl } from '@/components/manage/accounts/LoanStatusContro
 import { LoanEdit } from '@/components/manage/accounts/LoanEdit';
 import type { HeadOption } from '@/components/manage/accounts/VoucherForm';
 import { createAdminClient } from '@/lib/supabase/server';
+import { getStaffScope } from '@/lib/management/scope';
 import { loadActiveHeads } from '@/lib/management/accounts-data';
 import type { Loan } from '@/lib/management/types';
 import { branchShort } from '@/lib/management/branches';
@@ -16,8 +17,11 @@ export const metadata = { title: 'Loans' };
 
 async function loadLoans(): Promise<Loan[]> {
   try {
+    const scope = await getStaffScope();
     const db = createAdminClient();
-    const { data, error } = await db.from('loans').select('*').order('date', { ascending: false });
+    let q = db.from('loans').select('*');
+    if (scope.branch) q = q.eq('branch', scope.branch);
+    const { data, error } = await q.order('date', { ascending: false });
     if (error) return [];
     return (data ?? []) as Loan[];
   } catch {

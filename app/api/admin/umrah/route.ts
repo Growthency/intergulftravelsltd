@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireStaff } from '@/lib/management/guard';
 import { chargeParty, recordPayment, logActivity } from '@/lib/management/server';
+import { enforceBranch } from '@/lib/management/scope';
 import { BRANCHES } from '@/lib/management/branches';
 
 export const runtime = 'nodejs';
@@ -68,7 +69,7 @@ export async function POST(request: Request) {
         dob: d.dob ?? null,
         phone: d.phone ?? null,
         address: d.address ?? null,
-        branch: d.branch,
+        branch: await enforceBranch(d.branch),
         package_id: d.package_id ?? null,
         token_money: d.token_money ?? 0,
         photo_url: d.photo_url ?? null,

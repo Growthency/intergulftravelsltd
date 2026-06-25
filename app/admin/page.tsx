@@ -13,6 +13,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { mgmtDb } from '@/lib/management/server';
+import { getStaffScope } from '@/lib/management/scope';
 import type { AccountHead, Transaction } from '@/lib/management/types';
 import { netDebit, naturalBalance } from '@/lib/management/types';
 import { money } from '@/lib/management/format';
@@ -58,12 +59,15 @@ async function loadDashboard(): Promise<DashData> {
 
   const year = new Date().getFullYear();
   const t = today();
+  const scope = await getStaffScope();
 
   // --- account heads: cash / bank / receivable balances ---
   let heads: AccountHead[] = [];
   try {
     const db = mgmtDb();
-    const { data, error } = await db.from('account_heads').select('*').eq('active', true);
+    let hq = db.from('account_heads').select('*').eq('active', true);
+    if (scope.branch) hq = hq.in('branch', [scope.branch, 'general']);
+    const { data, error } = await hq;
     if (!error && data) {
       heads = data as AccountHead[];
       d.hasManagement = true;
@@ -83,7 +87,9 @@ async function loadDashboard(): Promise<DashData> {
   // --- today's income & expense from today's vouchers ---
   try {
     const db = mgmtDb();
-    const { data } = await db.from('transactions').select('*').eq('date', t);
+    let tq = db.from('transactions').select('*').eq('date', t);
+    if (scope.branch) tq = tq.eq('branch', scope.branch);
+    const { data } = await tq;
     const todays = (data ?? []) as Transaction[];
     if (heads.length) {
       const byId = new Map(heads.map((h) => [h.id, h]));
@@ -101,11 +107,9 @@ async function loadDashboard(): Promise<DashData> {
   // --- recent transactions (with head names) ---
   try {
     const db = mgmtDb();
-    const { data } = await db
-      .from('transactions')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(6);
+    let rq = db.from('transactions').select('*');
+    if (scope.branch) rq = rq.eq('branch', scope.branch);
+    const { data } = await rq.order('created_at', { ascending: false }).limit(6);
     const recent = (data ?? []) as Transaction[];
     if (recent.length) {
       const ids = Array.from(
@@ -131,15 +135,20 @@ async function loadDashboard(): Promise<DashData> {
   try {
     const db = mgmtDb();
     const head = { count: 'exact' as const, head: true };
-    const [hajjCount, umrahCount, recent] = await Promise.all([
-      db.from('hajj_pilgrims').select('id', head).eq('year', year),
-      db.from('umrah_passengers').select('id', head),
-      db
-        .from('hajj_pilgrims')
-        .select('id, tracking_no, name, reg_type, branch, created_at, year')
-        .order('created_at', { ascending: false })
-        .limit(6),
-    ]);
+    const b = scope.branch;
+    let hajjQ = db.from('hajj_pilgrims').select('id', head).eq('year', year);
+    let umrahQ = db.from('umrah_passengers').select('id', head);
+    let recentQ = db
+      .from('hajj_pilgrims')
+      .select('id, tracking_no, name, reg_type, branch, created_at, year')
+      .order('created_at', { ascending: false })
+      .limit(6);
+    if (b) {
+      hajjQ = hajjQ.eq('branch', b);
+      umrahQ = umrahQ.eq('branch', b);
+      recentQ = recentQ.eq('branch', b);
+    }
+    const [hajjCount, umrahCount, recent] = await Promise.all([hajjQ, umrahQ, recentQ]);
     d.hajjThisYear = hajjCount.count ?? 0;
     d.umrahThisYear = umrahCount.count ?? 0;
     d.recentPilgrims = recent.data ?? [];

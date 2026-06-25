@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { mgmtDb, nextCounter, chargeParty, recordPayment, logActivity } from '@/lib/management/server';
 import { requireStaff } from '@/lib/management/guard';
+import { enforceBranch } from '@/lib/management/scope';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
         pre_reg_no: clean(d.pre_reg_no),
         govt_serial: clean(d.govt_serial),
         package_id: d.package_id ?? null,
-        branch: d.branch,
+        branch: await enforceBranch(d.branch),
         token_money: d.token_money,
         photo_url: clean(d.photo_url),
         note: clean(d.note),

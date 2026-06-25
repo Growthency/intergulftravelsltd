@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 
 type Initial = { email: string; full_name: string; avatar_url: string | null };
 
-export function AccountSettings({ initial }: { initial: Initial }) {
+export function AccountSettings({ initial, canEditEmail = true }: { initial: Initial; canEditEmail?: boolean }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
@@ -129,8 +129,19 @@ export function AccountSettings({ initial }: { initial: Initial }) {
         <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
           <Mail className="h-4 w-4 text-brand-600" /> Sign-in email
         </h2>
-        <Field label="Email address">
-          <input name="email" type="email" defaultValue={initial.email} className={inputClass} autoComplete="email" />
+        <Field
+          label="Email address"
+          hint={canEditEmail ? undefined : 'Your branch sign-in email is fixed. Ask the administrator to change it.'}
+        >
+          <input
+            name="email"
+            type="email"
+            defaultValue={initial.email}
+            className={inputClass}
+            autoComplete="email"
+            disabled={!canEditEmail}
+            readOnly={!canEditEmail}
+          />
         </Field>
 
         <h2 className="flex items-center gap-2 border-t border-border pt-5 font-display text-lg font-semibold text-ink">

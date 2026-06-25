@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server';
+import { getStaffScope } from '@/lib/management/scope';
 import type { AccountHead, Transaction } from '@/lib/management/types';
 
 /**
@@ -12,11 +13,12 @@ import type { AccountHead, Transaction } from '@/lib/management/types';
 
 export async function loadActiveHeads(): Promise<AccountHead[]> {
   try {
+    const scope = await getStaffScope();
     const db = createAdminClient();
-    const { data, error } = await db
-      .from('account_heads')
-      .select('*')
-      .eq('active', true)
+    let q = db.from('account_heads').select('*').eq('active', true);
+    // Branch staff see their own heads plus the shared system/general heads.
+    if (scope.branch) q = q.in('branch', [scope.branch, 'general']);
+    const { data, error } = await q
       .order('type', { ascending: true })
       .order('name', { ascending: true });
     if (error) return [];
@@ -47,12 +49,15 @@ export type TxFilters = {
 
 export async function loadTransactions(filters: TxFilters = {}): Promise<Transaction[]> {
   try {
+    const scope = await getStaffScope();
     const db = createAdminClient();
     let q = db.from('transactions').select('*');
 
     if (filters.from) q = q.gte('date', filters.from);
     if (filters.to) q = q.lte('date', filters.to);
-    if (filters.branch && filters.branch !== 'all') q = q.eq('branch', filters.branch);
+    // Branch staff are locked to their branch; admins may filter freely.
+    if (scope.branch) q = q.eq('branch', scope.branch);
+    else if (filters.branch && filters.branch !== 'all') q = q.eq('branch', filters.branch);
     if (filters.type && filters.type !== 'all') q = q.eq('type', filters.type);
     if (filters.accountId) {
       q = q.or(`debit_account_id.eq.${filters.accountId},credit_account_id.eq.${filters.accountId}`);

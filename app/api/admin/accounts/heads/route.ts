@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireStaff } from '@/lib/management/guard';
 import { logActivity } from '@/lib/management/server';
+import { enforceBranch } from '@/lib/management/scope';
 import { isCoreHead } from '@/lib/management/types';
 
 export const runtime = 'nodejs';
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
         name: d.name,
         type: d.type,
         subtype,
-        branch: d.branch || 'general',
+        branch: await enforceBranch(d.branch),
         is_system: false,
         opening_balance: d.opening_balance ?? 0,
         opening_is_debit: d.opening_is_debit ?? true,

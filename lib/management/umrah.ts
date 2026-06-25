@@ -1,4 +1,5 @@
 import { mgmtDb } from '@/lib/management/server';
+import { getStaffScope } from '@/lib/management/scope';
 import { naturalBalance, type AccountHead, type MgmtPackage, type UmrahPassenger } from '@/lib/management/types';
 
 export type PassengerRow = UmrahPassenger & {
@@ -29,12 +30,11 @@ function paidFromPayments(payments: { amount: number; type: string | null }[]): 
 /** Active umrah packages for select inputs. */
 export async function loadUmrahPackages(): Promise<MgmtPackage[]> {
   try {
+    const scope = await getStaffScope();
     const db = mgmtDb();
-    const { data, error } = await db
-      .from('mgmt_packages')
-      .select('*')
-      .eq('type', 'umrah')
-      .order('created_at', { ascending: false });
+    let q = db.from('mgmt_packages').select('*').eq('type', 'umrah');
+    if (scope.branch) q = q.in('branch', [scope.branch, 'general']);
+    const { data, error } = await q.order('created_at', { ascending: false });
     if (error) return [];
     return (data ?? []) as MgmtPackage[];
   } catch {
@@ -65,11 +65,11 @@ export async function loadBankAccounts(): Promise<{ id: string; name: string }[]
  */
 export async function loadPassengers(): Promise<PassengerRow[]> {
   try {
+    const scope = await getStaffScope();
     const db = mgmtDb();
-    const { data, error } = await db
-      .from('umrah_passengers')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let q = db.from('umrah_passengers').select('*');
+    if (scope.branch) q = q.eq('branch', scope.branch);
+    const { data, error } = await q.order('created_at', { ascending: false });
     if (error || !data) return [];
 
     const passengers = data as UmrahPassenger[];

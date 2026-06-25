@@ -1,11 +1,15 @@
 import { mgmtDb } from '@/lib/management/server';
+import { getStaffScope } from '@/lib/management/scope';
 import { naturalBalance, type AccountHead, type HajjPilgrim, type MgmtPackage } from '@/lib/management/types';
 
 /** Load every account head once and return a Map keyed by id (for due lookups). */
 export async function loadHeadMap(): Promise<Map<string, AccountHead>> {
   const map = new Map<string, AccountHead>();
   try {
-    const { data } = await mgmtDb().from('account_heads').select('*');
+    const scope = await getStaffScope();
+    let q = mgmtDb().from('account_heads').select('*');
+    if (scope.branch) q = q.in('branch', [scope.branch, 'general']);
+    const { data } = await q;
     for (const h of (data ?? []) as AccountHead[]) map.set(h.id, h);
   } catch {
     // table absent — empty map, due defaults to 0 everywhere
@@ -38,12 +42,10 @@ export async function loadBankAccounts(): Promise<{ id: string; name: string }[]
 /** Hajj packages — full rows or a slim option set. */
 export async function loadHajjPackages(): Promise<MgmtPackage[]> {
   try {
-    const { data } = await mgmtDb()
-      .from('mgmt_packages')
-      .select('*')
-      .eq('type', 'hajj')
-      .order('year', { ascending: false })
-      .order('name');
+    const scope = await getStaffScope();
+    let q = mgmtDb().from('mgmt_packages').select('*').eq('type', 'hajj');
+    if (scope.branch) q = q.in('branch', [scope.branch, 'general']);
+    const { data } = await q.order('year', { ascending: false }).order('name');
     return (data ?? []) as MgmtPackage[];
   } catch {
     return [];

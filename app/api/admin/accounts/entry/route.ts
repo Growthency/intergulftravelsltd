@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireStaff } from '@/lib/management/guard';
+import { enforceBranch } from '@/lib/management/scope';
 import { postTransaction, getCashHead, logActivity } from '@/lib/management/server';
 import type { Transaction } from '@/lib/management/types';
 
@@ -101,7 +102,7 @@ export async function POST(request: Request) {
       credit_account_id: creditId,
       amount: d.amount,
       narration: d.narration || null,
-      branch: d.branch || 'general',
+      branch: await enforceBranch(d.branch),
       method,
       created_by: guard.user.id,
     });

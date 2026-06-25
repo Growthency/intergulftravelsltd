@@ -49,9 +49,10 @@ export async function PATCH(request: Request) {
   const admin = createAdminClient();
 
   // Email / password — applied through the admin API so no confirmation email
-  // round-trip is needed for the account holder.
+  // round-trip is needed for the account holder. Only administrators may change
+  // their email; branch staff keep theirs so their branch scoping stays intact.
   const authPatch: { email?: string; password?: string } = {};
-  if (d.email && d.email !== guard.user.email) authPatch.email = d.email;
+  if (d.email && d.email !== guard.user.email && guard.isAdmin) authPatch.email = d.email;
   if (d.password) authPatch.password = d.password;
   if (Object.keys(authPatch).length > 0) {
     const { error } = await admin.auth.admin.updateUserById(userId, authPatch);
