@@ -8,7 +8,7 @@ export async function loadHeadMap(): Promise<Map<string, AccountHead>> {
   try {
     const scope = await getStaffScope();
     let q = mgmtDb().from('account_heads').select('*');
-    if (scope.branch) q = q.in('branch', [scope.branch, 'general']);
+    if (scope.branch) q = q.eq('branch', scope.branch);
     const { data } = await q;
     for (const h of (data ?? []) as AccountHead[]) map.set(h.id, h);
   } catch {
@@ -27,12 +27,10 @@ export function dueForHead(headId: string | null, heads: Map<string, AccountHead
 /** Active bank accounts (subtype 'bank') for the payment form select. */
 export async function loadBankAccounts(): Promise<{ id: string; name: string }[]> {
   try {
-    const { data } = await mgmtDb()
-      .from('account_heads')
-      .select('id, name')
-      .eq('subtype', 'bank')
-      .eq('active', true)
-      .order('name');
+    const scope = await getStaffScope();
+    let q = mgmtDb().from('account_heads').select('id, name').eq('subtype', 'bank').eq('active', true);
+    if (scope.branch) q = q.eq('branch', scope.branch);
+    const { data } = await q.order('name');
     return (data ?? []) as { id: string; name: string }[];
   } catch {
     return [];
@@ -44,7 +42,7 @@ export async function loadHajjPackages(): Promise<MgmtPackage[]> {
   try {
     const scope = await getStaffScope();
     let q = mgmtDb().from('mgmt_packages').select('*').eq('type', 'hajj');
-    if (scope.branch) q = q.in('branch', [scope.branch, 'general']);
+    if (scope.branch) q = q.eq('branch', scope.branch);
     const { data } = await q.order('year', { ascending: false }).order('name');
     return (data ?? []) as MgmtPackage[];
   } catch {

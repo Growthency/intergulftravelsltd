@@ -16,8 +16,9 @@ export async function loadActiveHeads(): Promise<AccountHead[]> {
     const scope = await getStaffScope();
     const db = createAdminClient();
     let q = db.from('account_heads').select('*').eq('active', true);
-    // Branch staff see their own heads plus the shared system/general heads.
-    if (scope.branch) q = q.in('branch', [scope.branch, 'general']);
+    // Branch staff see only their own branch's heads (each branch keeps its own
+    // Cash / income / expense system heads, so balances never mix).
+    if (scope.branch) q = q.eq('branch', scope.branch);
     const { data, error } = await q
       .order('type', { ascending: true })
       .order('name', { ascending: true });

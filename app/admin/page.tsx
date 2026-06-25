@@ -66,7 +66,7 @@ async function loadDashboard(): Promise<DashData> {
   try {
     const db = mgmtDb();
     let hq = db.from('account_heads').select('*').eq('active', true);
-    if (scope.branch) hq = hq.in('branch', [scope.branch, 'general']);
+    if (scope.branch) hq = hq.eq('branch', scope.branch);
     const { data, error } = await hq;
     if (!error && data) {
       heads = data as AccountHead[];

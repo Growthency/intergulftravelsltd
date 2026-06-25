@@ -103,7 +103,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       // no package-income journal already exists for this pilgrim.
       const price = Number(pkg.price ?? 0);
       if (price > 0 && pilgrim.account_head_id) {
-        const incomeHead = await getSystemHead(INCOME_HEAD.hajj);
+        const incomeHead = await getSystemHead(INCOME_HEAD.hajj, pilgrim.branch);
         let alreadyCharged = false;
         if (incomeHead) {
           const { data: existing } = await db

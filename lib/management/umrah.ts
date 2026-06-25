@@ -33,7 +33,7 @@ export async function loadUmrahPackages(): Promise<MgmtPackage[]> {
     const scope = await getStaffScope();
     const db = mgmtDb();
     let q = db.from('mgmt_packages').select('*').eq('type', 'umrah');
-    if (scope.branch) q = q.in('branch', [scope.branch, 'general']);
+    if (scope.branch) q = q.eq('branch', scope.branch);
     const { data, error } = await q.order('created_at', { ascending: false });
     if (error) return [];
     return (data ?? []) as MgmtPackage[];
@@ -45,13 +45,11 @@ export async function loadUmrahPackages(): Promise<MgmtPackage[]> {
 /** Bank account heads for payment receipt selects. */
 export async function loadBankAccounts(): Promise<{ id: string; name: string }[]> {
   try {
+    const scope = await getStaffScope();
     const db = mgmtDb();
-    const { data, error } = await db
-      .from('account_heads')
-      .select('id, name')
-      .eq('subtype', 'bank')
-      .eq('active', true)
-      .order('name');
+    let q = db.from('account_heads').select('id, name').eq('subtype', 'bank').eq('active', true);
+    if (scope.branch) q = q.eq('branch', scope.branch);
+    const { data, error } = await q.order('name');
     if (error) return [];
     return (data ?? []) as { id: string; name: string }[];
   } catch {

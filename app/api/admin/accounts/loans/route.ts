@@ -50,20 +50,21 @@ export async function POST(request: Request) {
   const d = parsed.data;
 
   try {
+    const branch = await enforceBranch(d.branch);
     // Resolve the cash / bank counter account.
     let cashBankId: string | null = null;
     if (d.method === 'bank') {
       cashBankId = d.bank_account_id ?? null;
       if (!cashBankId) return badReq('Select the bank account for this loan.');
     } else {
-      const cash = await getCashHead();
+      const cash = await getCashHead(branch);
       cashBankId = cash?.id ?? null;
       if (!cashBankId) return badReq('The Cash in Hand account was not found. Run the database setup first.');
     }
 
     // Resolve the loan control head.
     const loanHeadName = d.type === 'given' ? 'Loan Receivable' : 'Loan Payable';
-    const loanHead = await getSystemHead(loanHeadName);
+    const loanHead = await getSystemHead(loanHeadName, branch);
     if (!loanHead) {
       return badReq(`The "${loanHeadName}" account was not found. Run the database setup first.`);
     }
@@ -81,7 +82,7 @@ export async function POST(request: Request) {
       credit_account_id: creditId,
       amount: d.principal,
       narration: d.narration || `Loan ${d.type} — ${d.party_name}`,
-      branch: await enforceBranch(d.branch),
+      branch,
       method: d.method,
       ref_table: 'loans',
       created_by: guard.user.id,
@@ -100,7 +101,7 @@ export async function POST(request: Request) {
         due_date: d.due_date || null,
         status: 'open',
         narration: d.narration || null,
-        branch: await enforceBranch(d.branch),
+        branch,
         account_head_id: loanHead.id,
         created_by: guard.user.id,
       })

@@ -57,10 +57,11 @@ export async function POST(request: Request) {
   const d = parsed.data;
 
   try {
+    const branch = await enforceBranch(d.branch);
     // The counter (cash/bank) account used by income & expense modes.
     async function counterAccountId(): Promise<string | null> {
       if (d.method === 'bank') return d.bank_account_id ?? null;
-      const cash = await getCashHead();
+      const cash = await getCashHead(branch);
       return cash?.id ?? null;
     }
 
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
       credit_account_id: creditId,
       amount: d.amount,
       narration: d.narration || null,
-      branch: await enforceBranch(d.branch),
+      branch,
       method,
       created_by: guard.user.id,
     });

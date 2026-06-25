@@ -18,18 +18,51 @@ export async function nextVoucherNo(prefix = 'V'): Promise<string> {
   return `${prefix}-${String(n).padStart(5, '0')}`;
 }
 
-export async function getSystemHead(name: string) {
+/**
+ * Resolve a system head for a given branch. Each branch keeps its OWN copy of
+ * the core heads (Cash in Hand, package income, expense heads, loan control…)
+ * so their balances never mix. The first time a branch needs one, it is copied
+ * from the 'general' template on demand.
+ */
+export async function getSystemHead(name: string, branch = 'general') {
   const db = mgmtDb();
   const { data } = await db
     .from('account_heads')
     .select('*')
     .eq('name', name)
     .eq('is_system', true)
+    .eq('branch', branch)
     .maybeSingle();
-  return data;
+  if (data) return data;
+
+  if (branch !== 'general') {
+    const { data: tmpl } = await db
+      .from('account_heads')
+      .select('code, name, type, subtype')
+      .eq('name', name)
+      .eq('is_system', true)
+      .eq('branch', 'general')
+      .maybeSingle();
+    if (tmpl) {
+      const { data: created } = await db
+        .from('account_heads')
+        .insert({
+          code: tmpl.code,
+          name: tmpl.name,
+          type: tmpl.type,
+          subtype: tmpl.subtype,
+          is_system: true,
+          branch,
+        })
+        .select('*')
+        .single();
+      if (created) return created;
+    }
+  }
+  return data ?? null;
 }
 
-export const getCashHead = () => getSystemHead('Cash in Hand');
+export const getCashHead = (branch = 'general') => getSystemHead('Cash in Hand', branch);
 
 export const INCOME_HEAD = {
   hajj: 'Hajj Package Income',
@@ -95,7 +128,7 @@ export async function recordPayment(p: {
 
   let debitId = p.bank_account_id ?? null;
   if (p.method === 'cash') {
-    const cash = await getCashHead();
+    const cash = await getCashHead(p.branch ?? 'general');
     debitId = cash?.id ?? null;
   }
   if (!debitId) throw new Error('No cash/bank account available for this payment.');
@@ -152,7 +185,7 @@ export async function chargeParty(opts: {
   ref_id?: string;
   created_by?: string | null;
 }) {
-  const income = await getSystemHead(INCOME_HEAD[opts.packageType]);
+  const income = await getSystemHead(INCOME_HEAD[opts.packageType], opts.branch ?? 'general');
   if (!income) throw new Error('Package income head not found. Run the seed migration.');
   const voucher_no = await nextVoucherNo('JV');
   return postTransaction({
