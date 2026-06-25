@@ -5,7 +5,7 @@ import { decryptSecret } from '@/lib/vault-crypto';
 import { SecureVault, type VaultCredential } from '@/components/admin/SecureVault';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Secure Vault' };
+export const metadata = { title: 'Vault' };
 
 async function loadItems(): Promise<VaultCredential[]> {
   try {

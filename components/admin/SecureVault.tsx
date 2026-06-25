@@ -80,7 +80,7 @@ export function SecureVault({ initial }: { initial: VaultCredential[] }) {
       <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 font-display text-2xl font-bold text-ink">
-            Secure Vault <Lock className="h-5 w-5 text-gold-500" />
+            Vault <Lock className="h-5 w-5 text-gold-500" />
           </h1>
           <p className="mt-1 text-sm text-ink-muted">Encrypted credential store (AES-256-GCM at rest).</p>
         </div>
@@ -116,6 +116,15 @@ export function SecureVault({ initial }: { initial: VaultCredential[] }) {
           <p className="mt-1 text-sm text-ink-muted">
             {query ? 'Try a different search.' : 'Add your first credential to keep it safely encrypted.'}
           </p>
+          {!query && (
+            <button
+              type="button"
+              onClick={() => setAdding(true)}
+              className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-brand-700 to-gold-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:opacity-95"
+            >
+              <Plus className="h-4 w-4" /> Add New
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
