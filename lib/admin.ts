@@ -5,7 +5,7 @@
  * The default login details we will create later should use one of these
  * emails so the account is treated as an administrator.
  */
-const DEFAULT_ADMINS = ['admin@intergulftravelsltd.com'];
+const DEFAULT_ADMINS = ['hellointergulftravelsltd@gmail.com'];
 
 export function getAdminEmails(): string[] {
   const fromEnv = (process.env.ADMIN_EMAILS || '')

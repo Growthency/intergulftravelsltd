@@ -16,6 +16,7 @@ import {
   Settings,
   Users,
   Users2,
+  UserCog,
   ExternalLink,
   LogOut,
   X,
@@ -34,6 +35,7 @@ import {
   ChevronDown,
   Video,
   Handshake,
+  KeyRound,
   type LucideIcon,
 } from 'lucide-react';
 import { LogoMark } from '@/components/brand/Logo';
@@ -46,7 +48,10 @@ type NavGroup = { group: string; items: NavLink[]; adminOnly?: boolean };
 const NAV: NavGroup[] = [
   {
     group: 'Overview',
-    items: [{ label: 'Dashboard', href: '/admin', icon: LayoutDashboard }],
+    items: [
+      { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+      { label: 'My Account', href: '/admin/account', icon: UserCog },
+    ],
   },
   {
     group: 'Accounting',
@@ -100,6 +105,7 @@ const NAV: NavGroup[] = [
       { label: 'Navigation', href: '/admin/menus', icon: MenuIcon },
       { label: 'Footer', href: '/admin/footer', icon: PanelsTopLeft },
       { label: 'Site Settings', href: '/admin/settings', icon: Settings },
+      { label: 'Secure Vault', href: '/admin/secure-vault', icon: KeyRound },
       { label: 'Staff & Roles', href: '/admin/users', icon: Users2 },
       { label: 'Activity Log', href: '/admin/activity', icon: History },
     ],
@@ -176,7 +182,11 @@ export function AdminShell({
               <span className="hidden sm:inline">View site</span>
             </Link>
 
-            <div className="hidden items-center gap-2.5 border-l border-border pl-3 sm:flex">
+            <Link
+              href="/admin/account"
+              title="My account"
+              className="hidden items-center gap-2.5 border-l border-border pl-3 transition hover:opacity-80 sm:flex"
+            >
               <Avatar name={user.name} email={user.email} avatarUrl={user.avatarUrl} />
               <div className="leading-tight">
                 <p className="max-w-[12rem] truncate text-sm font-semibold text-ink">
@@ -184,7 +194,7 @@ export function AdminShell({
                 </p>
                 <p className="max-w-[12rem] truncate text-xs text-ink-muted">{user.email}</p>
               </div>
-            </div>
+            </Link>
 
             <form action={signOutAction}>
               <button
@@ -215,14 +225,19 @@ function SidebarContent({
   onNavigate?: () => void;
 }) {
   const visibleGroups = NAV.filter((section) => !section.adminOnly || isAdmin);
-  const groupOf = (path: string) =>
-    visibleGroups.find((g) => g.items.some((i) => isActive(path, i.href)))?.group;
+  // Only the single best (longest) matching link is active, so e.g.
+  // /admin/hajj/packages activates "Hajj Packages" but NOT "Hajj Pilgrims".
+  const activeHref = bestMatchHref(
+    pathname,
+    visibleGroups.flatMap((g) => g.items.map((i) => i.href)),
+  );
+  const groupOf = () => visibleGroups.find((g) => g.items.some((i) => i.href === activeHref))?.group;
   const [openGroups, setOpenGroups] = useState<string[]>(() => {
-    const g = groupOf(pathname);
+    const g = groupOf();
     return g ? [g] : ['Overview'];
   });
   useEffect(() => {
-    const g = groupOf(pathname);
+    const g = groupOf();
     if (g) setOpenGroups((prev) => (prev.includes(g) ? prev : [...prev, g]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
@@ -244,7 +259,7 @@ function SidebarContent({
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5">
         {visibleGroups.map((section) => {
           const isOpen = openGroups.includes(section.group);
-          const hasActive = section.items.some((i) => isActive(pathname, i.href));
+          const hasActive = section.items.some((i) => i.href === activeHref);
           return (
             <div key={section.group}>
               <button
@@ -261,7 +276,7 @@ function SidebarContent({
               {isOpen && (
                 <ul className="space-y-1 pb-2 pt-0.5">
                   {section.items.map((item) => {
-                    const active = isActive(pathname, item.href);
+                    const active = item.href === activeHref;
                     const Icon = item.icon;
                     return (
                       <li key={item.href}>
@@ -339,7 +354,13 @@ function Avatar({
   );
 }
 
-function isActive(pathname: string, href: string) {
-  if (href === '/admin') return pathname === '/admin';
-  return pathname === href || pathname.startsWith(`${href}/`);
+/** Return the longest nav href that the current path matches, or null. */
+function bestMatchHref(pathname: string, hrefs: string[]): string | null {
+  let best: string | null = null;
+  for (const href of hrefs) {
+    const matches =
+      href === '/admin' ? pathname === '/admin' : pathname === href || pathname.startsWith(`${href}/`);
+    if (matches && (best === null || href.length > best.length)) best = href;
+  }
+  return best;
 }
