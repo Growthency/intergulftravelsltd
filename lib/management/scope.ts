@@ -27,12 +27,17 @@ export async function getStaffScope(): Promise<StaffScope> {
     if (!user) return { isAdmin: false, branch: null, email: null };
 
     const email = (user.email ?? '').toLowerCase();
+
+    // A branch-mapped email is ALWAYS locked to its branch for data, even if the
+    // account is an admin — so branch admins get the full toolset (Website,
+    // System, Vault, Staff…) while their Hajj/Umrah/accounts stay isolated.
+    const branch = BRANCH_BY_EMAIL[email] ?? null;
+
     let isAdmin = isAdminEmail(email);
     if (!isAdmin) {
       const { data } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
       if (data?.role === 'admin') isAdmin = true;
     }
-    const branch = isAdmin ? null : BRANCH_BY_EMAIL[email] ?? null;
     return { isAdmin, branch, email };
   } catch {
     return { isAdmin: false, branch: null, email: null };

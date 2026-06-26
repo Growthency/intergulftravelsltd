@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireStaff } from '@/lib/management/guard';
+import { getStaffScope } from '@/lib/management/scope';
 import { logActivity } from '@/lib/management/server';
 
 export const runtime = 'nodejs';
@@ -47,12 +48,13 @@ export async function PATCH(request: Request) {
   const d = parsed.data;
   const userId = guard.user.id;
   const admin = createAdminClient();
+  const scope = await getStaffScope();
 
   // Email / password — applied through the admin API so no confirmation email
-  // round-trip is needed for the account holder. Only administrators may change
-  // their email; branch staff keep theirs so their branch scoping stays intact.
+  // round-trip is needed for the account holder. A branch-scoped account can't
+  // change its own email (it's the key its branch isolation is built on).
   const authPatch: { email?: string; password?: string } = {};
-  if (d.email && d.email !== guard.user.email && guard.isAdmin) authPatch.email = d.email;
+  if (d.email && d.email !== guard.user.email && !scope.branch) authPatch.email = d.email;
   if (d.password) authPatch.password = d.password;
   if (Object.keys(authPatch).length > 0) {
     const { error } = await admin.auth.admin.updateUserById(userId, authPatch);
