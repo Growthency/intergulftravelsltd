@@ -1,26 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { toast } from 'sonner';
-import {
-  Mail,
-  Lock,
-  User,
-  Phone,
-  Eye,
-  EyeOff,
-  Loader2,
-  ArrowRight,
-  ShieldCheck,
-  MailCheck,
-  type LucideIcon,
-} from 'lucide-react';
-import { signIn, signUp, type AuthState } from '@/app/auth/actions';
-import { cn } from '@/lib/utils';
-
-type Mode = 'signin' | 'signup';
+import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, type LucideIcon } from 'lucide-react';
+import { signIn, type AuthState } from '@/app/auth/actions';
 
 const initialState: AuthState = { ok: false };
 
@@ -29,16 +13,9 @@ const fieldShell =
 const inputBase =
   'w-full bg-transparent py-3 text-[0.95rem] text-ink outline-none placeholder:text-ink-muted/70';
 
-export function AuthForm({
-  mode,
-  portal = false,
-}: {
-  mode: Mode;
-  /** Staff/admin portal — changes the submit label and helper note. */
-  portal?: boolean;
-}) {
-  const action = mode === 'signin' ? signIn : signUp;
-  const [state, formAction] = useFormState(action, initialState);
+/** Staff / admin sign-in. Email + password only; success redirects to /admin. */
+export function AuthForm({ portal = true }: { portal?: boolean }) {
+  const [state, formAction] = useFormState(signIn, initialState);
   const [showPassword, setShowPassword] = useState(false);
   const lastError = useRef<string | undefined>();
 
@@ -50,25 +27,8 @@ export function AuthForm({
     lastError.current = state.error;
   }, [state.error]);
 
-  // Successful sign-up awaiting email confirmation — swap the form for a notice.
-  if (mode === 'signup' && state.checkEmail) {
-    return <CheckEmailNotice email={state.email} />;
-  }
-
   return (
     <form action={formAction} noValidate className="space-y-4">
-      {mode === 'signup' && (
-        <Field
-          icon={User}
-          label="Full name"
-          name="full_name"
-          type="text"
-          autoComplete="name"
-          placeholder="e.g. Md. Abdur Rahman"
-          required
-        />
-      )}
-
       <Field
         icon={Mail}
         label="Email address"
@@ -80,36 +40,18 @@ export function AuthForm({
         required
       />
 
-      {mode === 'signup' && (
-        <Field
-          icon={Phone}
-          label="Phone number"
-          name="phone"
-          type="tel"
-          autoComplete="tel"
-          placeholder="01XXX XXXXXX"
-          required
-        />
-      )}
-
       <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <label htmlFor="password" className="block text-sm font-semibold text-ink">
-            Password
-          </label>
-          {mode === 'signup' && (
-            <span className="text-xs text-ink-muted">At least 8 characters</span>
-          )}
-        </div>
+        <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-ink">
+          Password
+        </label>
         <div className={fieldShell}>
           <Lock className="h-[1.15rem] w-[1.15rem] shrink-0 text-ink-muted" />
           <input
             id="password"
             name="password"
             type={showPassword ? 'text' : 'password'}
-            autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-            placeholder={mode === 'signin' ? 'Enter your password' : 'Create a password'}
-            minLength={mode === 'signup' ? 8 : undefined}
+            autoComplete="current-password"
+            placeholder="Enter your password"
             required
             className={inputBase}
           />
@@ -137,38 +79,12 @@ export function AuthForm({
         </p>
       )}
 
-      <SubmitButton mode={mode} portal={portal} />
+      <SubmitButton portal={portal} />
 
       {portal && (
         <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-xs text-ink-muted">
           <ShieldCheck className="h-3.5 w-3.5 text-brand-600" />
           This is a restricted area for authorised staff only.
-        </p>
-      )}
-
-      {!portal && (
-        <p className="pt-1 text-center text-sm text-ink-muted">
-          {mode === 'signin' ? (
-            <>
-              New to Inter Gulf Travels?{' '}
-              <Link
-                href="/signup"
-                className="font-semibold text-brand-700 underline-offset-2 transition hover:text-brand-900 hover:underline"
-              >
-                Create an account
-              </Link>
-            </>
-          ) : (
-            <>
-              Already have an account?{' '}
-              <Link
-                href="/login"
-                className="font-semibold text-brand-700 underline-offset-2 transition hover:text-brand-900 hover:underline"
-              >
-                Sign in
-              </Link>
-            </>
-          )}
         </p>
       )}
     </form>
@@ -177,11 +93,8 @@ export function AuthForm({
 
 /* ------------------------------ sub-components ----------------------------- */
 
-function SubmitButton({ mode, portal }: { mode: Mode; portal: boolean }) {
+function SubmitButton({ portal }: { portal: boolean }) {
   const { pending } = useFormStatus();
-  const label = mode === 'signin' ? (portal ? 'Sign in to portal' : 'Sign in') : 'Create account';
-  const pendingLabel = mode === 'signin' ? 'Signing in…' : 'Creating account…';
-
   return (
     <button
       type="submit"
@@ -192,11 +105,11 @@ function SubmitButton({ mode, portal }: { mode: Mode; portal: boolean }) {
       <span className="relative inline-flex items-center gap-2">
         {pending ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" /> {pendingLabel}
+            <Loader2 className="h-4 w-4 animate-spin" /> Signing in…
           </>
         ) : (
           <>
-            {label}
+            {portal ? 'Sign in to admin' : 'Sign in'}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </>
         )}
@@ -242,28 +155,6 @@ function Field({
           className={inputBase}
         />
       </div>
-    </div>
-  );
-}
-
-function CheckEmailNotice({ email }: { email?: string }) {
-  return (
-    <div className="text-center">
-      <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand-gradient text-white shadow-emerald">
-        <MailCheck className="h-7 w-7" />
-      </span>
-      <h2 className="mt-5 font-display text-xl font-semibold text-ink">Confirm your email</h2>
-      <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-        We&apos;ve sent a confirmation link{email ? <> to <span className="font-semibold text-ink">{email}</span></> : ''}.
-        Please open it to activate your account, then sign in.
-      </p>
-      <Link
-        href="/login"
-        className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-brand-600 px-6 font-semibold text-white shadow-emerald transition hover:bg-brand-700"
-      >
-        Go to sign in
-        <ArrowRight className="h-4 w-4" />
-      </Link>
     </div>
   );
 }

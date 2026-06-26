@@ -1,9 +1,6 @@
 /**
  * Admin allowlist. Emails listed here (or in ADMIN_EMAILS, comma separated)
- * get access to /dashboard/admin and the staff portal.
- *
- * The default login details we will create later should use one of these
- * emails so the account is treated as an administrator.
+ * are treated as administrators and can sign in to the console at /admin.
  */
 const DEFAULT_ADMINS = ['hellointergulftravelsltd@gmail.com'];
 

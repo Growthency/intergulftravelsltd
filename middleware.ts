@@ -2,24 +2,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 /**
- * - Custom staff login URL: rootdomain/<STAFF_LOGIN_SLUG> (default "taslima")
- *   is rewritten to the internal /portal login page. Change the slug in
- *   .env.local — the public URL changes, the page stays the same.
- * - Refreshes the Supabase auth session cookie on every request so Server
- *   Components always see a valid session.
+ * Refreshes the Supabase auth session cookie on every request so Server
+ * Components always see a valid session. (Staff/admins sign in at /admin.)
  */
-const STAFF_SLUG = process.env.NEXT_PUBLIC_STAFF_LOGIN_SLUG || 'taslima';
-
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Custom staff/admin login slug → internal /portal
-  if (pathname === `/${STAFF_SLUG}` || pathname === `/${STAFF_SLUG}/`) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/portal';
-    return NextResponse.rewrite(url);
-  }
-
   // Refresh Supabase session
   let response = NextResponse.next({ request: { headers: request.headers } });
 

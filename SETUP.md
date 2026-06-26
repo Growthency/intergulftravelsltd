@@ -39,7 +39,6 @@ it is never pushed to GitHub). Open it and paste the values below.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Supabase → Project Settings → **API** → *anon / public* key |
 | `SUPABASE_SERVICE_ROLE_KEY` | yes | Supabase → Project Settings → **API** → *service_role* key (**keep secret**) |
 | `ADMIN_EMAILS` | yes | Comma-separated emails that become admins |
-| `NEXT_PUBLIC_STAFF_LOGIN_SLUG` | yes | The secret staff-login path, e.g. `taslima` → `/taslima` |
 
 ---
 
@@ -74,20 +73,14 @@ Authentication → **Users** → *Add user* → enter `admin@intergulftravelsltd
 and a password → *Auto-confirm*. The database trigger automatically gives this
 email the `admin` role.
 
-**Option B — Self sign-up:** visit `/signup`, register with an email listed in
-`ADMIN_EMAILS`, confirm, done.
-
-> Suggested default credentials to set now and change later:
-> **Email:** `admin@intergulftravelsltd.com` · **Password:** *(choose a strong one)*
+> Suggested default account to set now and change later:
+> **Email:** `hellointergulftravelsltd@gmail.com` · **Password:** *(choose a strong one)*
 
 ### Logging in
 
-- **Customers** sign in at **`/login`** → land on `/dashboard`.
-- **Staff / Admin** sign in at the secret URL **`/{NEXT_PUBLIC_STAFF_LOGIN_SLUG}`**
-  (default **`/taslima`**) → admins land on `/admin`.
-
-To change the staff URL, edit `NEXT_PUBLIC_STAFF_LOGIN_SLUG` in `.env.local`
-(e.g. set it to `staff-2026` and the login moves to `/staff-2026`).
+Staff and admins sign in directly at **`/admin`**. When signed out, `/admin`
+shows the login form; after signing in, staff land on the admin dashboard.
+There is no separate customer area.
 
 ---
 
@@ -105,7 +98,7 @@ The site never serves JPG/PNG.
 
 ## 7. Managing content
 
-Sign in at `/taslima` as an admin → **`/admin`**:
+Sign in at **`/admin`**:
 
 - **Blog Posts** — create/edit/publish articles (auto-WebP cover images)
 - **Media Library / Gallery** — upload and manage images

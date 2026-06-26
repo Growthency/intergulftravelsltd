@@ -13,8 +13,6 @@ import { isAdminEmail } from '@/lib/admin';
 export type AuthState = {
   ok: boolean;
   error?: string;
-  /** Set by signUp when email confirmation is required (no active session yet). */
-  checkEmail?: boolean;
   /** Echoed back so the form can keep the field populated after an error. */
   email?: string;
 };
@@ -37,10 +35,9 @@ function str(formData: FormData, key: string) {
 }
 
 /**
- * Decide where a freshly authenticated user should land. Admins (by allowlist
- * email or by a `profiles.role === 'admin'` row) go to the admin area; everyone
- * else to their dashboard. The profile lookup fails gracefully if the table is
- * absent or RLS blocks it — the email allowlist still governs access.
+ * Decide where a freshly authenticated user should land. Staff (admin allowlist
+ * email or any management role) go to the admin console; anyone else goes to the
+ * public site. The profile lookup fails gracefully if the table is absent.
  */
 async function resolveLandingPath(
   supabase: ReturnType<typeof createClient>,
@@ -56,13 +53,14 @@ async function resolveLandingPath(
         .select('role')
         .eq('id', userId)
         .maybeSingle();
-      if (data?.role === 'admin') return '/admin';
+      const role = data?.role ?? '';
+      if (['admin', 'accountant', 'operator', 'staff'].includes(role)) return '/admin';
     } catch {
-      // table missing / not yet provisioned — fall through to the dashboard
+      // table missing / not yet provisioned
     }
   }
 
-  return '/dashboard';
+  return '/';
 }
 
 export async function signIn(_prev: AuthState, formData: FormData): Promise<AuthState> {
@@ -100,61 +98,6 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
 
   // redirect() throws a control-flow signal — keep it outside the try/catch.
   redirect(destination);
-}
-
-export async function signUp(_prev: AuthState, formData: FormData): Promise<AuthState> {
-  const fullName = str(formData, 'full_name');
-  const email = str(formData, 'email').toLowerCase();
-  const phone = str(formData, 'phone');
-  const password = String(formData.get('password') ?? '');
-
-  if (fullName.length < 2) {
-    return { ok: false, error: 'Please enter your full name.', email };
-  }
-  if (!emailPattern.test(email)) {
-    return { ok: false, error: 'Please enter a valid email address.', email };
-  }
-  if (phone.length < 6) {
-    return { ok: false, error: 'Please enter a valid phone number.', email };
-  }
-  if (password.length < 8) {
-    return { ok: false, error: 'Your password must be at least 8 characters.', email };
-  }
-  if (!isConfigured()) {
-    return { ok: false, error: NOT_CONFIGURED, email };
-  }
-
-  const supabase = createClient();
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://intergulftravelsltd.com';
-
-  try {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName, phone },
-        emailRedirectTo: `${origin.replace(/\/$/, '')}/auth/callback`,
-      },
-    });
-
-    if (error) {
-      const message = /already registered|already exists/i.test(error.message)
-        ? 'An account with this email already exists. Please sign in instead.'
-        : error.message || GENERIC_ERROR;
-      return { ok: false, error: message, email };
-    }
-
-    // When email confirmation is enabled, Supabase returns a user but no active
-    // session — ask the pilgrim to confirm their address before continuing.
-    if (!data.session) {
-      return { ok: true, checkEmail: true, email };
-    }
-  } catch (err) {
-    console.error('[auth] signUp failed:', err);
-    return { ok: false, error: GENERIC_ERROR, email };
-  }
-
-  redirect('/dashboard');
 }
 
 export async function signOut() {

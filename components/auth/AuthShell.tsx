@@ -31,7 +31,7 @@ export function AuthShell({
   title,
   subtitle,
   eyebrow,
-  variant = 'customer',
+  variant = 'staff',
   children,
 }: {
   title: string;

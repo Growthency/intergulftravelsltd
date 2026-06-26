@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/admin';
 import { AdminShell } from '@/components/admin/AdminShell';
+import { AuthShell } from '@/components/auth/AuthShell';
+import { AuthForm } from '@/components/auth/AuthForm';
 import { signOut } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -22,12 +24,22 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Not signed in → staff portal login.
-  if (!user) redirect('/portal');
+  // Not signed in → show the staff login right here at /admin (no separate URL).
+  if (!user) {
+    return (
+      <AuthShell
+        eyebrow="Admin Panel"
+        title="Inter Gulf Travels — Admin"
+        subtitle="Sign in with your authorised staff credentials to continue."
+        variant="staff"
+      >
+        <AuthForm portal />
+      </AuthShell>
+    );
+  }
 
   // Resolve role: email allowlist OR profile role. Admins + accounting staff
-  // (accountant / operator / staff) may use the management console; everyone
-  // else goes to their own customer dashboard.
+  // (accountant / operator / staff) may use the management console.
   let isAdmin = isAdminEmail(user.email);
   let role = 'user';
   let fullName: string | null = null;
@@ -50,7 +62,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const STAFF = ['admin', 'accountant', 'operator', 'staff'];
   const isStaff = isAdmin || STAFF.includes(role);
-  if (!isStaff) redirect('/dashboard');
+  // Signed in but without staff access → they have nowhere in the console; send
+  // them to the public site.
+  if (!isStaff) redirect('/');
 
   return (
     <AdminShell
