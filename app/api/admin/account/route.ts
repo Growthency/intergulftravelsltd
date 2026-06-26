@@ -14,7 +14,10 @@ const schema = z.object({
     (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
     z.string().trim().url().max(600).nullable().optional(),
   ),
-  email: z.string().trim().toLowerCase().email('Enter a valid email address.').optional(),
+  email: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+    z.string().trim().toLowerCase().email('Enter a valid email address.').optional(),
+  ),
   password: z.preprocess(
     (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
     z.string().min(8, 'Password must be at least 8 characters.').optional(),

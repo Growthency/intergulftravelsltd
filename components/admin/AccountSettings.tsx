@@ -53,9 +53,13 @@ export function AccountSettings({ initial, canEditEmail = true }: { initial: Ini
 
     const payload: Record<string, unknown> = {
       full_name: String(fd.get('full_name') ?? '').trim(),
-      email: String(fd.get('email') ?? '').trim(),
       avatar_url: avatarUrl,
     };
+    // The email input is disabled for branch accounts (so it submits nothing).
+    // Only send it when it actually has a value — an empty string would fail
+    // email validation and block saving the name/photo/password.
+    const email = String(fd.get('email') ?? '').trim();
+    if (email) payload.email = email;
     if (password) payload.password = password;
 
     setSaving(true);
