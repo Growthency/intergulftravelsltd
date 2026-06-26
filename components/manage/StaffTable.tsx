@@ -3,9 +3,12 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Search, Users as UsersIcon, Loader2, Lock } from 'lucide-react';
+import { Search, Users as UsersIcon, Loader2, Lock, Pencil, Trash2, X } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { EmptyState } from '@/components/admin/ui';
+import { Field, inputClass } from '@/components/manage/ui';
+import { Button } from '@/components/ui/Button';
+import { confirmDialog } from '@/components/admin/confirm';
 
 export type StaffRow = {
   id: string;
@@ -14,7 +17,7 @@ export type StaffRow = {
   phone: string | null;
   role: string;
   created_at: string | null;
-  locked: boolean; // allowlisted admin — role can't be changed
+  locked: boolean; // allowlisted admin — role can't be changed / can't be deleted
 };
 
 const ROLES = [
@@ -35,11 +38,20 @@ const TABS = [
 
 const STAFF_ROLES = ['admin', 'accountant', 'operator', 'staff'];
 
-export function StaffTable({ rows, canEdit }: { rows: StaffRow[]; canEdit: boolean }) {
+export function StaffTable({
+  rows,
+  canEdit,
+  currentUserId,
+}: {
+  rows: StaffRow[];
+  canEdit: boolean;
+  currentUserId: string | null;
+}) {
   const router = useRouter();
   const [tab, setTab] = useState('all');
   const [query, setQuery] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<StaffRow | null>(null);
 
   const counts = useMemo(
     () => ({
@@ -76,6 +88,33 @@ export function StaffTable({ rows, canEdit }: { rows: StaffRow[]; canEdit: boole
         return;
       }
       toast.success(`Role set to ${ROLE_LABEL[role] ?? role}.`);
+      router.refresh();
+    } catch {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function deleteRow(row: StaffRow) {
+    if (
+      !(await confirmDialog({
+        message: `Delete ${row.full_name || row.email}? Their login is removed permanently and they can no longer sign in. This cannot be undone.`,
+        confirmText: 'Delete account',
+        danger: true,
+      }))
+    ) {
+      return;
+    }
+    setBusyId(row.id);
+    try {
+      const res = await fetch(`/api/admin/staff/${row.id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        toast.error(data?.error ?? 'Could not delete the account.');
+        return;
+      }
+      toast.success('Account deleted.');
       router.refresh();
     } catch {
       toast.error('Network error. Please try again.');
@@ -142,13 +181,14 @@ export function StaffTable({ rows, canEdit }: { rows: StaffRow[]; canEdit: boole
       ) : (
         <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-soft">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[680px] text-left text-sm">
+            <table className="w-full min-w-[720px] text-left text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-xs uppercase tracking-wide text-ink-muted">
                   <th className="px-5 py-3 font-semibold">Person</th>
                   <th className="px-5 py-3 font-semibold">Phone</th>
                   <th className="px-5 py-3 font-semibold">Joined</th>
                   <th className="px-5 py-3 font-semibold">Role</th>
+                  {canEdit && <th className="px-5 py-3 text-right font-semibold">Actions</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -196,6 +236,38 @@ export function StaffTable({ rows, canEdit }: { rows: StaffRow[]; canEdit: boole
                         </div>
                       )}
                     </td>
+                    {canEdit && (
+                      <td className="px-5 py-3.5 text-right">
+                        {row.locked ? (
+                          <span className="text-xs text-ink-muted">—</span>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setEditing(row)}
+                              className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-ink-muted transition hover:border-brand-600/40 hover:text-brand-700"
+                            >
+                              <Pencil className="h-3.5 w-3.5" /> Edit
+                            </button>
+                            {row.id !== currentUserId && (
+                              <button
+                                type="button"
+                                onClick={() => deleteRow(row)}
+                                disabled={busyId === row.id}
+                                className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-ink-muted transition hover:border-red-300 hover:text-red-600 disabled:opacity-50"
+                                aria-label="Delete account"
+                              >
+                                {busyId === row.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -203,6 +275,116 @@ export function StaffTable({ rows, canEdit }: { rows: StaffRow[]; canEdit: boole
           </div>
         </div>
       )}
+
+      {editing && (
+        <StaffEditModal
+          row={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            router.refresh();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function StaffEditModal({
+  row,
+  onClose,
+  onSaved,
+}: {
+  row: StaffRow;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [saving, setSaving] = useState(false);
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (saving) return;
+    const fd = new FormData(e.currentTarget);
+    const password = String(fd.get('password') ?? '');
+    const confirm = String(fd.get('confirm') ?? '');
+    if (password && password !== confirm) {
+      toast.error('The two passwords do not match.');
+      return;
+    }
+    const payload: Record<string, unknown> = {
+      full_name: String(fd.get('full_name') ?? '').trim(),
+      phone: String(fd.get('phone') ?? '').trim(),
+    };
+    if (!payload.full_name) {
+      toast.error('Name cannot be empty.');
+      return;
+    }
+    if (password) payload.password = password;
+
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/staff/${row.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        toast.error(data?.error ?? 'Could not update the account.');
+        return;
+      }
+      toast.success('Account updated.');
+      onSaved();
+    } catch {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" role="dialog" aria-modal="true">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 text-left shadow-soft">
+        <div className="mb-1 flex items-center justify-between">
+          <h2 className="font-display text-base font-semibold text-ink">Edit account</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-8 w-8 place-items-center rounded-full text-ink-muted hover:bg-muted"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="mb-4 truncate text-xs text-ink-muted">{row.email}</p>
+
+        <form onSubmit={onSubmit} className="grid gap-4">
+          <Field label="Full name" required>
+            <input name="full_name" defaultValue={row.full_name ?? ''} className={inputClass} />
+          </Field>
+          <Field label="Phone">
+            <input name="phone" defaultValue={row.phone ?? ''} className={inputClass} placeholder="01XXXXXXXXX" />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="New password" hint="Leave blank to keep current.">
+              <input name="password" type="password" className={inputClass} placeholder="••••••••" autoComplete="new-password" />
+            </Field>
+            <Field label="Confirm password">
+              <input name="confirm" type="password" className={inputClass} placeholder="••••••••" autoComplete="new-password" />
+            </Field>
+          </div>
+          <p className="text-xs text-ink-muted">The email ({row.email}) is the sign-in identity and isn&apos;t changed here.</p>
+          <div className="flex items-center gap-3">
+            <Button type="submit" disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              Save changes
+            </Button>
+            <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

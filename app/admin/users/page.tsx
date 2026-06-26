@@ -34,23 +34,24 @@ async function loadStaff(): Promise<StaffRow[]> {
   }
 }
 
-async function resolveIsAdmin(): Promise<boolean> {
+async function resolveViewer(): Promise<{ isAdmin: boolean; userId: string | null }> {
   try {
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return false;
-    if (isAdminEmail(user.email)) return true;
+    if (!user) return { isAdmin: false, userId: null };
+    if (isAdminEmail(user.email)) return { isAdmin: true, userId: user.id };
     const { data } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-    return data?.role === 'admin';
+    return { isAdmin: data?.role === 'admin', userId: user.id };
   } catch {
-    return false;
+    return { isAdmin: false, userId: null };
   }
 }
 
 export default async function StaffPage() {
-  const [rows, isAdmin] = await Promise.all([loadStaff(), resolveIsAdmin()]);
+  const [rows, viewer] = await Promise.all([loadStaff(), resolveViewer()]);
+  const { isAdmin, userId } = viewer;
 
   return (
     <>
@@ -65,7 +66,7 @@ export default async function StaffPage() {
         </div>
       )}
 
-      <StaffTable rows={rows} canEdit={isAdmin} />
+      <StaffTable rows={rows} canEdit={isAdmin} currentUserId={userId} />
     </>
   );
 }
