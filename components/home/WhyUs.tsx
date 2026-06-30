@@ -1,21 +1,22 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { whyUs } from '@/lib/site';
 import { Icon } from '@/components/ui/Icon';
 import { Section, SectionHeading } from '@/components/ui/Section';
 import { Container } from '@/components/ui/Container';
 import { AuroraBackdrop } from '@/components/effects/AuroraBackdrop';
 import { revealItem } from '@/components/ui/Reveal';
+import { useDictionary } from '@/components/providers/LocaleProvider';
 
 export function WhyUs() {
+  const w = useDictionary().home.why;
   return (
     <Section className="relative overflow-hidden">
       <AuroraBackdrop />
       <SectionHeading
-        eyebrow="Why pilgrims choose us"
-        title={<>A name families trust with their <span className="text-gradient">most important journey</span></>}
-        lead="For over two decades we have earned trust the only way that lasts — by treating every pilgrim like family and keeping every promise we make."
+        eyebrow={w.eyebrow}
+        title={<>{w.titleA}<span className="text-gradient">{w.titleHighlight}</span>{w.titleB}</>}
+        lead={w.lead}
       />
 
       <Container className="mt-14">
@@ -26,7 +27,7 @@ export function WhyUs() {
           variants={{ show: { transition: { staggerChildren: 0.07 } } }}
           className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {whyUs.map((item) => (
+          {w.items.map((item) => (
             <motion.div
               key={item.title}
               variants={revealItem}

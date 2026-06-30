@@ -4,8 +4,13 @@ import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/Reveal';
 import { contact } from '@/lib/site';
 import { whatsappLink } from '@/lib/utils';
+import { getLocale } from '@/lib/i18n-server';
+import { getDictionary } from '@/lib/dictionaries';
+import { localizedPath } from '@/lib/i18n';
 
 export function CTA() {
+  const locale = getLocale();
+  const c = getDictionary(locale).home.cta;
   return (
     <section className="relative py-20 sm:py-24">
       <Container>
@@ -23,30 +28,29 @@ export function CTA() {
           </div>
           <div className="relative mx-auto max-w-2xl">
             <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl balance">
-              Ready to begin your sacred journey?
+              {c.title}
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-base text-white/80 sm:text-lg">
-              Speak to a Hajj &amp; Umrah advisor today. Free consultation, honest pricing and a plan
-              tailored to you — with no obligation.
+              {c.lead}
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button href="/estimate" variant="gold" size="lg">
-                Get a Free Estimate <ArrowRight className="h-4 w-4" />
+              <Button href={localizedPath(locale, '/estimate')} variant="gold" size="lg">
+                {c.getEstimate} <ArrowRight className="h-4 w-4" />
               </Button>
               <Button
-                href={whatsappLink(contact.whatsapp, 'Assalamu alaikum! I would like a free Hajj/Umrah consultation.')}
+                href={whatsappLink(contact.whatsapp, c.whatsappMsg)}
                 external
                 variant="light"
                 size="lg"
               >
-                <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+                <MessageCircle className="h-4 w-4" /> {c.whatsapp}
               </Button>
             </div>
             <a
               href={`tel:${contact.phones[0].replace(/\s/g, '')}`}
               className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white/85 hover:text-white"
             >
-              <Phone className="h-4 w-4" /> Or call us directly: {contact.phones[0]}
+              <Phone className="h-4 w-4" /> {c.callDirect} {contact.phones[0]}
             </a>
           </div>
         </Reveal>
