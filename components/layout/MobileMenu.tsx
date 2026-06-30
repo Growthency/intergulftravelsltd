@@ -9,17 +9,24 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/brand/Logo';
 import { Icon } from '@/components/ui/Icon';
+import { useDictionary } from '@/components/providers/LocaleProvider';
+import { localizedPath, type Locale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 export function MobileMenu({
   open,
   onClose,
   items = navigation,
+  locale = 'bn',
+  navLabel = (item) => item.label,
 }: {
   open: boolean;
   onClose: () => void;
   items?: NavItem[];
+  locale?: Locale;
+  navLabel?: (item: NavItem) => string;
 }) {
+  const t = useDictionary();
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return (
@@ -40,7 +47,7 @@ export function MobileMenu({
             className="absolute right-0 top-0 flex h-full w-[88%] max-w-sm flex-col bg-sand-soft shadow-2xl dark:bg-ink"
           >
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
-              <Logo href="/" />
+              <Logo href={localizedPath(locale, '/')} />
               <button
                 onClick={onClose}
                 aria-label="Close menu"
@@ -59,7 +66,7 @@ export function MobileMenu({
                         onClick={() => setExpanded((e) => (e === item.label ? null : item.label))}
                         className="flex w-full items-center justify-between px-2 py-3.5 text-left font-display text-lg font-medium"
                       >
-                        {item.label}
+                        {navLabel(item)}
                         <ChevronDown
                           className={cn(
                             'h-5 w-5 text-brand-600 transition-transform',
@@ -79,7 +86,7 @@ export function MobileMenu({
                               {item.children.map((child) => (
                                 <Link
                                   key={child.href}
-                                  href={child.href}
+                                  href={localizedPath(locale, child.href)}
                                   onClick={onClose}
                                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[0.95rem] text-ink-muted hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-brand-900/30"
                                 >
@@ -102,11 +109,11 @@ export function MobileMenu({
                     </>
                   ) : (
                     <Link
-                      href={item.href}
+                      href={localizedPath(locale, item.href)}
                       onClick={onClose}
                       className="block px-2 py-3.5 font-display text-lg font-medium hover:text-brand-700"
                     >
-                      {item.label}
+                      {navLabel(item)}
                     </Link>
                   )}
                 </div>
@@ -114,8 +121,8 @@ export function MobileMenu({
             </nav>
 
             <div className="space-y-3 border-t border-border px-5 py-5">
-              <Button href="/estimate" variant="gold" size="md" className="w-full" onClick={onClose as never}>
-                Get Free Estimate
+              <Button href={localizedPath(locale, '/estimate')} variant="gold" size="md" className="w-full" onClick={onClose as never}>
+                {t.cta.getEstimate}
               </Button>
               <a
                 href={`tel:${contact.phones[0].replace(/\s/g, '')}`}

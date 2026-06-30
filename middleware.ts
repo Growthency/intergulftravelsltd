@@ -2,12 +2,28 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 /**
- * Refreshes the Supabase auth session cookie on every request so Server
- * Components always see a valid session. (Staff/admins sign in at /admin.)
+ * - Locale routing: Bangla is the default (no prefix); English lives under
+ *   /en. We strip the /en prefix internally and pass the active locale to
+ *   Server Components via the `x-locale` request header (the URL stays /en/*).
+ * - Refreshes the Supabase auth session cookie on every request.
  */
 export async function middleware(request: NextRequest) {
-  // Refresh Supabase session
-  let response = NextResponse.next({ request: { headers: request.headers } });
+  const { pathname } = request.nextUrl;
+  const isEn = pathname === '/en' || pathname.startsWith('/en/');
+  const locale = isEn ? 'en' : 'bn';
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-locale', locale);
+
+  const rewriteUrl = request.nextUrl.clone();
+  if (isEn) rewriteUrl.pathname = pathname === '/en' ? '/' : pathname.replace(/^\/en/, '');
+
+  const build = () =>
+    isEn
+      ? NextResponse.rewrite(rewriteUrl, { request: { headers: requestHeaders } })
+      : NextResponse.next({ request: { headers: requestHeaders } });
+
+  let response = build();
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -19,7 +35,7 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request: { headers: request.headers } });
+          response = build();
           cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
         },
       },

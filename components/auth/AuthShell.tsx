@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { ShieldCheck, BadgeCheck, Headset, Sparkles } from 'lucide-react';
 import { LogoMark } from '@/components/brand/Logo';
+import { LangToggle } from '@/components/layout/LangToggle';
 import { siteConfig } from '@/lib/site';
 import { cn } from '@/lib/utils';
 
@@ -121,6 +122,9 @@ export function AuthShell({
       {/* ------------------------------- Form side ------------------------------- */}
       <section className="relative flex flex-1 items-center justify-center px-5 py-10 sm:px-8 sm:py-14 lg:px-10">
         <div className="w-full max-w-md">
+          <div className="mb-5 flex justify-center lg:justify-end">
+            <LangToggle />
+          </div>
           <header className="mb-7 text-center sm:mb-8 lg:text-left">
             <span className="inline-flex items-center gap-2 rounded-full border border-brand-600/15 bg-brand-50 px-3.5 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-brand-700">
               <span className="h-1.5 w-1.5 rounded-full bg-gold-500" />

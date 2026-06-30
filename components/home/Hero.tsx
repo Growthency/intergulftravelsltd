@@ -7,8 +7,12 @@ import { Typewriter } from '@/components/effects/AnimatedHeadline';
 import { Counter } from '@/components/ui/Counter';
 import { WavyDivider } from '@/components/effects/WavyDivider';
 import { contact } from '@/lib/site';
+import { useDictionary, useLocale } from '@/components/providers/LocaleProvider';
+import { localizedPath } from '@/lib/i18n';
 
 export function Hero() {
+  const t = useDictionary();
+  const locale = useLocale();
   return (
     <section className="relative isolate overflow-hidden bg-brand-900 pb-28 pt-16 text-white sm:pt-20 lg:min-h-[92vh] lg:pb-36">
       {/* layered moving background */}
@@ -56,28 +60,24 @@ export function Hero() {
             transition={{ duration: 0.6 }}
             className="inline-flex items-center gap-2 rounded-full border border-gold-400/30 bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-gold-200 backdrop-blur"
           >
-            <ShieldCheck className="h-4 w-4" /> Hajj License No. 071 · Trusted since 2002
+            <ShieldCheck className="h-4 w-4" /> {t.hero.badge}
           </motion.div>
 
           <h1 className="mt-6 font-display text-4xl font-semibold leading-[1.06] tracking-tight sm:text-5xl lg:text-[3.6rem]">
-            <span className="block text-white/95">Your sacred journey to</span>
+            <span className="block text-white/95">{t.hero.titleTop}</span>
             <span className="mt-1 block">
-              <Typewriter
-                phrases={['the Kaaba', 'Makkah & Madinah', 'the Haramain', 'a lifetime']}
-              />
+              <Typewriter phrases={[...t.hero.phrases]} />
             </span>
-            <span className="mt-1 block text-white/95">begins with us.</span>
+            <span className="mt-1 block text-white/95">{t.hero.titleBottom}</span>
           </h1>
 
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg lg:mx-0">
-            Government-licensed Hajj &amp; Umrah from Bangladesh — direct flights, hotels steps from
-            the Haram, Bangla-speaking guides and honest, all-inclusive pricing. We carry your
-            journey so you can carry your prayers.
+            {t.hero.lead}
           </p>
 
           <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row lg:items-start lg:justify-start">
-            <Button href="/hajj/packages" variant="gold" size="lg">
-              Explore Packages <ArrowRight className="h-4 w-4" />
+            <Button href={localizedPath(locale, '/hajj/packages')} variant="gold" size="lg">
+              {t.cta.explorePackages} <ArrowRight className="h-4 w-4" />
             </Button>
             <Button href={`tel:${contact.phones[0].replace(/\s/g, '')}`} variant="light" size="lg">
               <Phone className="h-4 w-4" /> {contact.phones[0]}
@@ -87,9 +87,9 @@ export function Hero() {
           {/* stats */}
           <div className="mt-12 grid grid-cols-3 gap-6 border-t border-white/10 pt-7 lg:max-w-lg">
             {[
-              { to: 24, suffix: '+', label: 'Years of service' },
-              { to: 12000, suffix: '+', label: 'Pilgrims guided' },
-              { to: 40, suffix: '+', label: 'Airline partners' },
+              { to: 24, suffix: '+', label: t.hero.statYears },
+              { to: 12000, suffix: '+', label: t.hero.statPilgrims },
+              { to: 40, suffix: '+', label: t.hero.statAirlines },
             ].map((s) => (
               <div key={s.label}>
                 <div className="font-display text-3xl font-semibold text-gold-300 sm:text-4xl">
@@ -116,7 +116,7 @@ export function Hero() {
                 <Star key={i} className="h-4 w-4 fill-current" />
               ))}
             </div>
-            <div className="mt-1 text-sm font-semibold">4.9 / 5 · 12,000+ pilgrims</div>
+            <div className="mt-1 text-sm font-semibold">{t.hero.rating}</div>
           </motion.div>
 
           <motion.div
@@ -125,13 +125,13 @@ export function Hero() {
             className="absolute -bottom-2 -right-2 max-w-[15rem] rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-md"
           >
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gold-300">
-              <MapPin className="h-3.5 w-3.5" /> 2026 Season
+              <MapPin className="h-3.5 w-3.5" /> {t.hero.season}
             </div>
             <p className="mt-1 text-sm font-semibold leading-snug">
-              Hajj pre-registration &amp; Umrah booking is now open.
+              {t.hero.seasonNote}
             </p>
-            <a href="/estimate" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-gold-200 hover:text-gold-100">
-              Reserve your seat <ArrowRight className="h-3 w-3" />
+            <a href={localizedPath(locale, '/estimate')} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-gold-200 hover:text-gold-100">
+              {t.hero.reserve} <ArrowRight className="h-3 w-3" />
             </a>
           </motion.div>
         </div>

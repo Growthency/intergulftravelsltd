@@ -10,16 +10,39 @@ import { Button } from '@/components/ui/Button';
 import Image from 'next/image';
 import { SocialIcon } from '@/components/layout/SocialIcons';
 import { MobileMenu } from '@/components/layout/MobileMenu';
+import { LangToggle } from '@/components/layout/LangToggle';
 import { Icon } from '@/components/ui/Icon';
+import { useDictionary, useLocale } from '@/components/providers/LocaleProvider';
+import { localizedPath, stripLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+
+/** Map default nav hrefs → dictionary keys for translated top-level labels. */
+const NAV_KEY: Record<string, keyof ReturnType<typeof useDictionary>['nav']> = {
+  '/': 'home',
+  '/hajj': 'hajj',
+  '/umrah': 'umrah',
+  '/services': 'services',
+  '/branches': 'branches',
+  '/gallery': 'gallery',
+  '/blog': 'blog',
+  '/about': 'about',
+  '/contact': 'contact',
+};
 
 export function Navbar({ menu }: { menu?: NavItem[] }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const t = useDictionary();
+  const locale = useLocale();
+  const here = stripLocale(pathname || '/');
 
   // Use the admin-managed menu when present, otherwise the built-in default nav.
   const items = menu && menu.length ? menu : navigation;
+  const navLabel = (item: NavItem) => {
+    const key = NAV_KEY[item.href];
+    return key ? t.nav[key] : item.label;
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -40,10 +63,10 @@ export function Navbar({ menu }: { menu?: NavItem[] }) {
             <a href={`mailto:${contact.emails[0]}`} className="flex items-center gap-1.5 hover:text-gold-300">
               <Mail className="h-3.5 w-3.5" /> {contact.emails[0]}
             </a>
-            <span className="text-white/55">{contact.hours}</span>
+            <span className="text-white/55">{t.utility.hours}</span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-gold-300/90">License No. 071 · Member of HAAB &amp; ATAB</span>
+            <span className="text-gold-300/90">{t.utility.license}</span>
             <span className="h-3 w-px bg-white/20" />
             <div className="flex items-center gap-3">
               {social.map((s) => (
@@ -65,21 +88,21 @@ export function Navbar({ menu }: { menu?: NavItem[] }) {
         )}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3 sm:px-6 lg:px-8">
-          <Logo href="/" />
+          <Logo href={localizedPath(locale, '/')} />
 
           <nav className="hidden items-center gap-1 lg:flex">
             {items.map((item) => {
-              const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+              const active = here === item.href || (item.href !== '/' && here.startsWith(item.href));
               return (
-                <div key={item.label} className="group relative">
+                <div key={item.href} className="group relative">
                   <Link
-                    href={item.href}
+                    href={localizedPath(locale, item.href)}
                     className={cn(
                       'flex items-center gap-1 rounded-full px-3.5 py-2 text-[0.92rem] font-medium transition-colors',
                       active ? 'text-brand-700' : 'text-ink/80 hover:text-brand-700',
                     )}
                   >
-                    {item.label}
+                    {navLabel(item)}
                     {item.children && <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" />}
                   </Link>
 
@@ -89,7 +112,7 @@ export function Navbar({ menu }: { menu?: NavItem[] }) {
                         {item.children.map((child) => (
                           <Link
                             key={child.href}
-                            href={child.href}
+                            href={localizedPath(locale, child.href)}
                             className="group/item flex items-start gap-3 rounded-xl px-3 py-2.5 transition hover:bg-brand-50 dark:hover:bg-brand-900/30"
                           >
                             {child.image ? (
@@ -118,8 +141,9 @@ export function Navbar({ menu }: { menu?: NavItem[] }) {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Button href="/estimate" variant="gold" size="sm" className="hidden sm:inline-flex">
-              Get Free Estimate
+            <LangToggle />
+            <Button href={localizedPath(locale, '/estimate')} variant="gold" size="sm" className="hidden sm:inline-flex">
+              {t.cta.getEstimate}
             </Button>
             <button
               onClick={() => setOpen(true)}
@@ -132,7 +156,7 @@ export function Navbar({ menu }: { menu?: NavItem[] }) {
         </div>
       </header>
 
-      <MobileMenu open={open} onClose={() => setOpen(false)} items={items} />
+      <MobileMenu open={open} onClose={() => setOpen(false)} items={items} locale={locale} navLabel={navLabel} />
     </>
   );
 }

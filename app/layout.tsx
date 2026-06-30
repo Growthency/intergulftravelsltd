@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Fraunces } from 'next/font/google';
+import { Inter, Fraunces, Hind_Siliguri } from 'next/font/google';
 import { Toaster } from 'sonner';
 import { siteConfig } from '@/lib/site';
 import { getBaseUrl } from '@/lib/utils';
+import { getLocale } from '@/lib/i18n-server';
+import { LocaleProvider } from '@/components/providers/LocaleProvider';
 import './globals.css';
 
 const inter = Inter({
@@ -16,6 +18,14 @@ const fraunces = Fraunces({
   display: 'swap',
   weight: ['400', '500', '600', '700'],
   variable: '--font-display',
+});
+
+// Bengali typeface — used across the whole Bangla version.
+const hindSiliguri = Hind_Siliguri({
+  subsets: ['bengali'],
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-bengali',
 });
 
 /** Origin of the Supabase project (for image preconnect), if configured. */
@@ -89,8 +99,21 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = getLocale();
+  // On the Bangla version, point the sans + display font vars at the Bengali
+  // typeface so every existing `font-sans`/`font-display` class renders Bangla
+  // correctly — without touching individual components.
+  const fontOverride =
+    locale === 'bn'
+      ? ({ ['--font-sans']: 'var(--font-bengali)', ['--font-display']: 'var(--font-bengali)' } as React.CSSProperties)
+      : undefined;
+
   return (
-    <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
+    <html
+      lang={locale}
+      className={`${inter.variable} ${fraunces.variable} ${hindSiliguri.variable}`}
+      style={fontOverride}
+    >
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
         {supabaseOrigin && (
           <>
@@ -99,7 +122,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </>
         )}
         <link rel="preconnect" href="https://i.ytimg.com" crossOrigin="anonymous" />
-        {children}
+        <LocaleProvider locale={locale}>{children}</LocaleProvider>
         <Toaster
           position="top-center"
           toastOptions={{

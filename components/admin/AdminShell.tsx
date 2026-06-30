@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { LogoMark } from '@/components/brand/Logo';
 import { ConfirmHost } from '@/components/admin/confirm';
+import { LangToggle } from '@/components/layout/LangToggle';
 import { cn } from '@/lib/utils';
 
 type NavLink = { label: string; href: string; icon: LucideIcon };
@@ -170,6 +171,7 @@ export function AdminShell({
           </div>
 
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
+            <LangToggle />
             <Link
               href="/"
               target="_blank"

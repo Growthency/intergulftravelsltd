@@ -4,9 +4,14 @@ import { Logo } from '@/components/brand/Logo';
 import { SocialIcon } from '@/components/layout/SocialIcons';
 import { WavyDivider } from '@/components/effects/WavyDivider';
 import { footerLinks, contact, social, siteConfig, affiliations } from '@/lib/site';
+import { getLocale } from '@/lib/i18n-server';
+import { getDictionary } from '@/lib/dictionaries';
+import { localizedPath } from '@/lib/i18n';
 
 export function Footer() {
   const year = new Date().getFullYear();
+  const locale = getLocale();
+  const t = getDictionary(locale);
 
   return (
     <footer className="relative mt-24 overflow-hidden bg-brand-900 text-white/80">
@@ -18,9 +23,9 @@ export function Footer() {
         <div className="grid gap-12 lg:grid-cols-12">
           {/* brand */}
           <div className="lg:col-span-4">
-            <Logo href="/" variant="light" />
+            <Logo href={localizedPath(locale, '/')} variant="light" />
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-white/65">
-              {siteConfig.description}
+              {t.footer.description}
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               {affiliations.map((a) => (
@@ -47,11 +52,11 @@ export function Footer() {
 
           {/* help & support */}
           <div className="lg:col-span-2">
-            <h4 className="font-display text-base font-semibold text-white">Help &amp; Support</h4>
+            <h4 className="font-display text-base font-semibold text-white">{t.footer.helpSupport}</h4>
             <ul className="mt-5 space-y-3 text-sm">
               {footerLinks.helpSupport.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="text-white/65 transition hover:text-gold-300">
+                  <Link href={localizedPath(locale, l.href)} className="text-white/65 transition hover:text-gold-300">
                     {l.label}
                   </Link>
                 </li>
@@ -61,7 +66,7 @@ export function Footer() {
 
           {/* useful links */}
           <div className="lg:col-span-3">
-            <h4 className="font-display text-base font-semibold text-white">Useful Links</h4>
+            <h4 className="font-display text-base font-semibold text-white">{t.footer.usefulLinks}</h4>
             <ul className="mt-5 space-y-3 text-sm">
               {footerLinks.usefulLinks.map((l) => (
                 <li key={l.label}>
@@ -81,7 +86,7 @@ export function Footer() {
 
           {/* contact */}
           <div className="lg:col-span-3">
-            <h4 className="font-display text-base font-semibold text-white">Contact Us</h4>
+            <h4 className="font-display text-base font-semibold text-white">{t.footer.contactUs}</h4>
             <ul className="mt-5 space-y-4 text-sm">
               <li className="flex gap-3">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold-400" />
@@ -105,18 +110,18 @@ export function Footer() {
               </li>
               <li className="flex gap-3">
                 <Clock className="mt-0.5 h-4 w-4 shrink-0 text-gold-400" />
-                <span className="text-white/65">{contact.hours}</span>
+                <span className="text-white/65">{t.footer.hours}</span>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 text-xs text-white/50 sm:flex-row">
-          <p>© {year} {siteConfig.legalName} All rights reserved.</p>
+          <p>© {year} {siteConfig.legalName} {t.footer.rights}</p>
           <div className="flex items-center gap-5">
-            <Link href="/terms" className="hover:text-gold-300">Terms &amp; Conditions</Link>
-            <Link href="/privacy" className="hover:text-gold-300">Privacy Policy</Link>
-            <Link href="/sitemap.xml" className="hover:text-gold-300">Sitemap</Link>
+            <Link href={localizedPath(locale, '/terms')} className="hover:text-gold-300">{t.footer.terms}</Link>
+            <Link href={localizedPath(locale, '/privacy')} className="hover:text-gold-300">{t.footer.privacy}</Link>
+            <Link href="/sitemap.xml" className="hover:text-gold-300">{t.footer.sitemap}</Link>
           </div>
         </div>
       </div>
