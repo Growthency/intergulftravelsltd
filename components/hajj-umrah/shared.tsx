@@ -40,9 +40,11 @@ export function PackageCard({ pkg }: { pkg: Pkg }) {
         </span>
       )}
       <h3 className="font-display text-xl font-semibold text-ink dark:text-white">{name}</h3>
-      <div className="mt-1 flex items-center gap-1.5 text-sm text-ink-muted">
-        <Clock className="h-3.5 w-3.5" /> {duration}
-      </div>
+      {duration && (
+        <div className="mt-1 flex items-center gap-1.5 text-sm text-ink-muted">
+          <Clock className="h-3.5 w-3.5" /> {duration}
+        </div>
+      )}
       <div className="mt-5 flex items-end gap-2">
         <span className="font-display text-3xl font-semibold text-gradient">{pkg.price}</span>
         <span className="pb-1 text-xs text-ink-muted">{priceNote}</span>

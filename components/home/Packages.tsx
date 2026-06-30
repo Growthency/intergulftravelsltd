@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Clock, Star, ArrowRight } from 'lucide-react';
-import { packages } from '@/lib/site';
+import { type Pkg } from '@/lib/site';
 import { Section, SectionHeading } from '@/components/ui/Section';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
@@ -11,12 +11,11 @@ import { cn } from '@/lib/utils';
 import { useDictionary, useLocale } from '@/components/providers/LocaleProvider';
 import { localizedPath } from '@/lib/i18n';
 
-export function Packages() {
+export function Packages({ data }: { data: { hajj: Pkg[]; umrah: Pkg[] } }) {
   const t = useDictionary().home.packages;
   const locale = useLocale();
   const [tab, setTab] = useState<'hajj' | 'umrah'>('hajj');
-  const list = packages
-    .filter((p) => p.type === tab)
+  const list = data[tab]
     .map((p) => {
       const tr = t.items.find((it) => it.id === p.id);
       return {
@@ -93,9 +92,11 @@ export function Packages() {
                     </span>
                   )}
                   <h3 className="font-display text-xl font-semibold">{p.name}</h3>
-                  <div className="mt-1 flex items-center gap-1.5 text-sm text-white/60">
-                    <Clock className="h-3.5 w-3.5" /> {p.duration}
-                  </div>
+                  {p.duration && (
+                    <div className="mt-1 flex items-center gap-1.5 text-sm text-white/60">
+                      <Clock className="h-3.5 w-3.5" /> {p.duration}
+                    </div>
+                  )}
                   <div className="mt-5 flex items-end gap-2">
                     <span className="font-display text-3xl font-semibold text-gold-300">{p.price}</span>
                     <span className="pb-1 text-xs text-white/55">{p.priceNote}</span>

@@ -11,8 +11,10 @@ import { Moments } from '@/components/home/Moments';
 import { Affiliations } from '@/components/home/Affiliations';
 import { BlogPreview } from '@/components/home/BlogPreview';
 import { CTA } from '@/components/home/CTA';
+import { getSitePackages } from '@/lib/site-packages';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const sitePackages = await getSitePackages();
   return (
     <>
       <JsonLd data={[organizationSchema(), websiteSchema(), localBusinessSchema()]} />
@@ -20,7 +22,7 @@ export default function HomePage() {
       <TrustBar />
       <Services />
       <WhyUs />
-      <Packages />
+      <Packages data={sitePackages} />
       <Process />
       <Testimonials />
       <Moments />

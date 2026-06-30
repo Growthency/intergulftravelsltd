@@ -6,7 +6,7 @@ import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Accordion } from '@/components/ui/Accordion';
-import { packages } from '@/lib/site';
+import { getSitePackages } from '@/lib/site-packages';
 import { PackageCard, CtaBand } from '@/components/hajj-umrah/shared';
 import { getLocale } from '@/lib/i18n-server';
 import { localizedPath } from '@/lib/i18n';
@@ -19,13 +19,12 @@ export const metadata: Metadata = {
   alternates: { canonical: '/umrah/packages' },
 };
 
-const umrahPackages = packages.filter((p) => p.type === 'umrah');
-
 const bookingIcons = [CreditCard, CalendarClock, FileText, ShieldCheck];
 
-export default function UmrahPackagesPage() {
+export default async function UmrahPackagesPage() {
   const locale = getLocale();
   const t = getDict(locale);
+  const { umrah: umrahPackages } = await getSitePackages();
   const compareRows = t.packages.compareRows;
   const included = t.packages.included;
   const notIncluded = t.packages.notIncluded;
