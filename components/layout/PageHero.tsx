@@ -4,6 +4,9 @@ import { WavyDivider } from '@/components/effects/WavyDivider';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbSchema } from '@/lib/seo';
+import { getLocale } from '@/lib/i18n-server';
+import { getDictionary } from '@/lib/dictionaries';
+import { localizedPath } from '@/lib/i18n';
 
 /** Consistent inner-page banner (breadcrumb + eyebrow + title + lead). */
 export function PageHero({
@@ -17,6 +20,8 @@ export function PageHero({
   lead?: React.ReactNode;
   crumbs?: { label: string; href?: string }[];
 }) {
+  const locale = getLocale();
+  const nav = getDictionary(locale).nav;
   return (
     <section className="relative isolate overflow-hidden bg-brand-900 pb-24 pt-14 text-white sm:pt-16">
       <JsonLd
@@ -37,12 +42,12 @@ export function PageHero({
 
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
         <nav className="flex items-center gap-1.5 text-sm text-white/55">
-          <Link href="/" className="hover:text-gold-300">Home</Link>
+          <Link href={localizedPath(locale, '/')} className="hover:text-gold-300">{nav.home}</Link>
           {crumbs.map((c) => (
             <span key={c.label} className="flex items-center gap-1.5">
               <ChevronRight className="h-3.5 w-3.5" />
               {c.href ? (
-                <Link href={c.href} className="hover:text-gold-300">{c.label}</Link>
+                <Link href={localizedPath(locale, c.href)} className="hover:text-gold-300">{c.label}</Link>
               ) : (
                 <span className="text-gold-200">{c.label}</span>
               )}

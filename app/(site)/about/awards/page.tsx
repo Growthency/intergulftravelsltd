@@ -18,97 +18,39 @@ import { Button } from '@/components/ui/Button';
 import { Reveal, RevealGroup } from '@/components/ui/Reveal';
 import { AuroraBackdrop } from '@/components/effects/AuroraBackdrop';
 import { siteConfig } from '@/lib/site';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/about';
 
-export const metadata: Metadata = {
-  title: 'Awards & Affiliations — Recognition & Memberships',
-  description:
-    'Inter Gulf Travels Ltd holds Government Hajj License No. 071 and is a member of HAAB, ATAB and IATA-accredited — backed by two decades of recognition for trusted Hajj & Umrah service.',
-  alternates: { canonical: '/about/awards' },
-};
+export function generateMetadata(): Metadata {
+  const t = getDict(getLocale());
+  return {
+    title: t.awards.meta.title,
+    description: t.awards.meta.description,
+    alternates: { canonical: '/about/awards' },
+  };
+}
 
-const certifications = [
-  {
-    icon: ShieldCheck,
-    badge: 'No. 071',
-    title: 'Government Hajj Licence',
-    issuer: 'Ministry of Religious Affairs, Bangladesh',
-    body: 'Our official licence to operate Hajj programmes, issued and regulated by the Government of Bangladesh — the foundation of every journey we arrange.',
-    meaning: 'A guarantee that your pilgrimage is legitimate, regulated and fully accountable.',
-  },
-  {
-    icon: Building2,
-    badge: 'HAAB',
-    title: 'HAAB Membership',
-    issuer: 'Hajj Agencies Association of Bangladesh',
-    body: 'Active membership of the apex body for licensed Hajj agencies, binding us to its code of conduct and pilgrim-protection standards.',
-    meaning: 'Your interests are protected by an industry-wide framework of ethics and safeguards.',
-  },
-  {
-    icon: Handshake,
-    badge: 'ATAB',
-    title: 'ATAB Membership',
-    issuer: 'Association of Travel Agents of Bangladesh',
-    body: 'Recognised membership of the national travel-agent association, the platform that upholds professional standards across the industry.',
-    meaning: 'Confidence that you are dealing with an established, professionally accredited agency.',
-  },
-  {
-    icon: Plane,
-    badge: 'IATA',
-    title: 'IATA Accreditation',
-    issuer: 'International Air Transport Association',
-    body: 'Accreditation that allows us to issue worldwide air tickets directly across 40+ airlines, with verified, secure ticketing.',
-    meaning: 'Better fares, trusted routings and the assurance of an internationally recognised standard.',
-  },
-];
-
-const recognitions = [
-  {
-    icon: Trophy,
-    title: 'Two Decades of Trusted Service',
-    year: 'Since 2002',
-    body: 'Recognised within the Bangladeshi Hajj community for over twenty years of honest, reliable pilgrim service.',
-  },
-  {
-    icon: Star,
-    title: '4.9 / 5 Pilgrim Satisfaction',
-    year: 'Ongoing',
-    body: 'Consistently high ratings across thousands of pilgrim reviews — a reflection of care that families notice.',
-  },
-  {
-    icon: Award,
-    title: 'Excellence in Hajj Operations',
-    year: 'Industry standing',
-    body: 'Acknowledged among peers for meticulously organised Hajj group operations and on-ground support.',
-  },
-  {
-    icon: BadgeCheck,
-    title: '12,000+ Pilgrims Guided',
-    year: 'Milestone',
-    body: 'A milestone of trust — more than twelve thousand pilgrims have completed their journey with us.',
-  },
-];
-
-const trustBadges = [
-  'Government Licensed',
-  'HAAB Member',
-  'ATAB Member',
-  'IATA Accredited',
-  '100% Verified',
-  'Since 2002',
-];
+const certIcons = [ShieldCheck, Building2, Handshake, Plane];
+const recognitionIcons = [Trophy, Star, Award, BadgeCheck];
 
 export default function AwardsPage() {
+  const locale = getLocale();
+  const t = getDict(locale).awards;
+  const certifications = t.certifications.items.map((c, i) => ({ icon: certIcons[i], ...c }));
+  const recognitions = t.recognitions.items.map((r, i) => ({ icon: recognitionIcons[i], ...r }));
+  const trustBadges = t.trustBadges;
   return (
     <>
       <PageHero
-        eyebrow="Awards & Affiliations"
+        eyebrow={t.hero.eyebrow}
         title={
           <>
-            Recognition built on <span className="text-gradient-gold">two decades of trust</span>
+            {t.hero.titleA}<span className="text-gradient-gold">{t.hero.titleHighlight}</span>
           </>
         }
-        lead="Our credentials are more than badges on a wall — they are your assurance that the agency holding your sacred journey is licensed, accredited and accountable."
-        crumbs={[{ label: 'About Us', href: '/about' }, { label: 'Awards & Affiliations' }]}
+        lead={t.hero.lead}
+        crumbs={[{ label: t.hero.crumbAbout, href: localizedPath(locale, '/about') }, { label: t.hero.crumb }]}
       />
 
       {/* Trust badges strip */}
@@ -130,13 +72,13 @@ export default function AwardsPage() {
       {/* Certifications */}
       <Section className="bg-sand-soft !pt-6">
         <SectionHeading
-          eyebrow="Licences & accreditations"
+          eyebrow={t.certifications.eyebrow}
           title={
             <>
-              The credentials that <span className="text-gradient">protect you</span>
+              {t.certifications.titleA}<span className="text-gradient">{t.certifications.titleHighlight}</span>
             </>
           }
-          lead="Every certification below is a promise of legitimacy — and each one means something concrete for your peace of mind."
+          lead={t.certifications.lead}
         />
         <Container className="mt-14">
           <RevealGroup className="grid gap-5 sm:grid-cols-2">
@@ -159,7 +101,7 @@ export default function AwardsPage() {
                   <div className="mt-5 flex items-start gap-2 rounded-2xl border border-border bg-sand-soft p-4 dark:bg-brand-900/20">
                     <ScrollText className="mt-0.5 h-4 w-4 shrink-0 text-gold-500" />
                     <p className="text-sm font-medium text-ink dark:text-white/90">
-                      <span className="text-ink-muted">What it means for you: </span>
+                      <span className="text-ink-muted">{t.certifications.whatItMeans}</span>
                       {c.meaning}
                     </p>
                   </div>
@@ -174,13 +116,13 @@ export default function AwardsPage() {
       <Section className="relative overflow-hidden">
         <AuroraBackdrop />
         <SectionHeading
-          eyebrow="Recognition & milestones"
+          eyebrow={t.recognitions.eyebrow}
           title={
             <>
-              Honoured for <span className="text-gradient">service that lasts</span>
+              {t.recognitions.titleA}<span className="text-gradient">{t.recognitions.titleHighlight}</span>
             </>
           }
-          lead="The recognition we value most comes from the families who trust us — and the milestones we have reached together."
+          lead={t.recognitions.lead}
         />
         <Container className="mt-14">
           <RevealGroup className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -212,18 +154,17 @@ export default function AwardsPage() {
             </div>
             <div className="relative mx-auto max-w-2xl">
               <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-4xl balance">
-                Travel with a name you can verify and trust
+                {t.cta.title}
               </h2>
               <p className="mx-auto mt-5 max-w-xl text-base text-white/80 sm:text-lg">
-                {siteConfig.legalName} — {siteConfig.license}, member of HAAB &amp; ATAB. Begin your
-                journey with the reassurance of full government licensing.
+                {siteConfig.legalName} — {siteConfig.license}{t.cta.leadB}
               </p>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Button href="/contact" variant="gold" size="lg">
-                  Get in Touch <ArrowRight className="h-4 w-4" />
+                <Button href={localizedPath(locale, '/contact')} variant="gold" size="lg">
+                  {t.cta.getInTouch} <ArrowRight className="h-4 w-4" />
                 </Button>
-                <Button href="/about/associates" variant="light" size="lg">
-                  View Our Partners
+                <Button href={localizedPath(locale, '/about/associates')} variant="light" size="lg">
+                  {t.cta.viewPartners}
                 </Button>
               </div>
             </div>

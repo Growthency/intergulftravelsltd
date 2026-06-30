@@ -12,6 +12,9 @@ import {
 } from 'lucide-react';
 import { contact } from '@/lib/site';
 import { whatsappLink } from '@/lib/utils';
+import { localizedPath, type Locale } from '@/lib/i18n';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/services';
 import { PageHero } from '@/components/layout/PageHero';
 import { Section, SectionHeading } from '@/components/ui/Section';
 import { Container } from '@/components/ui/Container';
@@ -25,104 +28,48 @@ export const metadata: Metadata = {
   alternates: { canonical: '/services/hotel-booking' },
 };
 
-const haramHotels = [
-  {
-    city: 'Makkah',
-    tone: 'from-brand-700 to-brand-900',
-    headline: 'Steps from Masjid al-Haram',
-    points: [
-      'Properties within 300–800m of the Haram',
-      'Clock Tower & Ajyad area options',
-      'Rooms with Kaaba / Haram views on request',
-      'Walking distance — no shuttle needed',
-    ],
-  },
-  {
-    city: 'Madinah',
-    tone: 'from-gold-600 to-gold-800',
-    headline: 'Facing Masjid an-Nabawi',
-    points: [
-      'Central Markaziyah district hotels',
-      'A short walk to the Prophet’s Mosque',
-      'Quiet, family-friendly accommodation',
-      'Easy access to Ziyarat sites',
-    ],
-  },
-];
-
-const worldwideCities = [
-  { city: 'Dubai', country: 'UAE' },
-  { city: 'Istanbul', country: 'Turkey' },
-  { city: 'Kuala Lumpur', country: 'Malaysia' },
-  { city: 'Bangkok', country: 'Thailand' },
-  { city: 'Singapore', country: 'Singapore' },
-  { city: 'Male', country: 'Maldives' },
-  { city: 'Srinagar', country: 'Kashmir' },
-  { city: 'Doha', country: 'Qatar' },
-];
-
-const steps = [
-  {
-    icon: Search,
-    title: 'Tell us your stay',
-    body: 'Share your city, dates, budget and how close to the Haram you would like to be.',
-  },
-  {
-    icon: BedDouble,
-    title: 'We shortlist options',
-    body: 'We send verified properties with real distances, room types and honest rates — no surprises.',
-  },
-  {
-    icon: CalendarCheck,
-    title: 'Confirm & relax',
-    body: 'Choose your favourite, we secure the booking and you receive a confirmed voucher.',
-  },
-];
-
-const assurances = [
-  'Verified, inspected properties — not anonymous listings',
-  'Best-rate booking with no hidden booking fees',
-  'Group & family allotments for Hajj and Umrah parties',
-  'Flexible dates and room configurations',
-  'Combine with our flights, visa and transfers',
-  'Support reachable throughout your stay',
-];
+// Gradient tones paired by index with t.hotel.haramHotels (copy lives in the dictionary).
+const haramTones = ['from-brand-700 to-brand-900', 'from-gold-600 to-gold-800'];
+// Icons paired by index with t.hotel.steps.
+const stepIcons = [Search, BedDouble, CalendarCheck];
 
 export default function HotelBookingPage() {
+  const locale = getLocale();
+  const t = getDict(locale);
   return (
     <>
       <PageHero
-        eyebrow="Hotel Booking"
+        eyebrow={t.hotel.hero.eyebrow}
         title={
           <>
-            Rest just steps <span className="text-gradient-gold">from the Haram</span>
+            {t.hotel.hero.titleA} <span className="text-gradient-gold">{t.hotel.hero.titleB}</span>
           </>
         }
-        lead="Hand-picked hotels in Makkah and Madinah within walking distance of the Haramain — plus verified, best-rate stays across Dubai, Istanbul, Kuala Lumpur and the wider world."
-        crumbs={[{ label: 'Services', href: '/services' }, { label: 'Hotel Booking' }]}
+        lead={t.hotel.hero.lead}
+        crumbs={[{ label: t.hotel.hero.crumbServices, href: localizedPath(locale, '/services') }, { label: t.hotel.hero.crumb }]}
       />
 
       {/* Haramain hotels */}
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="Close to the Haramain"
+          eyebrow={t.hotel.haramHead.eyebrow}
           title={
             <>
-              Spend less time travelling, <span className="text-gradient">more in worship</span>
+              {t.hotel.haramHead.titleA} <span className="text-gradient">{t.hotel.haramHead.titleB}</span>
             </>
           }
-          lead="We secure accommodation as close to the holy mosques as your budget allows, so every prayer is just a short walk away."
+          lead={t.hotel.haramHead.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-5 md:grid-cols-2">
-            {haramHotels.map((h, i) => (
+            {t.hotel.haramHotels.map((h, i) => (
               <Reveal
                 key={h.city}
                 delay={i * 0.08}
                 as="article"
                 className="overflow-hidden rounded-3xl border border-border bg-card shadow-soft"
               >
-                <div className={`relative bg-gradient-to-br ${h.tone} px-7 py-10 text-white`}>
+                <div className={`relative bg-gradient-to-br ${haramTones[i]} px-7 py-10 text-white`}>
                   <div
                     aria-hidden
                     className="absolute inset-0 opacity-15"
@@ -134,7 +81,7 @@ export default function HotelBookingPage() {
                   />
                   <div className="relative flex items-center gap-2 text-gold-200">
                     <MapPin className="h-5 w-5" />
-                    <span className="text-sm font-semibold uppercase tracking-wider">{h.city}, Saudi Arabia</span>
+                    <span className="text-sm font-semibold uppercase tracking-wider">{h.city}, {t.hotel.cityCountry}</span>
                   </div>
                   <h3 className="relative mt-3 font-display text-2xl font-semibold sm:text-3xl">{h.headline}</h3>
                 </div>
@@ -154,17 +101,19 @@ export default function HotelBookingPage() {
       {/* How it works */}
       <Section>
         <SectionHeading
-          eyebrow="How it works"
+          eyebrow={t.hotel.stepsHead.eyebrow}
           title={
             <>
-              Booking a hotel, <span className="text-gradient">made effortless</span>
+              {t.hotel.stepsHead.titleA} <span className="text-gradient">{t.hotel.stepsHead.titleB}</span>
             </>
           }
-          lead="Three simple steps from your request to a confirmed voucher in your inbox."
+          lead={t.hotel.stepsHead.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-5 md:grid-cols-3">
-            {steps.map((s, i) => (
+            {t.hotel.steps.map((s, i) => {
+              const StepIcon = stepIcons[i];
+              return (
               <Reveal
                 key={s.title}
                 delay={i * 0.06}
@@ -172,14 +121,15 @@ export default function HotelBookingPage() {
               >
                 <div className="flex items-center gap-4">
                   <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-gradient text-white shadow-emerald">
-                    <s.icon className="h-6 w-6" />
+                    <StepIcon className="h-6 w-6" />
                   </span>
                   <span className="font-display text-4xl font-semibold text-brand-600/15">{`0${i + 1}`}</span>
                 </div>
                 <h3 className="mt-5 font-display text-lg font-semibold text-ink dark:text-white">{s.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-ink-muted">{s.body}</p>
               </Reveal>
-            ))}
+              );
+            })}
           </div>
         </Container>
       </Section>
@@ -190,17 +140,16 @@ export default function HotelBookingPage() {
           <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
             <Reveal>
               <span className="inline-flex items-center gap-2 rounded-full border border-brand-600/15 bg-brand-50 px-3.5 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-brand-700 dark:border-brand-400/20 dark:bg-brand-900/30 dark:text-brand-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-gold-500" /> Worldwide hotels
+                <span className="h-1.5 w-1.5 rounded-full bg-gold-500" /> {t.hotel.worldwideBadge}
               </span>
               <h2 className="mt-5 font-display text-3xl font-semibold leading-tight text-ink dark:text-white sm:text-4xl">
-                Quality stays well beyond the Kingdom
+                {t.hotel.worldwideTitle}
               </h2>
               <p className="mt-4 text-base leading-relaxed text-ink-muted">
-                Travelling onward or planning a holiday? We book trusted hotels across the destinations our clients
-                love most.
+                {t.hotel.worldwideLead}
               </p>
               <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-2">
-                {worldwideCities.map((c) => (
+                {t.hotel.worldwideCities.map((c) => (
                   <div
                     key={c.city}
                     className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-soft"
@@ -219,17 +168,16 @@ export default function HotelBookingPage() {
 
             <Reveal delay={0.1}>
               <span className="inline-flex items-center gap-2 rounded-full border border-brand-600/15 bg-brand-50 px-3.5 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-brand-700 dark:border-brand-400/20 dark:bg-brand-900/30 dark:text-brand-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-gold-500" /> Our assurance
+                <span className="h-1.5 w-1.5 rounded-full bg-gold-500" /> {t.hotel.assuranceBadge}
               </span>
               <h2 className="mt-5 font-display text-3xl font-semibold leading-tight text-ink dark:text-white sm:text-4xl">
-                Every booking, honestly handled
+                {t.hotel.assuranceTitle}
               </h2>
               <p className="mt-4 text-base leading-relaxed text-ink-muted">
-                We treat your accommodation the way we would arrange our own family&apos;s — verified, fairly priced
-                and exactly as described.
+                {t.hotel.assuranceLead}
               </p>
               <ul className="mt-7 space-y-3">
-                {assurances.map((a) => (
+                {t.hotel.assurances.map((a) => (
                   <li
                     key={a}
                     className="flex items-start gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-sm text-ink/85 shadow-soft dark:text-white/85"
@@ -244,22 +192,28 @@ export default function HotelBookingPage() {
       </Section>
 
       <ServiceCTA
-        heading="Need a hotel near the Haram?"
-        body="Share your city, dates and budget. We will send verified options with real distances and our best rates."
-        waMessage="Assalamu alaikum! I would like help booking a hotel near the Haram."
+        locale={locale}
+        heading={t.hotel.ctaHeading}
+        body={t.hotel.ctaBody}
+        waMessage={t.hotel.ctaWa}
+        cta={t.cta}
       />
     </>
   );
 }
 
 function ServiceCTA({
+  locale,
   heading,
   body,
   waMessage,
+  cta,
 }: {
+  locale: Locale;
   heading: string;
   body: string;
   waMessage: string;
+  cta: { estimate: string; whatsapp: string; callPrefix: string };
 }) {
   return (
     <Section className="pt-0">
@@ -273,18 +227,18 @@ function ServiceCTA({
             <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-4xl balance">{heading}</h2>
             <p className="mx-auto mt-5 max-w-xl text-base text-white/80 sm:text-lg">{body}</p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button href="/estimate" variant="gold" size="lg">
-                Get a Free Estimate <ArrowRight className="h-4 w-4" />
+              <Button href={localizedPath(locale, '/estimate')} variant="gold" size="lg">
+                {cta.estimate} <ArrowRight className="h-4 w-4" />
               </Button>
               <Button href={whatsappLink(contact.whatsapp, waMessage)} external variant="light" size="lg">
-                <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+                <MessageCircle className="h-4 w-4" /> {cta.whatsapp}
               </Button>
             </div>
             <a
               href={`tel:${contact.phones[0].replace(/\s/g, '')}`}
               className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white/85 hover:text-white"
             >
-              <Phone className="h-4 w-4" /> Or call us directly: {contact.phones[0]}
+              <Phone className="h-4 w-4" /> {cta.callPrefix} {contact.phones[0]}
             </a>
           </div>
         </Reveal>

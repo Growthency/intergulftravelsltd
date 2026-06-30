@@ -4,6 +4,8 @@ import { getAffiliations, type Affiliation } from '@/lib/affiliations';
 import { Section, SectionHeading } from '@/components/ui/Section';
 import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
+import { getLocale } from '@/lib/i18n-server';
+import { getDictionary } from '@/lib/dictionaries';
 
 /* ------------------------------------------------------------------ *
  *  Our Affiliations — public home section.
@@ -20,7 +22,7 @@ function initials(name: string) {
   return letters.join('').toUpperCase() || name.slice(0, 2).toUpperCase();
 }
 
-function PartnerCard({ partner, index }: { partner: Affiliation; index: number }) {
+function PartnerCard({ partner, index, visitLabel }: { partner: Affiliation; index: number; visitLabel: string }) {
   const inner = (
     <div className="group flex h-28 w-full items-center justify-center rounded-2xl border border-border bg-white p-5 shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:border-gold-400/40 hover:shadow-gold sm:h-32 dark:bg-white">
       {partner.logo_url ? (
@@ -53,7 +55,7 @@ function PartnerCard({ partner, index }: { partner: Affiliation; index: number }
           href={partner.website_url}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Visit ${partner.name}`}
+          aria-label={`${visitLabel} ${partner.name}`}
           className="block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand-600/40 focus-visible:ring-offset-2"
         >
           {inner}
@@ -70,11 +72,13 @@ function PartnerBlock({
   title,
   subtitle,
   partners,
+  visitLabel,
 }: {
   icon: React.ReactNode;
   title: string;
   subtitle: string;
   partners: Affiliation[];
+  visitLabel: string;
 }) {
   if (partners.length === 0) return null;
 
@@ -94,7 +98,7 @@ function PartnerBlock({
 
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {partners.map((partner, i) => (
-          <PartnerCard key={partner.id} partner={partner} index={i} />
+          <PartnerCard key={partner.id} partner={partner} index={i} visitLabel={visitLabel} />
         ))}
       </div>
     </div>
@@ -102,6 +106,7 @@ function PartnerBlock({
 }
 
 export async function Affiliations() {
+  const t = getDictionary(getLocale()).home.affiliations;
   const affiliations = await getAffiliations();
   const flight = affiliations.filter((a) => a.category === 'flight');
   const hotel = affiliations.filter((a) => a.category === 'hotel');
@@ -111,27 +116,29 @@ export async function Affiliations() {
   return (
     <Section className="relative overflow-hidden bg-muted/40">
       <SectionHeading
-        eyebrow="Our Affiliations"
+        eyebrow={t.eyebrow}
         title={
           <>
-            Trusted airline &amp; hotel <span className="text-gradient">partners</span>
+            {t.titleA}<span className="text-gradient">{t.titleHighlight}</span>
           </>
         }
-        lead="We work hand in hand with the world's leading airlines and Makkah &amp; Madinah hotels to give every pilgrim a seamless, comfortable journey."
+        lead={t.lead}
       />
 
       <Container className="mt-14 space-y-14">
         <PartnerBlock
           icon={<Plane className="h-6 w-6" />}
-          title="Airlines & Flight Partners"
-          subtitle="Reliable carriers for a smooth journey to the Holy Land."
+          title={t.flightTitle}
+          subtitle={t.flightSubtitle}
           partners={flight}
+          visitLabel={t.visit}
         />
         <PartnerBlock
           icon={<BedDouble className="h-6 w-6" />}
-          title="Hotel Partners"
-          subtitle="Comfortable stays close to the Haram in Makkah & Madinah."
+          title={t.hotelTitle}
+          subtitle={t.hotelSubtitle}
           partners={hotel}
+          visitLabel={t.visit}
         />
       </Container>
     </Section>

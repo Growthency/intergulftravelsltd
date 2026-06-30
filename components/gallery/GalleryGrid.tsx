@@ -7,6 +7,8 @@ import Image from 'next/image';
 import type { GalleryImage } from '@/lib/gallery';
 import { blurFor } from '@/lib/blur';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/gallery';
 
 type Category = 'makkah' | 'madinah' | 'pilgrims' | 'training' | 'ziyarat' | 'tours';
 
@@ -22,15 +24,7 @@ type Tile = {
   fit?: 'cover' | 'contain';
 };
 
-const categories: { id: Category | 'all'; label: string }[] = [
-  { id: 'all', label: 'All moments' },
-  { id: 'makkah', label: 'Makkah' },
-  { id: 'madinah', label: 'Madinah' },
-  { id: 'pilgrims', label: 'Our Pilgrims' },
-  { id: 'ziyarat', label: 'Ziyarat' },
-  { id: 'training', label: 'Training & Events' },
-  { id: 'tours', label: 'Tours' },
-];
+const categoryIds: (Category | 'all')[] = ['all', 'makkah', 'madinah', 'pilgrims', 'ziyarat', 'training', 'tours'];
 
 const iconMap = {
   kaaba: Landmark,
@@ -231,10 +225,10 @@ const CATEGORY_MAP: Record<string, Category> = {
 };
 
 /** Turn an admin-uploaded gallery row into a real-photo tile. */
-function dbToTile(g: GalleryImage): Tile {
+function dbToTile(g: GalleryImage, fallbackLabel: string): Tile {
   const key = (g.category ?? '').toLowerCase().trim();
   const category = CATEGORY_MAP[key] ?? 'pilgrims';
-  const label = g.category ? g.category.charAt(0).toUpperCase() + g.category.slice(1) : 'Inter Gulf Travels';
+  const label = g.category ? g.category.charAt(0).toUpperCase() + g.category.slice(1) : fallbackLabel;
   return {
     caption: g.title,
     location: label,
@@ -247,10 +241,20 @@ function dbToTile(g: GalleryImage): Tile {
 }
 
 export function GalleryGrid({ extra = [] }: { extra?: GalleryImage[] }) {
+  const t = getDict(useLocale());
   const [active, setActive] = useState<Category | 'all'>('all');
 
+  // Localized copy of the built-in tiles (text only; metadata unchanged).
+  const localizedTiles = useMemo<Tile[]>(
+    () => tiles.map((tile, i) => ({ ...tile, caption: t.tiles[i].caption, location: t.tiles[i].location })),
+    [t],
+  );
+
   // Admin-curated DB images first, then the built-in curated tiles.
-  const allTiles = useMemo(() => [...extra.map(dbToTile), ...tiles], [extra]);
+  const allTiles = useMemo(
+    () => [...extra.map((g) => dbToTile(g, t.dbFallbackLocation)), ...localizedTiles],
+    [extra, localizedTiles, t.dbFallbackLocation],
+  );
 
   const visible = useMemo(
     () => (active === 'all' ? allTiles : allTiles.filter((t) => t.category === active)),
@@ -261,12 +265,12 @@ export function GalleryGrid({ extra = [] }: { extra?: GalleryImage[] }) {
     <div>
       {/* Filter chips */}
       <div className="mb-10 flex flex-wrap justify-center gap-2.5">
-        {categories.map((c) => {
-          const isActive = active === c.id;
+        {categoryIds.map((id) => {
+          const isActive = active === id;
           return (
             <button
-              key={c.id}
-              onClick={() => setActive(c.id)}
+              key={id}
+              onClick={() => setActive(id)}
               aria-pressed={isActive}
               className={cn(
                 'rounded-full border px-4 py-2 text-sm font-semibold transition-all duration-300',
@@ -275,7 +279,7 @@ export function GalleryGrid({ extra = [] }: { extra?: GalleryImage[] }) {
                   : 'border-border bg-card text-ink-muted hover:border-brand-600/40 hover:text-brand-700 dark:hover:text-brand-200',
               )}
             >
-              {c.label}
+              {t.categories[id]}
             </button>
           );
         })}
@@ -361,7 +365,7 @@ export function GalleryGrid({ extra = [] }: { extra?: GalleryImage[] }) {
       </motion.div>
 
       {visible.length === 0 && (
-        <p className="py-16 text-center text-ink-muted">No moments in this category yet — check back soon.</p>
+        <p className="py-16 text-center text-ink-muted">{t.emptyState}</p>
       )}
     </div>
   );

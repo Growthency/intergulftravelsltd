@@ -12,25 +12,29 @@ import { BlogSearchBox } from '@/components/blog/BlogSearchBox';
 import { Pagination } from '@/components/blog/Pagination';
 import { cn, formatDate } from '@/lib/utils';
 import { siteConfig } from '@/lib/site';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/blog';
 
-export const metadata: Metadata = {
-  title: 'Blog — Hajj, Umrah & Travel Journal',
-  description:
-    'Guides, checklists and travel tips from Inter Gulf Travels Ltd — a government-licensed Hajj & Umrah agency in Dhaka. Practical advice to help you prepare for the journey of a lifetime.',
-  alternates: { canonical: '/blog' },
-  openGraph: {
-    title: `Our Journal · ${siteConfig.name}`,
-    description:
-      'Hajj & Umrah guides, Saudi visa help and family travel inspiration from Bangladesh’s trusted pilgrimage specialists.',
-    url: '/blog',
-    type: 'website',
-  },
-};
+export function generateMetadata(): Metadata {
+  const t = getDict(getLocale());
+  return {
+    title: t.meta.title,
+    description: t.meta.description,
+    alternates: { canonical: '/blog' },
+    openGraph: {
+      title: `${t.meta.ogTitle} · ${siteConfig.name}`,
+      description: t.meta.ogDescription,
+      url: '/blog',
+      type: 'website',
+    },
+  };
+}
 
-const tabs = [
-  { label: 'All Articles', value: 'all' },
-  { label: 'Hajj & Umrah', value: 'hajj-umrah' },
-  { label: 'Travel & Tips', value: 'others' },
+const tabValues = [
+  { key: 'all' as const, value: 'all' },
+  { key: 'hajjUmrah' as const, value: 'hajj-umrah' },
+  { key: 'others' as const, value: 'others' },
 ] as const;
 
 const FIRST_PAGE_GRID = 6; // page 1: featured + 6 = 7
@@ -41,8 +45,10 @@ export default async function BlogPage({
 }: {
   searchParams?: { category?: string; page?: string; search?: string };
 }) {
+  const locale = getLocale();
+  const t = getDict(locale);
   const category = searchParams?.category ?? 'all';
-  const activeCategory = tabs.some((t) => t.value === category) ? category : 'all';
+  const activeCategory = tabValues.some((tab) => tab.value === category) ? category : 'all';
   const search = (searchParams?.search ?? '').trim();
   const searching = search.length > 0;
   const page = Math.max(1, Number.parseInt(searchParams?.page ?? '1', 10) || 1);
@@ -82,20 +88,20 @@ export default async function BlogPage({
     if (search) sp.set('search', search);
     if (p > 1) sp.set('page', String(p));
     const qs = sp.toString();
-    return qs ? `/blog?${qs}` : '/blog';
+    return localizedPath(locale, qs ? `/blog?${qs}` : '/blog');
   };
 
   return (
     <>
       <PageHero
-        eyebrow="Our Journal"
+        eyebrow={t.hero.eyebrow}
         title={
           <>
-            Guides, reflections &amp; <span className="text-gradient-gold">travel wisdom</span>
+            {t.hero.titleA}<span className="text-gradient-gold">{t.hero.titleHighlight}</span>
           </>
         }
-        lead="Practical advice for pilgrims and travellers — from Hajj preparation and Umrah guides to Saudi visas and family holidays you can book from Dhaka."
-        crumbs={[{ label: 'Blog' }]}
+        lead={t.hero.lead}
+        crumbs={[{ label: t.hero.crumb }]}
       />
 
       {/* Featured article (page 1, unfiltered) */}
@@ -104,7 +110,7 @@ export default async function BlogPage({
           <Container>
             <Reveal>
               <Link
-                href={`/blog/${featured.slug}`}
+                href={localizedPath(locale, `/blog/${featured.slug}`)}
                 className="group grid overflow-hidden rounded-[2rem] border border-border bg-card shadow-soft transition-all duration-300 hover:shadow-emerald lg:grid-cols-2"
               >
                 <div className="relative min-h-[16rem] overflow-hidden bg-brand-950 lg:min-h-full">
@@ -118,7 +124,7 @@ export default async function BlogPage({
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                   <div className="absolute left-5 top-5 inline-flex items-center gap-1.5 rounded-full bg-gold-gradient px-3.5 py-1.5 text-[0.7rem] font-bold uppercase tracking-wide text-brand-900 shadow-gold">
-                    Featured
+                    {t.featured.badge}
                   </div>
                 </div>
 
@@ -137,10 +143,10 @@ export default async function BlogPage({
                     <span className="inline-flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5" /> {featured.readTime}
                     </span>
-                    <span>By {featured.author}</span>
+                    <span>{t.featured.by} {featured.author}</span>
                   </div>
                   <span className="mt-7 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700">
-                    Read the full article
+                    {t.featured.readFull}
                     <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                   </span>
                 </div>
@@ -154,9 +160,12 @@ export default async function BlogPage({
       <section className="relative py-16 sm:py-20">
         <Container>
           <Reveal className="mb-10 flex flex-wrap items-center justify-center gap-2.5">
-            {tabs.map((tab) => {
+            {tabValues.map((tab) => {
               const isActive = activeCategory === tab.value;
-              const href = tab.value === 'all' ? '/blog' : `/blog?category=${tab.value}`;
+              const href = localizedPath(
+                locale,
+                tab.value === 'all' ? '/blog' : `/blog?category=${tab.value}`,
+              );
               return (
                 <Link
                   key={tab.value}
@@ -169,7 +178,7 @@ export default async function BlogPage({
                       : 'border-border bg-card text-ink-muted hover:border-brand-600/40 hover:text-brand-700',
                   )}
                 >
-                  {tab.label}
+                  {t.tabs[tab.key]}
                 </Link>
               );
             })}
@@ -181,7 +190,8 @@ export default async function BlogPage({
             <>
               {searching && (
                 <p className="mb-8 text-center text-sm text-ink-muted">
-                  {matches.length} result{matches.length === 1 ? '' : 's'} for “{search}”
+                  {matches.length}{' '}
+                  {matches.length === 1 ? t.list.resultsSingular : t.list.resultsPlural} “{search}”
                 </p>
               )}
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -195,9 +205,7 @@ export default async function BlogPage({
             </>
           ) : (
             <p className="py-16 text-center text-ink-muted">
-              {searching
-                ? `No articles match “${search}”. Try a different keyword.`
-                : 'No articles in this category yet — please check back soon.'}
+              {searching ? t.list.emptySearch(search) : t.list.emptyCategory}
             </p>
           )}
         </Container>
@@ -214,21 +222,21 @@ export default async function BlogPage({
             <div className="relative flex flex-col items-center gap-6 text-center lg:flex-row lg:justify-between lg:text-left">
               <div className="max-w-xl">
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-gold-200">
-                  <Mail className="h-3.5 w-3.5" /> Plan your journey
+                  <Mail className="h-3.5 w-3.5" /> {t.cta.eyebrow}
                 </span>
                 <h2 className="mt-4 font-display text-2xl font-semibold leading-tight text-white sm:text-3xl">
-                  Have a question about Hajj, Umrah or travel?
+                  {t.cta.heading}
                 </h2>
                 <p className="mt-3 text-base text-white/80">
-                  Our advisors answer honestly, with no obligation. Reach out and we’ll help you plan the right journey for your dates and budget.
+                  {t.cta.body}
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button href="/contact" variant="gold" size="lg">
-                  Talk to an advisor <ArrowRight className="h-4 w-4" />
+                <Button href={localizedPath(locale, '/contact')} variant="gold" size="lg">
+                  {t.cta.advisor} <ArrowRight className="h-4 w-4" />
                 </Button>
-                <Button href="/estimate" variant="light" size="lg">
-                  Get a free estimate
+                <Button href={localizedPath(locale, '/estimate')} variant="light" size="lg">
+                  {t.cta.estimate}
                 </Button>
               </div>
             </div>

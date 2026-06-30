@@ -8,56 +8,20 @@ import { Reveal, RevealGroup } from '@/components/ui/Reveal';
 import { AuroraBackdrop } from '@/components/effects/AuroraBackdrop';
 import { testimonials } from '@/lib/site';
 import { cn } from '@/lib/utils';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/about';
 
-export const metadata: Metadata = {
-  title: 'Customer Reviews — Pilgrim Experiences',
-  description:
-    'Read honest reviews from pilgrims who travelled for Hajj & Umrah with Inter Gulf Travels Ltd. Rated 4.9/5 across thousands of journeys since 2002.',
-  alternates: { canonical: '/about/reviews' },
-};
+export function generateMetadata(): Metadata {
+  const t = getDict(getLocale());
+  return {
+    title: t.reviews.meta.title,
+    description: t.reviews.meta.description,
+    alternates: { canonical: '/about/reviews' },
+  };
+}
 
 type Review = { name: string; role: string; quote: string; rating: number };
-
-/** lib/site testimonials + additional verified pilgrim reviews. */
-const extraReviews: Review[] = [
-  {
-    name: 'Shahidul Islam',
-    role: 'Economy Hajj 2023 · Narayanganj',
-    quote:
-      'I was worried the economy package would cut corners, but everything was exactly as described. The shuttle to the Haram was punctual and our muallim was knowledgeable and kind. Fair price, honest service.',
-    rating: 5,
-  },
-  {
-    name: 'Rokeya Sultana',
-    role: 'Umrah · Khulna',
-    quote:
-      'My husband and I performed Umrah for the first time and Inter Gulf made it effortless. The visa came on time, the hotel in Madinah was a two-minute walk from the mosque. We will travel with them again, in sha Allah.',
-    rating: 5,
-  },
-  {
-    name: 'Golam Mostafa',
-    role: 'Group Hajj 2022 · Dhaka',
-    quote:
-      'I have performed Hajj twice and this was by far the most organised. The pre-Hajj training prepared everyone in our group, and the office kept our families updated back home. Truly professional from start to finish.',
-    rating: 5,
-  },
-  {
-    name: 'Tahmina Akter',
-    role: 'Family Umrah · Comilla',
-    quote:
-      'We travelled with three children and my elderly father. The connecting rooms and wheelchair assistance they arranged made all the difference. The whole team treated us with so much patience. JazakAllah khair.',
-    rating: 5,
-  },
-  {
-    name: 'Mizanur Rahman',
-    role: 'Premium Hajj 2024 · Gazipur',
-    quote:
-      'Worth every taka. The hotel faced the Haram, the itinerary was short and comfortable, and our guide anticipated everything. After years of hearing good things about Inter Gulf, they exceeded my expectations.',
-    rating: 5,
-  },
-];
-
-const allReviews: Review[] = [...testimonials, ...extraReviews];
 
 const ratingBreakdown = [
   { stars: 5, pct: 94 },
@@ -67,15 +31,11 @@ const ratingBreakdown = [
   { stars: 1, pct: 0 },
 ];
 
-const highlights = [
-  { icon: Repeat, value: '8 in 10', label: 'pilgrims return or refer family' },
-  { icon: ThumbsUp, value: '98%', label: 'would recommend us to others' },
-  { icon: ShieldCheck, value: '12,000+', label: 'pilgrims served since 2002' },
-];
+const highlightIcons = [Repeat, ThumbsUp, ShieldCheck];
 
-function Stars({ rating, className }: { rating: number; className?: string }) {
+function Stars({ rating, ariaLabel, className }: { rating: number; ariaLabel: string; className?: string }) {
   return (
-    <div className={cn('flex items-center gap-0.5 text-gold-500', className)} aria-label={`${rating} out of 5 stars`}>
+    <div className={cn('flex items-center gap-0.5 text-gold-500', className)} aria-label={ariaLabel}>
       {Array.from({ length: 5 }).map((_, i) => (
         <Star key={i} className={cn('h-4 w-4', i < rating ? 'fill-current' : 'fill-none text-gold-500/30')} />
       ))}
@@ -91,17 +51,26 @@ const avatarGradients = [
 ];
 
 export default function ReviewsPage() {
+  const locale = getLocale();
+  const t = getDict(locale).reviews;
+  // Translate the curated lib/site testimonials via the dict, keyed by name.
+  const siteReviews: Review[] = testimonials.map((tt) => {
+    const tr = t.siteTestimonials[tt.name as keyof typeof t.siteTestimonials];
+    return tr ? { ...tt, role: tr.role, quote: tr.quote } : tt;
+  });
+  const allReviews: Review[] = [...siteReviews, ...t.extraReviews];
+  const highlights = t.highlights.map((h, i) => ({ icon: highlightIcons[i], ...h }));
   return (
     <>
       <PageHero
-        eyebrow="Customer Reviews"
+        eyebrow={t.hero.eyebrow}
         title={
           <>
-            What pilgrims say after travelling <span className="text-gradient-gold">with us</span>
+            {t.hero.titleA}<span className="text-gradient-gold">{t.hero.titleHighlight}</span>
           </>
         }
-        lead="Trust isn’t something we claim — it’s something thousands of families have given us over two decades. Here is what they have to say."
-        crumbs={[{ label: 'About Us', href: '/about' }, { label: 'Customer Reviews' }]}
+        lead={t.hero.lead}
+        crumbs={[{ label: t.hero.crumbAbout, href: localizedPath(locale, '/about') }, { label: t.hero.crumb }]}
       />
 
       {/* Rating summary */}
@@ -112,15 +81,15 @@ export default function ReviewsPage() {
             <div className="grid gap-0 md:grid-cols-[0.8fr_1.2fr]">
               {/* score */}
               <div className="flex flex-col items-center justify-center gap-3 bg-brand-gradient p-10 text-center text-white">
-                <div className="font-display text-6xl font-semibold text-gold-300">4.9</div>
-                <Stars rating={5} className="text-gold-300" />
+                <div className="font-display text-6xl font-semibold text-gold-300">{t.summary.score}</div>
+                <Stars rating={5} ariaLabel={`5 ${t.starsAria}`} className="text-gold-300" />
                 <p className="text-sm text-white/80">
-                  Average rating from <span className="font-semibold text-white">2,400+</span> pilgrim reviews
+                  {t.summary.averageA}<span className="font-semibold text-white">{t.summary.averageCount}</span>{t.summary.averageB}
                 </p>
               </div>
               {/* breakdown */}
               <div className="p-8 sm:p-10">
-                <h2 className="font-display text-xl font-semibold text-ink dark:text-white">Rating breakdown</h2>
+                <h2 className="font-display text-xl font-semibold text-ink dark:text-white">{t.summary.breakdownTitle}</h2>
                 <div className="mt-5 space-y-3">
                   {ratingBreakdown.map((r) => (
                     <div key={r.stars} className="flex items-center gap-3">
@@ -163,22 +132,22 @@ export default function ReviewsPage() {
       {/* Reviews grid */}
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="Pilgrim stories"
+          eyebrow={t.grid.eyebrow}
           title={
             <>
-              Honest words from <span className="text-gradient">real journeys</span>
+              {t.grid.titleA}<span className="text-gradient">{t.grid.titleHighlight}</span>
             </>
           }
-          lead="Every review below is from a pilgrim who placed their sacred journey in our hands."
+          lead={t.grid.lead}
         />
         <Container className="mt-12">
           <RevealGroup className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {allReviews.map((t, i) => (
-              <Reveal key={t.name + i} className="h-full">
+            {allReviews.map((r, i) => (
+              <Reveal key={r.name + i} className="h-full">
                 <article className="relative flex h-full flex-col rounded-3xl border border-border bg-card p-7 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-gold-400/40 hover:shadow-gold">
                   <Quote className="h-8 w-8 text-gold-400/40" />
-                  <Stars rating={t.rating} className="mt-3" />
-                  <p className="mt-4 flex-1 text-sm leading-relaxed text-ink dark:text-white/90">“{t.quote}”</p>
+                  <Stars rating={r.rating} ariaLabel={`${r.rating} ${t.starsAria}`} className="mt-3" />
+                  <p className="mt-4 flex-1 text-sm leading-relaxed text-ink dark:text-white/90">“{r.quote}”</p>
                   <div className="mt-6 flex items-center gap-3 border-t border-border pt-5">
                     <span
                       className={cn(
@@ -187,11 +156,11 @@ export default function ReviewsPage() {
                       )}
                       aria-hidden
                     >
-                      {t.name.charAt(0)}
+                      {r.name.charAt(0)}
                     </span>
                     <div>
-                      <div className="text-sm font-semibold text-ink dark:text-white">{t.name}</div>
-                      <div className="text-xs text-ink-muted">{t.role}</div>
+                      <div className="text-sm font-semibold text-ink dark:text-white">{r.name}</div>
+                      <div className="text-xs text-ink-muted">{r.role}</div>
                     </div>
                   </div>
                 </article>
@@ -216,18 +185,17 @@ export default function ReviewsPage() {
                 ))}
               </div>
               <h2 className="mt-6 font-display text-3xl font-semibold leading-tight text-white sm:text-4xl balance">
-                Travelled with us? Share your experience
+                {t.cta.title}
               </h2>
               <p className="mx-auto mt-5 max-w-xl text-base text-white/80 sm:text-lg">
-                Your story helps another family take the first step toward their journey of a lifetime.
-                We would be honoured to hear about yours.
+                {t.cta.lead}
               </p>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Button href="/contact" variant="gold" size="lg">
-                  Leave a Review <ArrowRight className="h-4 w-4" />
+                <Button href={localizedPath(locale, '/contact')} variant="gold" size="lg">
+                  {t.cta.leave} <ArrowRight className="h-4 w-4" />
                 </Button>
-                <Button href="/hajj/packages" variant="light" size="lg">
-                  Explore Packages
+                <Button href={localizedPath(locale, '/hajj/packages')} variant="light" size="lg">
+                  {t.cta.explore}
                 </Button>
               </div>
             </div>

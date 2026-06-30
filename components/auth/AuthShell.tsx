@@ -5,6 +5,9 @@ import { LogoMark } from '@/components/brand/Logo';
 import { LangToggle } from '@/components/layout/LangToggle';
 import { siteConfig } from '@/lib/site';
 import { cn } from '@/lib/utils';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/auth';
 
 /* ------------------------------------------------------------------ *
  *  AuthShell — full-screen split layout for the auth pages.
@@ -15,17 +18,9 @@ import { cn } from '@/lib/utils';
 
 type Variant = 'customer' | 'staff';
 
-const trustPoints: Record<Variant, { icon: typeof ShieldCheck; text: string }[]> = {
-  customer: [
-    { icon: ShieldCheck, text: 'Government-licensed since 2002 (Hajj License No. 071)' },
-    { icon: BadgeCheck, text: 'Track your bookings, documents & departures in one place' },
-    { icon: Headset, text: 'Dedicated, Bangla-speaking support around the clock' },
-  ],
-  staff: [
-    { icon: ShieldCheck, text: 'Restricted access — authorised personnel only' },
-    { icon: BadgeCheck, text: 'Manage enquiries, bookings & site content securely' },
-    { icon: Headset, text: 'Every session is protected and logged' },
-  ],
+const trustIcons: Record<Variant, (typeof ShieldCheck)[]> = {
+  customer: [ShieldCheck, BadgeCheck, Headset],
+  staff: [ShieldCheck, BadgeCheck, Headset],
 };
 
 export function AuthShell({
@@ -41,7 +36,12 @@ export function AuthShell({
   variant?: Variant;
   children: ReactNode;
 }) {
-  const points = trustPoints[variant];
+  const locale = getLocale();
+  const t = getDict(locale).shell;
+  const points = trustIcons[variant].map((icon, i) => ({
+    icon,
+    text: t.trustPoints[variant][i],
+  }));
 
   return (
     <main className="relative min-h-screen w-full bg-sand-soft lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
@@ -71,8 +71,8 @@ export function AuthShell({
         {/* Mobile: compact header. Desktop: full column. */}
         <div className="relative flex h-full flex-col justify-between gap-8 px-6 py-7 sm:px-10 lg:px-12 lg:py-12 xl:px-16">
           <Link
-            href="/"
-            aria-label={`${siteConfig.name} — home`}
+            href={localizedPath(locale, '/')}
+            aria-label={`${siteConfig.name} — ${t.homeAria}`}
             className="inline-flex w-fit items-center gap-3"
           >
             <LogoMark glow className="h-11 w-11 shrink-0" />
@@ -90,11 +90,11 @@ export function AuthShell({
           <div className="hidden max-w-md lg:block">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-gold-200">
               <Sparkles className="h-3.5 w-3.5" />
-              {variant === 'staff' ? 'Staff Portal' : 'Pilgrim Account'}
+              {variant === 'staff' ? t.staffPortal : t.pilgrimAccount}
             </span>
             <h2 className="mt-6 font-display text-3xl font-semibold leading-tight tracking-tight xl:text-[2.6rem]">
-              A reliable name for your{' '}
-              <span className="text-gold-300">sacred journey.</span>
+              {t.heroLead}{' '}
+              <span className="text-gold-300">{t.heroAccent}</span>
             </h2>
             <p className="mt-4 text-[0.975rem] leading-relaxed text-white/75">
               {siteConfig.tagline}
@@ -114,7 +114,7 @@ export function AuthShell({
 
           {/* Footer line on the brand panel (desktop only) */}
           <p className="hidden text-xs text-white/55 lg:block">
-            © {new Date().getFullYear()} {siteConfig.legalName} · All rights reserved.
+            © {new Date().getFullYear()} {siteConfig.legalName} · {t.allRightsReserved}
           </p>
         </div>
       </aside>

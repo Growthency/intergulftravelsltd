@@ -12,6 +12,9 @@ import {
 } from 'lucide-react';
 import { contact } from '@/lib/site';
 import { whatsappLink } from '@/lib/utils';
+import { localizedPath, type Locale } from '@/lib/i18n';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/services';
 import { PageHero } from '@/components/layout/PageHero';
 import { Section, SectionHeading } from '@/components/ui/Section';
 import { Container } from '@/components/ui/Container';
@@ -26,131 +29,40 @@ export const metadata: Metadata = {
   alternates: { canonical: '/services/visa' },
 };
 
-const visaCountries = [
-  {
-    flag: '🇸🇦',
-    country: 'Saudi Arabia',
-    types: ['Hajj visa', 'Umrah e-visa', 'Work visa', 'Business / commercial visit'],
-    note: 'Our core specialty since 2002 — Hajj and Umrah visas processed through approved Saudi channels.',
-  },
-  {
-    flag: '🇦🇪',
-    country: 'United Arab Emirates',
-    types: ['Tourist visa (30 / 60 days)', 'Visit visa', 'Transit visa'],
-    note: 'Fast UAE tourist and visit visas for Dubai, Abu Dhabi and Sharjah trips.',
-  },
-  {
-    flag: '🇲🇾',
-    country: 'Malaysia',
-    types: ['eVISA tourist', 'Visit visa', 'eNTRI'],
-    note: 'Straightforward Malaysian eVISA processing for holidays and family visits.',
-  },
-  {
-    flag: '🇹🇭',
-    country: 'Thailand',
-    types: ['Tourist visa', 'e-Visa', 'Visa on arrival guidance'],
-    note: 'Bangkok and Phuket tourist visas with full document preparation.',
-  },
-  {
-    flag: '🇪🇺',
-    country: 'Schengen States',
-    types: ['Tourist / family visit', 'Business visa', 'Travel insurance support'],
-    note: 'Schengen applications for France, Germany, Italy and more — appointment and cover-letter support.',
-  },
-  {
-    flag: '🌍',
-    country: 'Other Destinations',
-    types: ['Turkey e-Visa', 'Singapore', 'Qatar & Kuwait', 'Country-specific guidance'],
-    note: 'Tell us where you are going — our consultants advise on the right route and paperwork.',
-  },
-];
-
-const documents = [
-  'Passport valid for at least 6 months with blank pages',
-  'Recent passport-size photographs (white background)',
-  'Completed visa application form (we prepare this for you)',
-  'Confirmed return air ticket or itinerary',
-  'Hotel booking / accommodation proof',
-  'Bank statement & solvency certificate (where required)',
-  'National ID (NID) and / or trade license for business visas',
-  'Vaccination certificate (meningitis for Hajj & Umrah)',
-];
-
-const processSteps = [
-  {
-    icon: ClipboardCheck,
-    title: 'Free consultation',
-    body: 'We assess your destination, purpose and eligibility, then list exactly what you need.',
-  },
-  {
-    icon: FileText,
-    title: 'Document preparation',
-    body: 'Our team completes forms, checks every paper and corrects issues before submission.',
-  },
-  {
-    icon: Stamp,
-    title: 'Application & filing',
-    body: 'We submit through the correct embassy or online portal and track your file daily.',
-  },
-  {
-    icon: Plane,
-    title: 'Visa & travel ready',
-    body: 'You collect your visa and, if you wish, we arrange your flights and hotels too.',
-  },
-];
-
-const faqs = [
-  {
-    q: 'How long does a Saudi Umrah e-visa take?',
-    a: 'With complete documents, the Umrah e-visa is typically issued within a few working days. Our premium Umrah packages include fast-track processing for tighter departure dates.',
-  },
-  {
-    q: 'Can you process a Schengen visa from Dhaka?',
-    a: 'Yes. We prepare your full Schengen application — cover letter, itinerary, travel insurance and supporting documents — and guide you through the VFS / embassy appointment so your file is as strong as possible.',
-  },
-  {
-    q: 'Do you guarantee that a visa will be approved?',
-    a: 'No agency can guarantee approval — the final decision always rests with the embassy or immigration authority. What we guarantee is an accurate, complete and well-presented application that gives you the best possible chance.',
-  },
-  {
-    q: 'Can I apply for a visa even if I book my flight elsewhere?',
-    a: 'Absolutely. Our visa service is available on its own. Of course, many clients let us handle flights and hotels as well so the whole trip is coordinated by one team.',
-  },
-  {
-    q: 'What is the difference between Hajj, Umrah and visit visas to Saudi Arabia?',
-    a: 'A Hajj visa is issued only for the official Hajj season and only through licensed agencies like ours. An Umrah e-visa is available year-round for the lesser pilgrimage. A business or commercial visit visa is for trade and meetings and does not permit Hajj or Umrah rites.',
-  },
-];
+// Icons paired by index with t.visa.processSteps (copy lives in the dictionary).
+const processIcons = [ClipboardCheck, FileText, Stamp, Plane];
 
 export default function VisaServicePage() {
+  const locale = getLocale();
+  const t = getDict(locale);
   return (
     <>
       <PageHero
-        eyebrow="Visa Service"
+        eyebrow={t.visa.hero.eyebrow}
         title={
           <>
-            Borders made simple, <span className="text-gradient-gold">paperwork done right</span>
+            {t.visa.hero.titleA} <span className="text-gradient-gold">{t.visa.hero.titleB}</span>
           </>
         }
-        lead="End-to-end visa processing for Saudi Arabia, the UAE, Malaysia, Thailand, Schengen states and beyond — handled by specialists who know exactly what each embassy expects."
-        crumbs={[{ label: 'Services', href: '/services' }, { label: 'Visa Service' }]}
+        lead={t.visa.hero.lead}
+        crumbs={[{ label: t.visa.hero.crumbServices, href: localizedPath(locale, '/services') }, { label: t.visa.hero.crumb }]}
       />
 
       {/* Countries */}
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="Where we can take you"
+          eyebrow={t.visa.countries.eyebrow}
           title={
             <>
-              Visas for the destinations <span className="text-gradient">that matter most</span>
+              {t.visa.countries.titleA} <span className="text-gradient">{t.visa.countries.titleB}</span>
             </>
           }
-          lead="From the holy cities of Makkah and Madinah to family holidays and business trips, we process the visas Bangladeshi travellers need most."
+          lead={t.visa.countries.lead}
         />
 
         <Container className="mt-14">
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {visaCountries.map((c, i) => (
+            {t.visa.visaCountries.map((c, i) => (
               <Reveal
                 key={c.country}
                 delay={i * 0.05}
@@ -183,17 +95,16 @@ export default function VisaServicePage() {
           <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
             <Reveal>
               <span className="inline-flex items-center gap-2 rounded-full border border-brand-600/15 bg-brand-50 px-3.5 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-brand-700 dark:border-brand-400/20 dark:bg-brand-900/30 dark:text-brand-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-gold-500" /> Required documents
+                <span className="h-1.5 w-1.5 rounded-full bg-gold-500" /> {t.visa.docsBadge}
               </span>
               <h2 className="mt-5 font-display text-3xl font-semibold leading-tight text-ink dark:text-white sm:text-4xl">
-                What you will typically need
+                {t.visa.docsTitle}
               </h2>
               <p className="mt-4 text-base leading-relaxed text-ink-muted">
-                Exact requirements vary by country and visa type. Bring what you have and our consultants will
-                tell you precisely what is missing — we handle the rest.
+                {t.visa.docsLead}
               </p>
               <ul className="mt-7 space-y-3">
-                {documents.map((d) => (
+                {t.visa.documents.map((d) => (
                   <li key={d} className="flex items-start gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-sm text-ink/85 shadow-soft dark:text-white/85">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" /> {d}
                   </li>
@@ -203,27 +114,30 @@ export default function VisaServicePage() {
 
             <Reveal delay={0.1}>
               <span className="inline-flex items-center gap-2 rounded-full border border-brand-600/15 bg-brand-50 px-3.5 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-brand-700 dark:border-brand-400/20 dark:bg-brand-900/30 dark:text-brand-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-gold-500" /> How it works
+                <span className="h-1.5 w-1.5 rounded-full bg-gold-500" /> {t.visa.processBadge}
               </span>
               <h2 className="mt-5 font-display text-3xl font-semibold leading-tight text-ink dark:text-white sm:text-4xl">
-                Four simple steps to your visa
+                {t.visa.processTitle}
               </h2>
               <p className="mt-4 text-base leading-relaxed text-ink-muted">
-                We have refined this process over 24 years so it is as smooth and stress-free as possible.
+                {t.visa.processLead}
               </p>
               <ol className="mt-7 space-y-4">
-                {processSteps.map((s, i) => (
+                {t.visa.processSteps.map((s, i) => {
+                  const StepIcon = processIcons[i];
+                  return (
                   <li key={s.title} className="flex gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
                     <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-gradient text-white shadow-emerald">
-                      <s.icon className="h-6 w-6" />
+                      <StepIcon className="h-6 w-6" />
                     </span>
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-gold-600">Step {i + 1}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-gold-600">{t.visa.stepLabel} {i + 1}</p>
                       <h3 className="mt-0.5 font-display text-lg font-semibold text-ink dark:text-white">{s.title}</h3>
                       <p className="mt-1 text-sm leading-relaxed text-ink-muted">{s.body}</p>
                     </div>
                   </li>
-                ))}
+                  );
+                })}
               </ol>
             </Reveal>
           </div>
@@ -236,10 +150,7 @@ export default function VisaServicePage() {
           <Reveal className="flex items-start gap-4 rounded-3xl border border-gold-500/30 bg-gold-50 p-6 dark:bg-gold-900/10 sm:p-8">
             <CalendarClock className="mt-1 h-6 w-6 shrink-0 text-gold-600" />
             <p className="text-sm leading-relaxed text-ink/80 dark:text-white/80">
-              <strong className="text-ink dark:text-white">Please note:</strong> visa approval is always at the
-              sole discretion of the relevant embassy or immigration authority. Inter Gulf Travels prepares and
-              submits accurate, complete applications, but cannot influence or guarantee the final decision.
-              Government and embassy fees are separate from our service charge and are non-refundable once paid.
+              <strong className="text-ink dark:text-white">{t.visa.disclaimerLabel}</strong>{t.visa.disclaimerBody}
             </p>
           </Reveal>
         </Container>
@@ -248,36 +159,42 @@ export default function VisaServicePage() {
       {/* FAQ */}
       <Section className="bg-sand-soft pt-0">
         <SectionHeading
-          eyebrow="Visa FAQ"
+          eyebrow={t.visa.faqEyebrow}
           title={
             <>
-              Your questions, <span className="text-gradient">answered</span>
+              {t.visa.faqTitleA} <span className="text-gradient">{t.visa.faqTitleB}</span>
             </>
           }
-          lead="Still unsure about something? Call us — our consultants are happy to walk you through it."
+          lead={t.visa.faqLead}
         />
         <Container size="narrow" className="mt-12">
-          <Accordion items={faqs} />
+          <Accordion items={t.visa.faqs} />
         </Container>
       </Section>
 
       <ServiceCTA
-        heading="Ready to start your visa application?"
-        body="Send us your destination and travel dates. We will tell you exactly what is needed and begin straight away."
-        waMessage="Assalamu alaikum! I would like help with a visa application."
+        locale={locale}
+        heading={t.visa.ctaHeading}
+        body={t.visa.ctaBody}
+        waMessage={t.visa.ctaWa}
+        cta={t.cta}
       />
     </>
   );
 }
 
 function ServiceCTA({
+  locale,
   heading,
   body,
   waMessage,
+  cta,
 }: {
+  locale: Locale;
   heading: string;
   body: string;
   waMessage: string;
+  cta: { estimate: string; whatsapp: string; callPrefix: string };
 }) {
   return (
     <Section className="pt-0">
@@ -291,18 +208,18 @@ function ServiceCTA({
             <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-4xl balance">{heading}</h2>
             <p className="mx-auto mt-5 max-w-xl text-base text-white/80 sm:text-lg">{body}</p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button href="/estimate" variant="gold" size="lg">
-                Get a Free Estimate <ArrowRight className="h-4 w-4" />
+              <Button href={localizedPath(locale, '/estimate')} variant="gold" size="lg">
+                {cta.estimate} <ArrowRight className="h-4 w-4" />
               </Button>
               <Button href={whatsappLink(contact.whatsapp, waMessage)} external variant="light" size="lg">
-                <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+                <MessageCircle className="h-4 w-4" /> {cta.whatsapp}
               </Button>
             </div>
             <a
               href={`tel:${contact.phones[0].replace(/\s/g, '')}`}
               className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white/85 hover:text-white"
             >
-              <Phone className="h-4 w-4" /> Or call us directly: {contact.phones[0]}
+              <Phone className="h-4 w-4" /> {cta.callPrefix} {contact.phones[0]}
             </a>
           </div>
         </Reveal>

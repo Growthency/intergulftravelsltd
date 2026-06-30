@@ -3,6 +3,9 @@ import { ArrowRight, MessageCircle, PlayCircle } from 'lucide-react';
 import { contact } from '@/lib/site';
 import { whatsappLink } from '@/lib/utils';
 import { getVideos } from '@/lib/videos';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/videos';
 import { PageHero } from '@/components/layout/PageHero';
 import { Section } from '@/components/ui/Section';
 import { Container } from '@/components/ui/Container';
@@ -21,18 +24,21 @@ export const metadata: Metadata = {
 
 export default async function VideosPage() {
   const videos = await getVideos();
+  const locale = getLocale();
+  const t = getDict(locale);
 
   return (
     <>
       <PageHero
-        eyebrow="Watch"
+        eyebrow={t.hero.eyebrow}
         title={
           <>
-            Our <span className="text-gradient-gold">Videos</span>
+            {t.hero.titleLead}
+            <span className="text-gradient-gold">{t.hero.titleHighlight}</span>
           </>
         }
-        lead="Clear, practical guidance for your sacred journey — from how each rite of Hajj and Umrah is performed to the experiences of pilgrims who travelled with us. Watch, learn and prepare with confidence."
-        crumbs={[{ label: 'Videos' }]}
+        lead={t.hero.lead}
+        crumbs={[{ label: t.hero.crumb }]}
       />
 
       <Section className="bg-sand-soft">
@@ -42,24 +48,20 @@ export default async function VideosPage() {
               <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-brand-50 text-brand-600">
                 <PlayCircle className="h-8 w-8" />
               </span>
-              <h2 className="mt-5 font-display text-2xl font-semibold text-ink">Videos coming soon</h2>
+              <h2 className="mt-5 font-display text-2xl font-semibold text-ink">{t.empty.title}</h2>
               <p className="mx-auto mt-3 max-w-md text-base text-ink-muted">
-                We are putting together a library of Hajj and Umrah guidance videos to help you prepare for
-                every step of your journey. Check back shortly — or speak to an advisor in the meantime.
+                {t.empty.body}
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Button href="/estimate" variant="primary">
-                  Get a Free Estimate <ArrowRight className="h-4 w-4" />
+                <Button href={localizedPath(locale, '/estimate')} variant="primary">
+                  {t.empty.estimate} <ArrowRight className="h-4 w-4" />
                 </Button>
                 <Button
-                  href={whatsappLink(
-                    contact.whatsapp,
-                    'Assalamu alaikum! I have a question about Hajj and Umrah.',
-                  )}
+                  href={whatsappLink(contact.whatsapp, t.empty.whatsappMessage)}
                   external
                   variant="outline"
                 >
-                  <MessageCircle className="h-4 w-4" /> Ask on WhatsApp
+                  <MessageCircle className="h-4 w-4" /> {t.empty.whatsapp}
                 </Button>
               </div>
             </Reveal>
@@ -79,26 +81,22 @@ export default async function VideosPage() {
             </div>
             <div className="relative mx-auto max-w-2xl">
               <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-4xl balance">
-                Ready to begin your own journey?
+                {t.cta.title}
               </h2>
               <p className="mx-auto mt-5 max-w-xl text-base text-white/80 sm:text-lg">
-                Our advisors are here to guide you from your first question to your safe return. Plan your Hajj,
-                Umrah or holiday with a team that has served pilgrims since 2002.
+                {t.cta.body}
               </p>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Button href="/estimate" variant="gold" size="lg">
-                  Get a Free Estimate <ArrowRight className="h-4 w-4" />
+                <Button href={localizedPath(locale, '/estimate')} variant="gold" size="lg">
+                  {t.cta.estimate} <ArrowRight className="h-4 w-4" />
                 </Button>
                 <Button
-                  href={whatsappLink(
-                    contact.whatsapp,
-                    'Assalamu alaikum! I would like to plan a journey with Inter Gulf Travels.',
-                  )}
+                  href={whatsappLink(contact.whatsapp, t.cta.whatsappMessage)}
                   external
                   variant="light"
                   size="lg"
                 >
-                  <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+                  <MessageCircle className="h-4 w-4" /> {t.cta.whatsapp}
                 </Button>
               </div>
             </div>

@@ -14,6 +14,9 @@ import { cn, formatDate } from '@/lib/utils';
 import { siteConfig } from '@/lib/site';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { articleSchema, breadcrumbSchema } from '@/lib/seo';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/blog';
 
 export async function generateStaticParams() {
   const posts = await getPosts();
@@ -27,7 +30,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const post = await getPost(params.slug);
   if (!post) {
-    return { title: 'Article not found' };
+    return { title: getDict(getLocale()).article.notFound };
   }
   const url = `/blog/${post.slug}`;
   return {
@@ -60,6 +63,8 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   const post = await getPost(params.slug);
   if (!post) notFound();
 
+  const locale = getLocale();
+  const t = getDict(locale);
   const clean = DOMPurify.sanitize(post.content);
   const url = `/blog/${post.slug}`;
 
@@ -74,9 +79,9 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         data={[
           articleSchema(post),
           breadcrumbSchema([
-            { name: 'Home', url: '/' },
-            { name: 'Blog', url: '/blog' },
-            { name: post.title, url },
+            { name: t.article.breadcrumbHome, url: localizedPath(locale, '/') },
+            { name: t.article.breadcrumbBlog, url: localizedPath(locale, '/blog') },
+            { name: post.title, url: localizedPath(locale, url) },
           ]),
         ]}
       />
@@ -102,15 +107,15 @@ export default async function ArticlePage({ params }: { params: { slug: string }
 
         <Container size="narrow">
           <nav className="flex items-center gap-1.5 text-sm text-white/60">
-            <Link href="/" className="hover:text-gold-200">
-              Home
+            <Link href={localizedPath(locale, '/')} className="hover:text-gold-200">
+              {t.article.breadcrumbHome}
             </Link>
             <span>/</span>
-            <Link href="/blog" className="hover:text-gold-200">
-              Blog
+            <Link href={localizedPath(locale, '/blog')} className="hover:text-gold-200">
+              {t.article.breadcrumbBlog}
             </Link>
             <span>/</span>
-            <Link href={`/blog?category=${post.category}`} className="hover:text-gold-200">
+            <Link href={localizedPath(locale, `/blog?category=${post.category}`)} className="hover:text-gold-200">
               {post.categoryLabel}
             </Link>
           </nav>
@@ -147,10 +152,10 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           {/* Top share row */}
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-6">
             <Link
-              href="/blog"
+              href={localizedPath(locale, '/blog')}
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 transition hover:text-brand-800"
             >
-              <ArrowLeft className="h-4 w-4" /> All articles
+              <ArrowLeft className="h-4 w-4" /> {t.article.allArticles}
             </Link>
             <ShareButtons url={url} title={post.title} />
           </div>
@@ -175,8 +180,8 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           {/* Bottom share row */}
           <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-8">
             <div>
-              <p className="font-display text-sm font-semibold text-ink">Found this helpful?</p>
-              <p className="text-sm text-ink-muted">Share it with someone planning their journey.</p>
+              <p className="font-display text-sm font-semibold text-ink">{t.article.foundHelpful}</p>
+              <p className="text-sm text-ink-muted">{t.article.shareWith}</p>
             </div>
             <ShareButtons url={url} title={post.title} />
           </div>
@@ -187,18 +192,18 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-xl">
               <h2 className="font-display text-2xl font-semibold leading-tight text-white">
-                Ready to plan your Hajj, Umrah or holiday?
+                {t.article.ctaHeading}
               </h2>
               <p className="mt-3 text-base text-white/80">
-                Government-licensed since 2002. Get an honest, no-obligation estimate tailored to your dates and budget.
+                {t.article.ctaBody}
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button href="/estimate" variant="gold" size="lg">
-                Get a free estimate <ArrowRight className="h-4 w-4" />
+              <Button href={localizedPath(locale, '/estimate')} variant="gold" size="lg">
+                {t.article.ctaEstimate} <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button href="/contact" variant="light" size="lg">
-                Contact us
+              <Button href={localizedPath(locale, '/contact')} variant="light" size="lg">
+                {t.article.ctaContact}
               </Button>
             </div>
           </div>
@@ -211,10 +216,10 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           <Container>
             <Reveal className="mb-10 flex flex-col gap-2 text-center">
               <span className="mx-auto inline-flex items-center gap-2 rounded-full border border-brand-600/15 bg-brand-50 px-3.5 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-brand-700">
-                Keep reading
+                {t.article.keepReading}
               </span>
               <h2 className="font-display text-2xl font-semibold text-ink sm:text-3xl dark:text-white">
-                Related articles
+                {t.article.relatedHeading}
               </h2>
             </Reveal>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -225,8 +230,8 @@ export default async function ArticlePage({ params }: { params: { slug: string }
               ))}
             </div>
             <div className="mt-12 text-center">
-              <Button href="/blog" variant="outline" size="md">
-                Back to all articles <ArrowLeft className="h-4 w-4" />
+              <Button href={localizedPath(locale, '/blog')} variant="outline" size="md">
+                {t.article.backToAll} <ArrowLeft className="h-4 w-4" />
               </Button>
             </div>
           </Container>

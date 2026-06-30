@@ -7,6 +7,8 @@ import { Section } from '@/components/ui/Section';
 import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
 import { ContactForm } from '@/components/forms/ContactForm';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/contact';
 
 export const metadata: Metadata = {
   title: 'Contact Us',
@@ -17,43 +19,47 @@ export const metadata: Metadata = {
 
 const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(contact.address.mapQuery)}&output=embed`;
 
-const infoCards = [
-  {
-    icon: MapPin,
-    title: 'Visit our office',
-    lines: [contact.address.line1, contact.address.line2, contact.address.country],
-  },
-  {
-    icon: Phone,
-    title: 'Call us',
-    lines: contact.phones,
-    hrefs: contact.phones.map((p) => `tel:${p.replace(/\s/g, '')}`),
-  },
-  {
-    icon: Mail,
-    title: 'Email us',
-    lines: contact.emails,
-    hrefs: contact.emails.map((e) => `mailto:${e}`),
-  },
-  {
-    icon: Clock,
-    title: 'Office hours',
-    lines: [contact.hours, 'Friday — Closed'],
-  },
-];
-
 export default function ContactPage() {
+  const locale = getLocale();
+  const t = getDict(locale);
+
+  const infoCards = [
+    {
+      icon: MapPin,
+      title: t.cards.visit,
+      lines: [contact.address.line1, contact.address.line2, contact.address.country],
+    },
+    {
+      icon: Phone,
+      title: t.cards.call,
+      lines: contact.phones,
+      hrefs: contact.phones.map((p) => `tel:${p.replace(/\s/g, '')}`),
+    },
+    {
+      icon: Mail,
+      title: t.cards.email,
+      lines: contact.emails,
+      hrefs: contact.emails.map((e) => `mailto:${e}`),
+    },
+    {
+      icon: Clock,
+      title: t.cards.hours,
+      lines: [contact.hours, t.cards.fridayClosed],
+    },
+  ];
+
   return (
     <>
       <PageHero
-        eyebrow="Contact Us"
+        eyebrow={t.hero.eyebrow}
         title={
           <>
-            Let&apos;s plan your <span className="text-gradient-gold">next journey</span>
+            {t.hero.titleA}
+            <span className="text-gradient-gold">{t.hero.titleHighlight}</span>
           </>
         }
-        lead="Our advisors are here to help with Hajj, Umrah, visas, air tickets, hotels and tours. Reach us however suits you — and expect a warm, prompt reply."
-        crumbs={[{ label: 'Contact Us' }]}
+        lead={t.hero.lead}
+        crumbs={[{ label: t.hero.crumb }]}
       />
 
       {/* Info cards */}
@@ -101,13 +107,13 @@ export default function ContactPage() {
             {/* Form */}
             <Reveal className="rounded-3xl border border-border bg-card p-7 shadow-soft sm:p-9">
               <span className="inline-flex items-center gap-2 rounded-full border border-brand-600/15 bg-brand-50 px-3.5 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-brand-700 dark:border-brand-400/20 dark:bg-brand-900/30 dark:text-brand-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-gold-500" /> Send a message
+                <span className="h-1.5 w-1.5 rounded-full bg-gold-500" /> {t.form.badge}
               </span>
               <h2 className="mt-5 font-display text-2xl font-semibold text-ink dark:text-white sm:text-3xl">
-                Write to us
+                {t.form.heading}
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-                Fill in the form and our team will respond as soon as possible, insha&apos;Allah.
+                {t.form.intro}
               </p>
               <div className="mt-7">
                 <ContactForm />
@@ -129,18 +135,17 @@ export default function ContactPage() {
               </div>
 
               <div className="rounded-3xl border border-border bg-card p-7 shadow-soft">
-                <h3 className="font-display text-lg font-semibold text-ink dark:text-white">Prefer to chat?</h3>
+                <h3 className="font-display text-lg font-semibold text-ink dark:text-white">{t.chat.heading}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-                  Message us on WhatsApp for the fastest response, or follow us to keep up with departures and
-                  offers.
+                  {t.chat.body}
                 </p>
                 <a
-                  href={whatsappLink(contact.whatsapp, 'Assalamu alaikum! I have a question for Inter Gulf Travels.')}
+                  href={whatsappLink(contact.whatsapp, t.chat.whatsappMessage)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-5 inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-emerald transition hover:bg-brand-700"
                 >
-                  <MessageCircle className="h-4 w-4" /> Chat on WhatsApp ({contact.whatsappDisplay})
+                  <MessageCircle className="h-4 w-4" /> {t.chat.whatsappCta} ({contact.whatsappDisplay})
                 </a>
                 <div className="mt-6 flex flex-wrap gap-2.5">
                   {social.map((s) => (

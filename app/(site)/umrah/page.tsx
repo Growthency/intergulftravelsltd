@@ -6,9 +6,12 @@ import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/Reveal';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { packages, processSteps, whyUs } from '@/lib/site';
+import { packages, whyUs } from '@/lib/site';
 import { Icon } from '@/components/ui/Icon';
 import { PackageCard, CtaBand, NavLinkCard } from '@/components/hajj-umrah/shared';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/umrahpages';
 
 export const metadata: Metadata = {
   title: 'Umrah Packages — Year-Round Umrah from Bangladesh',
@@ -19,63 +22,46 @@ export const metadata: Metadata = {
 
 const umrahPackages = packages.filter((p) => p.type === 'umrah');
 
-const inclusions = [
-  { icon: Plane, title: 'Air Ticket & Visa', body: 'Return air tickets from Dhaka and a hassle-free Umrah e-visa — fast-track processing on premium plans.' },
-  { icon: BedDouble, title: 'Haramain Hotels', body: 'Comfortable accommodation in Makkah and Madinah within easy reach of the Haram, by package tier.' },
-  { icon: Bus, title: 'All Transfers', body: 'Airport pickups and Makkah ⇄ Madinah transport in air-conditioned coaches or private vehicles.' },
-  { icon: MapPinned, title: 'Guided Ziyarat', body: 'Visits to the blessed historical sites of Makkah and Madinah with a knowledgeable guide.' },
-  { icon: Utensils, title: 'Meals', body: 'Daily breakfast and dinner on premium plans, with Bengali cuisine to keep you nourished.' },
-  { icon: BadgeCheck, title: '24/7 Support', body: 'A dedicated ground team in Saudi Arabia reachable around the clock for anything you need.' },
-];
-
-const subPages = [
-  { href: '/umrah/benefit', title: 'Benefit of Umrah', description: 'The forgiveness, reward and spiritual refreshment of the lesser pilgrimage.' },
-  { href: '/umrah/packages', title: 'Umrah Packages', description: 'Year-round Economy, Family and Premium plans with full inclusions.' },
-  { href: '/umrah/guide', title: 'Umrah Guide', description: 'How to perform Umrah correctly — Ihram, Tawaf, Sa‘i and Halq/Taqsir.' },
-  { href: '/umrah/guideline', title: 'Umrah Guideline', description: 'Visa, documents, the best time to travel and a packing checklist.' },
-  { href: '/umrah/faq', title: 'FAQ of Umrah', description: 'Answers to the questions pilgrims ask about Umrah.' },
-];
+const inclusionIcons = [Plane, BedDouble, Bus, MapPinned, Utensils, BadgeCheck];
 
 export default function UmrahPage() {
+  const locale = getLocale();
+  const t = getDict(locale);
+  const inclusions = t.index.inclusions.map((item, i) => ({ icon: inclusionIcons[i], ...item }));
   return (
     <>
       <PageHero
-        eyebrow="The Lesser Pilgrimage"
-        title={<>Answer the call to the Haramain, any time of year</>}
-        lead="Umrah is a beloved Sunnah and a journey of renewal that can be undertaken throughout the year. Inter Gulf Travels makes it simple, comfortable and affordable — from your visa to your return."
-        crumbs={[{ label: 'Umrah' }]}
+        eyebrow={t.index.hero.eyebrow}
+        title={<>{t.index.hero.title}</>}
+        lead={t.index.hero.lead}
+        crumbs={[{ label: t.index.hero.crumb }]}
       />
 
       {/* What Umrah is */}
       <Section>
         <Container className="grid items-center gap-12 lg:grid-cols-2">
           <Reveal>
-            <Eyebrow>What is Umrah</Eyebrow>
+            <Eyebrow>{t.index.what.eyebrow}</Eyebrow>
             <h2 className="mt-5 font-display text-3xl font-semibold leading-tight text-ink dark:text-white sm:text-4xl balance">
-              A blessed pilgrimage you can perform <span className="text-gradient">at any time</span>
+              {t.index.what.titleA} <span className="text-gradient">{t.index.what.titleB}</span>
             </h2>
             <div className="mt-5 space-y-4 text-base leading-relaxed text-ink-muted">
               <p>
-                Umrah, the “lesser pilgrimage,” is a deeply rewarded act of worship performed by entering Ihram and
-                completing Tawaf around the Kaaba, Sa‘i between Safa and Marwah, and Halq or Taqsir (shaving or
-                trimming the hair). Unlike Hajj, it has no fixed time — it may be performed in any month of the year.
+                {t.index.what.p1}
               </p>
               <p>
-                The Prophet ﷺ said: <em>“Umrah to Umrah is an expiation for what is between them, and an accepted Hajj
-                has no reward but Paradise”</em> (Bukhari & Muslim). He also taught that performing Umrah in Ramadan
-                equals the reward of a Hajj performed with him.
+                {t.index.what.p2A}<em>{t.index.what.p2Quote}</em>{t.index.what.p2B}
               </p>
               <p>
-                Whether it is your first visit to the House of Allah or a return to refresh your faith, Umrah offers a
-                gentle, profound reconnection with the Creator — and we are honoured to make it possible for you.
+                {t.index.what.p3}
               </p>
             </div>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button href="/umrah/packages" variant="primary">
-                View Umrah Packages <ArrowRight className="h-4 w-4" />
+              <Button href={localizedPath(locale, '/umrah/packages')} variant="primary">
+                {t.index.what.viewPackages} <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button href="/umrah/guide" variant="outline">
-                Read the Umrah Guide
+              <Button href={localizedPath(locale, '/umrah/guide')} variant="outline">
+                {t.index.what.readGuide}
               </Button>
             </div>
           </Reveal>
@@ -84,14 +70,13 @@ export default function UmrahPage() {
             <div className="relative overflow-hidden rounded-3xl border border-border bg-brand-gradient p-8 text-white shadow-emerald sm:p-10">
               <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-gold-300/20 blur-3xl" />
               <p className="font-display text-lg italic leading-relaxed">
-                “And complete the Hajj and Umrah for Allah…”
+                {t.index.what.quote}
               </p>
-              <p className="mt-3 text-sm text-white/75">Surah al-Baqarah 2:196</p>
+              <p className="mt-3 text-sm text-white/75">{t.index.what.quoteRef}</p>
               <div className="mt-7 space-y-4 border-t border-white/15 pt-6 text-sm text-white/85">
-                <p className="flex items-start gap-3"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold-300" /> Four simple rites — Ihram, Tawaf, Sa‘i, Halq/Taqsir.</p>
-                <p className="flex items-start gap-3"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold-300" /> Available every month, with flexible departure dates.</p>
-                <p className="flex items-start gap-3"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold-300" /> 10 to 21-day plans for individuals and families.</p>
-                <p className="flex items-start gap-3"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold-300" /> Especially rewarded when performed in Ramadan.</p>
+                {t.index.what.points.map((point) => (
+                  <p key={point} className="flex items-start gap-3"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold-300" /> {point}</p>
+                ))}
               </div>
             </div>
           </Reveal>
@@ -101,17 +86,17 @@ export default function UmrahPage() {
       {/* Why us */}
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="Why Inter Gulf"
-          title={<>Why pilgrims choose us for <span className="text-gradient">their Umrah</span></>}
-          lead="A government-licensed agency with 24 years of service — every detail arranged so your journey is pure worship and rest."
+          eyebrow={t.index.why.eyebrow}
+          title={<>{t.index.why.titleA} <span className="text-gradient">{t.index.why.titleB}</span></>}
+          lead={t.index.why.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {whyUs.map((item, i) => (
+            {t.index.whyUs.map((item, i) => (
               <Reveal key={item.title} delay={i * 0.05}>
                 <div className="h-full rounded-3xl border border-border bg-card p-7 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-emerald">
                   <div className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200">
-                    <Icon name={item.icon} className="h-6 w-6" />
+                    <Icon name={whyUs[i].icon} className="h-6 w-6" />
                   </div>
                   <h3 className="mt-5 font-display text-lg font-semibold text-ink dark:text-white">{item.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-ink-muted">{item.body}</p>
@@ -125,9 +110,9 @@ export default function UmrahPage() {
       {/* Packages */}
       <Section>
         <SectionHeading
-          eyebrow="Year-round departures"
-          title={<>Umrah packages for <span className="text-gradient">every traveller</span></>}
-          lead="Transparent, all-inclusive pricing with flexible dates. Choose a plan below, or let us tailor one to your family and budget."
+          eyebrow={t.index.packagesSection.eyebrow}
+          title={<>{t.index.packagesSection.titleA} <span className="text-gradient">{t.index.packagesSection.titleB}</span></>}
+          lead={t.index.packagesSection.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-6 lg:grid-cols-3">
@@ -138,9 +123,9 @@ export default function UmrahPage() {
             ))}
           </div>
           <p className="mt-8 text-center text-sm text-ink-muted">
-            Prices are indicative and may vary with airline fares and hotel availability.{' '}
-            <a href="/umrah/packages" className="font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-300">
-              See full package details →
+            {t.index.packagesSection.noteA}{' '}
+            <a href={localizedPath(locale, '/umrah/packages')} className="font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-300">
+              {t.index.packagesSection.noteLink}
             </a>
           </p>
         </Container>
@@ -149,9 +134,9 @@ export default function UmrahPage() {
       {/* Inclusions */}
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="What’s included"
-          title={<>A complete journey, <span className="text-gradient">arranged for you</span></>}
-          lead="From your visa in Dhaka to your safe return home, every essential is taken care of."
+          eyebrow={t.index.inclusionsSection.eyebrow}
+          title={<>{t.index.inclusionsSection.titleA} <span className="text-gradient">{t.index.inclusionsSection.titleB}</span></>}
+          lead={t.index.inclusionsSection.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -175,15 +160,15 @@ export default function UmrahPage() {
       {/* Process */}
       <Section>
         <SectionHeading
-          eyebrow="How it works"
-          title={<>Four simple steps to <span className="text-gradient">the House of Allah</span></>}
-          lead="We have refined the journey into a calm, guided process — you focus on your intention, we take care of everything else."
+          eyebrow={t.index.process.eyebrow}
+          title={<>{t.index.process.titleA} <span className="text-gradient">{t.index.process.titleB}</span></>}
+          lead={t.index.process.lead}
         />
         <Container className="mt-14">
           <div className="relative">
             <div className="absolute left-0 right-0 top-9 hidden h-px bg-gradient-to-r from-transparent via-brand-600/30 to-transparent lg:block" />
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-              {processSteps.map((step, i) => (
+              {t.index.processSteps.map((step, i) => (
                 <Reveal key={step.step} delay={i * 0.1} className="relative text-center lg:text-left">
                   <div
                     className="relative z-10 mx-auto grid place-items-center rounded-2xl bg-brand-gradient font-display text-2xl font-semibold text-white shadow-emerald lg:mx-0"
@@ -203,15 +188,15 @@ export default function UmrahPage() {
       {/* Explore */}
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="Explore Umrah"
-          title={<>Plan your Umrah with <span className="text-gradient">complete confidence</span></>}
-          lead="Learn the rewards, the rites, the requirements and the answers to your questions."
+          eyebrow={t.index.explore.eyebrow}
+          title={<>{t.index.explore.titleA} <span className="text-gradient">{t.index.explore.titleB}</span></>}
+          lead={t.index.explore.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {subPages.map((p, i) => (
+            {t.index.subPages.map((p, i) => (
               <Reveal key={p.href} delay={i * 0.05}>
-                <NavLinkCard {...p} />
+                <NavLinkCard href={localizedPath(locale, p.href)} title={p.title} description={p.description} />
               </Reveal>
             ))}
           </div>
@@ -219,9 +204,9 @@ export default function UmrahPage() {
       </Section>
 
       <CtaBand
-        title="Begin your Umrah journey today"
-        lead="Tell us your preferred dates and we will arrange everything — visa, flights, hotels and guidance — for a smooth, blessed Umrah."
-        message="Assalamu alaikum! I am interested in your Umrah packages."
+        title={t.index.cta.title}
+        lead={t.index.cta.lead}
+        message={t.index.cta.message}
       />
     </>
   );

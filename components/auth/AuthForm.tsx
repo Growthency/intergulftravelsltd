@@ -5,6 +5,8 @@ import { useFormState, useFormStatus } from 'react-dom';
 import { toast } from 'sonner';
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, type LucideIcon } from 'lucide-react';
 import { signIn, type AuthState } from '@/app/auth/actions';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/auth';
 
 const initialState: AuthState = { ok: false };
 
@@ -15,6 +17,7 @@ const inputBase =
 
 /** Staff / admin sign-in. Email + password only; success redirects to /admin. */
 export function AuthForm({ portal = true }: { portal?: boolean }) {
+  const t = getDict(useLocale()).form;
   const [state, formAction] = useFormState(signIn, initialState);
   const [showPassword, setShowPassword] = useState(false);
   const lastError = useRef<string | undefined>();
@@ -31,18 +34,18 @@ export function AuthForm({ portal = true }: { portal?: boolean }) {
     <form action={formAction} noValidate className="space-y-4">
       <Field
         icon={Mail}
-        label="Email address"
+        label={t.emailLabel}
         name="email"
         type="email"
         autoComplete="email"
-        placeholder="you@example.com"
+        placeholder={t.emailPlaceholder}
         defaultValue={state.email}
         required
       />
 
       <div>
         <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-ink">
-          Password
+          {t.passwordLabel}
         </label>
         <div className={fieldShell}>
           <Lock className="h-[1.15rem] w-[1.15rem] shrink-0 text-ink-muted" />
@@ -51,14 +54,14 @@ export function AuthForm({ portal = true }: { portal?: boolean }) {
             name="password"
             type={showPassword ? 'text' : 'password'}
             autoComplete="current-password"
-            placeholder="Enter your password"
+            placeholder={t.passwordPlaceholder}
             required
             className={inputBase}
           />
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            aria-label={showPassword ? t.hidePassword : t.showPassword}
             aria-pressed={showPassword}
             className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-muted transition hover:bg-brand-50 hover:text-brand-700"
           >
@@ -79,12 +82,12 @@ export function AuthForm({ portal = true }: { portal?: boolean }) {
         </p>
       )}
 
-      <SubmitButton portal={portal} />
+      <SubmitButton portal={portal} t={t} />
 
       {portal && (
         <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-xs text-ink-muted">
           <ShieldCheck className="h-3.5 w-3.5 text-brand-600" />
-          This is a restricted area for authorised staff only.
+          {t.restrictedNote}
         </p>
       )}
     </form>
@@ -93,7 +96,13 @@ export function AuthForm({ portal = true }: { portal?: boolean }) {
 
 /* ------------------------------ sub-components ----------------------------- */
 
-function SubmitButton({ portal }: { portal: boolean }) {
+function SubmitButton({
+  portal,
+  t,
+}: {
+  portal: boolean;
+  t: ReturnType<typeof getDict>['form'];
+}) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -105,11 +114,11 @@ function SubmitButton({ portal }: { portal: boolean }) {
       <span className="relative inline-flex items-center gap-2">
         {pending ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" /> Signing in…
+            <Loader2 className="h-4 w-4 animate-spin" /> {t.signingIn}
           </>
         ) : (
           <>
-            {portal ? 'Sign in to admin' : 'Sign in'}
+            {portal ? t.signInAdmin : t.signIn}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </>
         )}

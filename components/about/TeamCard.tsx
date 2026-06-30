@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { Linkedin, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { revealItem } from '@/components/ui/Reveal';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/about';
 
 export type TeamMember = {
   name: string;
@@ -23,6 +25,7 @@ function initials(name: string) {
 }
 
 export function TeamCard({ member }: { member: TeamMember }) {
+  const t = getDict(useLocale());
   return (
     <motion.article
       variants={revealItem}
@@ -53,7 +56,7 @@ export function TeamCard({ member }: { member: TeamMember }) {
         {member.email && (
           <a
             href={`mailto:${member.email}`}
-            aria-label={`Email ${member.name}`}
+            aria-label={`${t.teamCard.emailAria} ${member.name}`}
             className="grid h-9 w-9 place-items-center rounded-full border border-border text-brand-700 transition hover:border-brand-600 hover:bg-brand-50 dark:text-brand-200 dark:hover:bg-brand-900/40"
           >
             <Mail className="h-4 w-4" />

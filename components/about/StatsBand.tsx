@@ -5,6 +5,8 @@ import { Counter } from '@/components/ui/Counter';
 import { Container } from '@/components/ui/Container';
 import { AuroraBackdrop } from '@/components/effects/AuroraBackdrop';
 import { revealItem } from '@/components/ui/Reveal';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/about';
 
 type Stat = {
   to: number;
@@ -13,15 +15,17 @@ type Stat = {
   sub?: string;
 };
 
-const stats: Stat[] = [
-  { to: 24, suffix: '+', label: 'Years of service', sub: 'Trusted since 2002' },
-  { to: 12000, suffix: '+', label: 'Pilgrims guided', sub: 'Hajj & Umrah journeys' },
-  { to: 40, suffix: '+', label: 'Airline partners', sub: 'Worldwide network' },
-  { to: 100, suffix: '%', label: 'Government licensed', sub: 'Hajj License No. 071' },
+const statValues = [
+  { to: 24, suffix: '+' },
+  { to: 12000, suffix: '+' },
+  { to: 40, suffix: '+' },
+  { to: 100, suffix: '%' },
 ];
 
 /** Animated emerald statistics band — reused across About pages. */
 export function StatsBand() {
+  const t = getDict(useLocale());
+  const stats: Stat[] = statValues.map((v, i) => ({ ...v, ...t.stats.items[i] }));
   return (
     <section className="relative isolate overflow-hidden bg-brand-900 py-16 text-white sm:py-20">
       <AuroraBackdrop variant="dark" />

@@ -3,9 +3,12 @@
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Search, X, Loader2 } from 'lucide-react';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/blog';
 
 /** Debounced search that updates the ?search URL param (server re-paginates). */
 export function BlogSearchBox() {
+  const t = getDict(useLocale()).search;
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -37,15 +40,15 @@ export function BlogSearchBox() {
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder='Search articles, e.g. "Umrah", "visa"…'
-        aria-label="Search articles"
+        placeholder={t.placeholder}
+        aria-label={t.ariaLabel}
         className="w-full rounded-full border border-border bg-card py-3.5 pl-12 pr-11 text-sm text-ink shadow-soft outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20"
       />
       <span className="absolute right-4 top-1/2 -translate-y-1/2">
         {pending ? (
           <Loader2 className="h-4 w-4 animate-spin text-ink-muted" />
         ) : value ? (
-          <button onClick={() => setValue('')} aria-label="Clear search" className="text-ink-muted transition hover:text-ink">
+          <button onClick={() => setValue('')} aria-label={t.clearLabel} className="text-ink-muted transition hover:text-ink">
             <X className="h-4 w-4" />
           </button>
         ) : null}

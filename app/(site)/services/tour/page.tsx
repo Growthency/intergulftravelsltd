@@ -12,6 +12,9 @@ import {
 } from 'lucide-react';
 import { contact } from '@/lib/site';
 import { whatsappLink } from '@/lib/utils';
+import { localizedPath, type Locale } from '@/lib/i18n';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/services';
 import { PageHero } from '@/components/layout/PageHero';
 import { Section, SectionHeading } from '@/components/ui/Section';
 import { Container } from '@/components/ui/Container';
@@ -25,121 +28,48 @@ export const metadata: Metadata = {
   alternates: { canonical: '/services/tour' },
 };
 
-const destinations = [
-  {
-    name: 'Dubai',
-    country: 'United Arab Emirates',
-    duration: '4–6 days',
-    tone: 'from-amber-500 via-gold-600 to-brand-800',
-    tagline: 'Skylines, desert & souks',
-    highlights: [
-      'Burj Khalifa & Dubai Mall fountains',
-      'Desert safari with BBQ dinner',
-      'Marina dhow cruise & Palm Jumeirah',
-      'Old Dubai gold & spice souks',
-    ],
-  },
-  {
-    name: 'Turkey',
-    country: 'Türkiye',
-    duration: '7–9 days',
-    tone: 'from-rose-600 via-brand-700 to-brand-900',
-    tagline: 'Where east meets west',
-    highlights: [
-      'Hagia Sophia & Blue Mosque, Istanbul',
-      'Bosphorus cruise between two continents',
-      'Cappadocia hot-air balloons & cave hotels',
-      'Pamukkale travertine terraces',
-    ],
-  },
-  {
-    name: 'Malaysia',
-    country: 'Malaysia',
-    duration: '5–7 days',
-    tone: 'from-emerald-500 via-brand-600 to-brand-900',
-    tagline: 'City lights & island calm',
-    highlights: [
-      'Petronas Twin Towers & KL city tour',
-      'Genting Highlands cable car & resorts',
-      'Langkawi island hopping & cable car',
-      'Halal-friendly dining throughout',
-    ],
-  },
-  {
-    name: 'Kashmir',
-    country: 'India',
-    duration: '5–7 days',
-    tone: 'from-sky-600 via-brand-600 to-brand-900',
-    tagline: 'Paradise on earth',
-    highlights: [
-      'Shikara ride on Dal Lake, Srinagar',
-      'Gulmarg gondola & meadows',
-      'Pahalgam valley & Betaab valley',
-      'Mughal gardens & houseboat stays',
-    ],
-  },
-  {
-    name: 'Maldives',
-    country: 'Maldives',
-    duration: '4–6 days',
-    tone: 'from-cyan-500 via-brand-600 to-brand-900',
-    tagline: 'Turquoise lagoons & villas',
-    highlights: [
-      'Overwater & beach villa resorts',
-      'Snorkelling over coral reefs',
-      'Sunset dolphin cruise',
-      'Honeymoon & all-inclusive options',
-    ],
-  },
-  {
-    name: 'Custom Tour',
-    country: 'You choose',
-    duration: 'Flexible',
-    tone: 'from-brand-700 via-brand-800 to-gold-700',
-    tagline: 'Designed entirely around you',
-    highlights: [
-      'Tell us your dream destination',
-      'Tailored itinerary & pacing',
-      'Family, group or honeymoon focus',
-      'Visa, flights & hotels all arranged',
-    ],
-  },
+// Gradient tones paired by index with t.tour.destinations (copy lives in the dictionary).
+const destinationTones = [
+  'from-amber-500 via-gold-600 to-brand-800',
+  'from-rose-600 via-brand-700 to-brand-900',
+  'from-emerald-500 via-brand-600 to-brand-900',
+  'from-sky-600 via-brand-600 to-brand-900',
+  'from-cyan-500 via-brand-600 to-brand-900',
+  'from-brand-700 via-brand-800 to-gold-700',
 ];
-
-const tourTypes = [
-  { icon: Users, title: 'Family tours', body: 'Kid-friendly pacing, connecting rooms and activities everyone enjoys.' },
-  { icon: Heart, title: 'Honeymoon escapes', body: 'Romantic resorts, private transfers and special touches for two.' },
-  { icon: Sparkles, title: 'All-inclusive', body: 'Flights, hotels, transfers, sightseeing and meals in one clear price.' },
-];
+// Icons paired by index with t.tour.tourTypes.
+const tourTypeIcons = [Users, Heart, Sparkles];
 
 export default function TourPackagesPage() {
+  const locale = getLocale();
+  const t = getDict(locale);
   return (
     <>
       <PageHero
-        eyebrow="Tour Packages"
+        eyebrow={t.tour.hero.eyebrow}
         title={
           <>
-            See the world, <span className="text-gradient-gold">the easy way</span>
+            {t.tour.hero.titleA} <span className="text-gradient-gold">{t.tour.hero.titleB}</span>
           </>
         }
-        lead="Curated holiday packages to Dubai, Turkey, Malaysia, Kashmir and the Maldives — thoughtfully planned, fairly priced and completely hassle-free, with custom itineraries on request."
-        crumbs={[{ label: 'Services', href: '/services' }, { label: 'Tour Packages' }]}
+        lead={t.tour.hero.lead}
+        crumbs={[{ label: t.tour.hero.crumbServices, href: localizedPath(locale, '/services') }, { label: t.tour.hero.crumb }]}
       />
 
       {/* Destination cards */}
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="Popular destinations"
+          eyebrow={t.tour.destHead.eyebrow}
           title={
             <>
-              Handpicked holidays for <span className="text-gradient">every traveller</span>
+              {t.tour.destHead.titleA} <span className="text-gradient">{t.tour.destHead.titleB}</span>
             </>
           }
-          lead="Each tour is built around real highlights and sensible durations — and every detail, from visa to hotel, is handled by one team."
+          lead={t.tour.destHead.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {destinations.map((d, i) => (
+            {t.tour.destinations.map((d, i) => (
               <Reveal
                 key={d.name}
                 delay={i * 0.05}
@@ -147,7 +77,7 @@ export default function TourPackagesPage() {
                 className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-soft transition-all duration-300 hover:-translate-y-1.5 hover:shadow-emerald"
               >
                 {/* Vector gradient banner — no raster imagery */}
-                <div className={`relative h-40 bg-gradient-to-br ${d.tone}`}>
+                <div className={`relative h-40 bg-gradient-to-br ${destinationTones[i]}`}>
                   <div
                     aria-hidden
                     className="absolute inset-0 opacity-20"
@@ -187,14 +117,14 @@ export default function TourPackagesPage() {
                   <Button
                     href={whatsappLink(
                       contact.whatsapp,
-                      `Assalamu alaikum! I'm interested in the ${d.name} tour package. Please share the details.`,
+                      `${t.tour.enquireWaPrefix}${d.name}${t.tour.enquireWaSuffix}`,
                     )}
                     external
                     variant="outline"
                     size="sm"
                     className="mt-6 w-full"
                   >
-                    Enquire about {d.name} <ArrowRight className="h-4 w-4" />
+                    {t.tour.enquireAbout} {d.name} <ArrowRight className="h-4 w-4" />
                   </Button>
                 </div>
               </Reveal>
@@ -206,50 +136,59 @@ export default function TourPackagesPage() {
       {/* Tour types */}
       <Section>
         <SectionHeading
-          eyebrow="However you travel"
+          eyebrow={t.tour.typesHead.eyebrow}
           title={
             <>
-              Tours shaped around <span className="text-gradient">the people on them</span>
+              {t.tour.typesHead.titleA} <span className="text-gradient">{t.tour.typesHead.titleB}</span>
             </>
           }
-          lead="Whether it is the whole family, just the two of you, or a worry-free all-inclusive break — we build it your way."
+          lead={t.tour.typesHead.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-5 md:grid-cols-3">
-            {tourTypes.map((t, i) => (
+            {t.tour.tourTypes.map((tt, i) => {
+              const TypeIcon = tourTypeIcons[i];
+              return (
               <Reveal
-                key={t.title}
+                key={tt.title}
                 delay={i * 0.06}
                 className="group rounded-3xl border border-border bg-card p-7 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-emerald"
               >
                 <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-700 transition-colors group-hover:bg-brand-600 group-hover:text-white dark:bg-brand-900/40 dark:text-brand-200">
-                  <t.icon className="h-6 w-6" />
+                  <TypeIcon className="h-6 w-6" />
                 </span>
-                <h3 className="mt-5 font-display text-lg font-semibold text-ink dark:text-white">{t.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink-muted">{t.body}</p>
+                <h3 className="mt-5 font-display text-lg font-semibold text-ink dark:text-white">{tt.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-ink-muted">{tt.body}</p>
               </Reveal>
-            ))}
+              );
+            })}
           </div>
         </Container>
       </Section>
 
       <ServiceCTA
-        heading="Where shall we take you?"
-        body="Pick a destination above or describe your dream trip. We will craft an itinerary and a clear, all-inclusive quote."
-        waMessage="Assalamu alaikum! I would like to plan a tour package. Please share options."
+        locale={locale}
+        heading={t.tour.ctaHeading}
+        body={t.tour.ctaBody}
+        waMessage={t.tour.ctaWa}
+        cta={t.cta}
       />
     </>
   );
 }
 
 function ServiceCTA({
+  locale,
   heading,
   body,
   waMessage,
+  cta,
 }: {
+  locale: Locale;
   heading: string;
   body: string;
   waMessage: string;
+  cta: { estimate: string; whatsapp: string; callPrefix: string };
 }) {
   return (
     <Section className="bg-sand-soft pt-0">
@@ -263,18 +202,18 @@ function ServiceCTA({
             <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-4xl balance">{heading}</h2>
             <p className="mx-auto mt-5 max-w-xl text-base text-white/80 sm:text-lg">{body}</p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button href="/estimate" variant="gold" size="lg">
-                Get a Free Estimate <ArrowRight className="h-4 w-4" />
+              <Button href={localizedPath(locale, '/estimate')} variant="gold" size="lg">
+                {cta.estimate} <ArrowRight className="h-4 w-4" />
               </Button>
               <Button href={whatsappLink(contact.whatsapp, waMessage)} external variant="light" size="lg">
-                <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+                <MessageCircle className="h-4 w-4" /> {cta.whatsapp}
               </Button>
             </div>
             <a
               href={`tel:${contact.phones[0].replace(/\s/g, '')}`}
               className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white/85 hover:text-white"
             >
-              <Phone className="h-4 w-4" /> Or call us directly: {contact.phones[0]}
+              <Phone className="h-4 w-4" /> {cta.callPrefix} {contact.phones[0]}
             </a>
           </div>
         </Reveal>

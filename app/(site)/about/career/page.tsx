@@ -21,153 +21,53 @@ import { Reveal, RevealGroup } from '@/components/ui/Reveal';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { AuroraBackdrop } from '@/components/effects/AuroraBackdrop';
 import { contact } from '@/lib/site';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/about';
 
 const careersEmail = 'intergulfg47@gmail.com';
 
-export const metadata: Metadata = {
-  title: 'Career Opportunity — Join the Inter Gulf Family',
-  description:
-    'Build a meaningful career with Inter Gulf Travels Ltd, a government-licensed Hajj & Umrah agency in Dhaka since 2002. Explore open positions in Hajj operations, visa processing, ticketing, customer care and digital marketing.',
-  alternates: { canonical: '/about/career' },
-};
+export function generateMetadata(): Metadata {
+  const t = getDict(getLocale());
+  return {
+    title: t.career.meta.title,
+    description: t.career.meta.description,
+    alternates: { canonical: '/about/career' },
+  };
+}
 
-const culture = [
-  {
-    icon: HeartHandshake,
-    title: 'Purposeful work',
-    body: 'Every booking you handle helps a family fulfil a once-in-a-lifetime dream. Few jobs carry this much meaning.',
-  },
-  {
-    icon: GraduationCap,
-    title: 'Learn from veterans',
-    body: 'Work alongside colleagues with two decades of Hajj & Umrah expertise and grow into a true specialist.',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Real growth',
-    body: 'We promote from within. Strong performers move into senior operations, team-lead and management roles.',
-  },
-  {
-    icon: Users,
-    title: 'A family culture',
-    body: 'A close-knit, respectful team in the heart of Dhaka where your contribution is seen, valued and supported.',
-  },
-];
-
-type Position = {
-  title: string;
-  department: string;
-  type: string;
-  location: string;
-  summary: string;
-  responsibilities: string[];
-};
-
-const positions: Position[] = [
-  {
-    title: 'Hajj Operations Executive',
-    department: 'Operations',
-    type: 'Full-time',
-    location: 'Dhaka (On-site)',
-    summary:
-      'Coordinate end-to-end Hajj group logistics — registration, flights, hotels and ground services — and ensure every pilgrim’s journey runs flawlessly.',
-    responsibilities: [
-      'Manage Hajj pre-registration, group allocations and government submissions',
-      'Coordinate flights, hotel bookings and Maktab services with Saudi partners',
-      'Prepare departure schedules, rooming lists and pilgrim documentation',
-      'Liaise with on-ground teams in Makkah and Madinah during the Hajj season',
-    ],
-  },
-  {
-    title: 'Visa Processing Officer',
-    department: 'Documentation',
-    type: 'Full-time',
-    location: 'Dhaka (On-site)',
-    summary:
-      'Take ownership of accurate, timely visa applications for Hajj, Umrah and tourist travel across Saudi Arabia, the UAE and beyond.',
-    responsibilities: [
-      'Prepare and submit Hajj, Umrah, UAE and Schengen visa applications',
-      'Verify passports, photographs and supporting documents for completeness',
-      'Track application status and keep clients updated at every stage',
-      'Maintain meticulous records and ensure full regulatory compliance',
-    ],
-  },
-  {
-    title: 'Customer Care Representative',
-    department: 'Customer Experience',
-    type: 'Full-time',
-    location: 'Dhaka (On-site)',
-    summary:
-      'Be the warm, reassuring first voice pilgrims hear — answering enquiries, guiding choices and turning interest into confident bookings.',
-    responsibilities: [
-      'Respond to phone, WhatsApp and walk-in enquiries with patience and care',
-      'Explain packages, pricing and procedures clearly to prospective pilgrims',
-      'Follow up on leads and support clients through the booking journey',
-      'Gather feedback and help continuously improve our service quality',
-    ],
-  },
-  {
-    title: 'Ticketing Executive',
-    department: 'Air Travel',
-    type: 'Full-time',
-    location: 'Dhaka (On-site)',
-    summary:
-      'Issue domestic and international air tickets across 40+ airlines, securing the best fares and routings for pilgrims and travellers.',
-    responsibilities: [
-      'Search, quote and issue air tickets via GDS and airline portals',
-      'Find optimal fares and routings to Jeddah, Madinah, Dubai and beyond',
-      'Handle reissues, refunds, date changes and group fare requests',
-      'Reconcile bookings and coordinate with the accounts team',
-    ],
-  },
-  {
-    title: 'Digital Marketing Executive',
-    department: 'Marketing',
-    type: 'Full-time',
-    location: 'Dhaka (On-site)',
-    summary:
-      'Grow our online presence and bring our story to more families through content, social media and thoughtful campaigns.',
-    responsibilities: [
-      'Plan and publish content across Facebook, Instagram and the website',
-      'Run and optimise paid campaigns for Hajj & Umrah package seasons',
-      'Create graphics, reels and copy that reflect our trusted, caring brand',
-      'Track analytics and report on reach, engagement and lead generation',
-    ],
-  },
-];
-
-const applySteps = [
-  'Email your CV and a short cover note telling us why you would like to join.',
-  'Mention the position you are applying for in the subject line.',
-  'Our team reviews every application and contacts shortlisted candidates.',
-  'Selected applicants are invited to our Purana Paltan office for an interview.',
-];
+const cultureIcons = [HeartHandshake, GraduationCap, TrendingUp, Users];
 
 export default function CareerPage() {
+  const locale = getLocale();
+  const t = getDict(locale).career;
+  const culture = t.culture.items.map((c, i) => ({ icon: cultureIcons[i], ...c }));
+  const positions = t.positions.items;
+  const applySteps = t.apply.steps;
   return (
     <>
       <PageHero
-        eyebrow="Career Opportunity"
+        eyebrow={t.hero.eyebrow}
         title={
           <>
-            Build a career with <span className="text-gradient-gold">meaning</span> behind every journey
+            {t.hero.titleA}<span className="text-gradient-gold">{t.hero.titleHighlight}</span>{t.hero.titleB}
           </>
         }
-        lead="At Inter Gulf Travels, your work helps families fulfil the dream of a lifetime. Join a respected, government-licensed team that has served pilgrims with pride since 2002."
-        crumbs={[{ label: 'About Us', href: '/about' }, { label: 'Career Opportunity' }]}
+        lead={t.hero.lead}
+        crumbs={[{ label: t.hero.crumbAbout, href: localizedPath(locale, '/about') }, { label: t.hero.crumb }]}
       />
 
       {/* Culture / why work here */}
       <Section className="relative overflow-hidden">
         <AuroraBackdrop />
         <SectionHeading
-          eyebrow="Why work here"
+          eyebrow={t.culture.eyebrow}
           title={
             <>
-              More than a job — a chance to <span className="text-gradient">serve</span>
+              {t.culture.titleA}<span className="text-gradient">{t.culture.titleHighlight}</span>{t.culture.titleB}
             </>
           }
-          lead="We are a team that takes pride in honesty, care and craft. Here is what life at Inter Gulf Travels looks like."
+          lead={t.culture.lead}
         />
         <Container className="mt-14">
           <RevealGroup className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -189,13 +89,13 @@ export default function CareerPage() {
       {/* Open positions */}
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="Open positions"
+          eyebrow={t.positions.eyebrow}
           title={
             <>
-              Current <span className="text-gradient">openings</span>
+              {t.positions.titleA}<span className="text-gradient">{t.positions.titleHighlight}</span>
             </>
           }
-          lead="We are growing, and we are looking for dedicated people who share our commitment to pilgrims. All roles are based at our head office in Dhaka."
+          lead={t.positions.lead}
         />
         <Container className="mt-12">
           <RevealGroup className="space-y-5">
@@ -230,11 +130,11 @@ export default function CareerPage() {
                     </div>
                     <div className="shrink-0">
                       <Button
-                        href={`mailto:${careersEmail}?subject=${encodeURIComponent(`Application: ${p.title}`)}`}
+                        href={`mailto:${careersEmail}?subject=${encodeURIComponent(`${t.apply.applicationPrefix}: ${p.title}`)}`}
                         external
                         variant="outline"
                       >
-                        Apply Now <ArrowRight className="h-4 w-4" />
+                        {t.positions.apply} <ArrowRight className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -251,13 +151,12 @@ export default function CareerPage() {
         <Container>
           <div className="grid gap-12 lg:grid-cols-[1fr_1fr] lg:gap-16">
             <Reveal>
-              <Eyebrow>How to apply</Eyebrow>
+              <Eyebrow>{t.apply.eyebrow}</Eyebrow>
               <h2 className="mt-5 font-display text-3xl font-semibold leading-[1.12] text-ink dark:text-white sm:text-4xl balance">
-                Four simple steps to join our team
+                {t.apply.heading}
               </h2>
               <p className="mt-5 text-base leading-relaxed text-ink-muted">
-                Don’t see your exact role listed? We still want to hear from talented, sincere people.
-                Send us your CV and tell us how you can help us serve pilgrims better.
+                {t.apply.intro}
               </p>
               <ol className="mt-7 space-y-4">
                 {applySteps.map((step, i) => (
@@ -277,21 +176,21 @@ export default function CareerPage() {
                   <Sparkles className="h-7 w-7" />
                 </span>
                 <h3 className="mt-5 font-display text-xl font-semibold text-ink dark:text-white">
-                  Send your application
+                  {t.apply.cardTitle}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-                  Email your CV with the position in the subject line, and our team will be in touch.
+                  {t.apply.cardBody}
                 </p>
                 <div className="mt-6 space-y-3">
                   <a
-                    href={`mailto:${careersEmail}?subject=${encodeURIComponent('Career Application — Inter Gulf Travels')}`}
+                    href={`mailto:${careersEmail}?subject=${encodeURIComponent(t.apply.applicationSubject)}`}
                     className="flex items-center gap-3 rounded-2xl border border-border bg-sand-soft p-4 transition hover:border-brand-600 dark:bg-brand-900/20"
                   >
                     <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-gold-300">
                       <Mail className="h-5 w-5" />
                     </span>
                     <span>
-                      <span className="block text-xs uppercase tracking-wide text-ink-muted">Careers email</span>
+                      <span className="block text-xs uppercase tracking-wide text-ink-muted">{t.apply.careersEmailLabel}</span>
                       <span className="block text-sm font-semibold text-ink dark:text-white">{careersEmail}</span>
                     </span>
                   </a>
@@ -303,7 +202,7 @@ export default function CareerPage() {
                       <Phone className="h-5 w-5" />
                     </span>
                     <span>
-                      <span className="block text-xs uppercase tracking-wide text-ink-muted">Call us</span>
+                      <span className="block text-xs uppercase tracking-wide text-ink-muted">{t.apply.callUsLabel}</span>
                       <span className="block text-sm font-semibold text-ink dark:text-white">{contact.phones[0]}</span>
                     </span>
                   </a>
@@ -312,7 +211,7 @@ export default function CareerPage() {
                       <MapPin className="h-5 w-5" />
                     </span>
                     <span>
-                      <span className="block text-xs uppercase tracking-wide text-ink-muted">Visit our office</span>
+                      <span className="block text-xs uppercase tracking-wide text-ink-muted">{t.apply.visitOfficeLabel}</span>
                       <span className="block text-sm font-semibold text-ink dark:text-white">
                         {contact.address.line1}, {contact.address.line2}
                       </span>
@@ -320,8 +219,8 @@ export default function CareerPage() {
                   </div>
                 </div>
                 <div className="mt-6">
-                  <Button href="/contact" className="w-full">
-                    Contact Us <ArrowRight className="h-4 w-4" />
+                  <Button href={localizedPath(locale, '/contact')} className="w-full">
+                    {t.apply.contact} <ArrowRight className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

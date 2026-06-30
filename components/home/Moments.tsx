@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { Section, SectionHeading } from '@/components/ui/Section';
@@ -5,23 +7,27 @@ import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/Reveal';
 import { blurFor } from '@/lib/blur';
-
-const lead = {
-  src: '/gallery/pilgrims-haram.webp',
-  caption: 'Our pilgrims before the Holy Kaaba',
-};
-const side = [
-  { src: '/gallery/group-haram.webp', caption: 'Inter Gulf Hajj group, Makkah' },
-  { src: '/gallery/office-handover.webp', caption: 'Handing over documents · Dhaka office' },
-];
+import { useDictionary, useLocale } from '@/components/providers/LocaleProvider';
+import { localizedPath } from '@/lib/i18n';
 
 export function Moments() {
+  const t = useDictionary().home.moments;
+  const locale = useLocale();
+  const lead = {
+    src: '/gallery/pilgrims-haram.webp',
+    caption: t.leadCaption,
+  };
+  const side = [
+    { src: '/gallery/group-haram.webp', caption: t.sideCaptions[0] },
+    { src: '/gallery/office-handover.webp', caption: t.sideCaptions[1] },
+  ];
+
   return (
     <Section>
       <SectionHeading
-        eyebrow="Gallery"
-        title={<>Moments from the <span className="text-gradient">journeys we&apos;ve shared</span></>}
-        lead="Real pilgrims, real smiles — a glimpse of the families we have had the honour to serve."
+        eyebrow={t.eyebrow}
+        title={<>{t.titleA}<span className="text-gradient">{t.titleHighlight}</span></>}
+        lead={t.lead}
       />
       <Container className="mt-12">
         <div className="grid gap-5 lg:grid-cols-3">
@@ -66,8 +72,8 @@ export function Moments() {
         </div>
 
         <div className="mt-10 text-center">
-          <Button href="/gallery" variant="outline" size="md">
-            View full gallery <ArrowRight className="h-4 w-4" />
+          <Button href={localizedPath(locale, '/gallery')} variant="outline" size="md">
+            {t.viewGallery} <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       </Container>

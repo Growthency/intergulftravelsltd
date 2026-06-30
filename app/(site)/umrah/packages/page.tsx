@@ -6,8 +6,11 @@ import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Accordion } from '@/components/ui/Accordion';
-import { packages, umrahFaqs } from '@/lib/site';
+import { packages } from '@/lib/site';
 import { PackageCard, CtaBand } from '@/components/hajj-umrah/shared';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/umrahpages';
 
 export const metadata: Metadata = {
   title: 'Umrah Packages — Economy, Family & Premium from Dhaka',
@@ -18,60 +21,30 @@ export const metadata: Metadata = {
 
 const umrahPackages = packages.filter((p) => p.type === 'umrah');
 
-const compareRows: { label: string; economy: string; family: string; premium: string }[] = [
-  { label: 'Duration', economy: '10–14 days', family: '12–14 days', premium: '14 days' },
-  { label: 'Air ticket & visa', economy: 'Return ticket + Umrah visa', family: 'Return ticket + Umrah visa', premium: 'Return ticket + fast-track visa' },
-  { label: 'Hotel rating', economy: 'Clean, comfortable', family: '3-star, family rooms', premium: '4-star near the Haramain' },
-  { label: 'Room occupancy', economy: 'Shared (4–5)', family: 'Connecting family rooms', premium: '2–3 per room' },
-  { label: 'Transport', economy: 'Group coach transfers', family: 'Group coach transfers', premium: 'Private AC transport' },
-  { label: 'Meals', economy: 'Self / optional', family: 'Breakfast included', premium: 'Breakfast & dinner' },
-  { label: 'Ziyarat', economy: 'Group Ziyarat with guide', family: 'Group Ziyarat with guide', premium: 'Complete Ziyarat, dedicated guide' },
-  { label: 'Special assistance', economy: 'On request', family: 'Wheelchair & elder support', premium: 'Full concierge support' },
-];
-
-const included = [
-  'Return air ticket (Dhaka ⇄ Jeddah / Madinah)',
-  'Umrah e-visa processing',
-  'Hotel accommodation in Makkah & Madinah',
-  'Airport & Makkah ⇄ Madinah transfers',
-  'Guided Ziyarat of the blessed sites',
-  'Experienced Bangla-speaking guide',
-  '24/7 on-ground support in Saudi Arabia',
-  'Zamzam water (as per airline allowance)',
-];
-
-const notIncluded = [
-  'Passport issuance / renewal fees',
-  'Meals not specified in your package tier',
-  'Personal expenses, shopping & SIM/phone',
-  'Travel & health insurance (optional, on request)',
-  'Excess baggage charges beyond airline limit',
-  'Any cost due to flight delays beyond our control',
-];
-
-const bookingNotes = [
-  { icon: CreditCard, title: 'Flexible Booking', body: 'Reserve with a deposit and settle the balance before departure. We accept bank transfer, cheque and cash, and every payment is receipted.' },
-  { icon: CalendarClock, title: 'Year-Round Dates', body: 'Umrah runs all year. Tell us your preferred window — Ramadan, school holidays or any month — and we arrange the rest.' },
-  { icon: FileText, title: 'Simple Documents', body: 'A passport valid for at least six months, photographs and a completed form are all that’s usually needed. We handle the e-visa for you.' },
-  { icon: ShieldCheck, title: 'Honest Pricing', body: 'Clear, itemised costs with no hidden charges. If a Saudi fee or fare changes, we tell you immediately and adjust fairly.' },
-];
+const bookingIcons = [CreditCard, CalendarClock, FileText, ShieldCheck];
 
 export default function UmrahPackagesPage() {
+  const locale = getLocale();
+  const t = getDict(locale);
+  const compareRows = t.packages.compareRows;
+  const included = t.packages.included;
+  const notIncluded = t.packages.notIncluded;
+  const bookingNotes = t.packages.bookingNotes.map((n, i) => ({ icon: bookingIcons[i], ...n }));
   return (
     <>
       <PageHero
-        eyebrow="Umrah Packages"
-        title={<>Choose the Umrah package made for you</>}
-        lead="From a value Economy plan to a comfortable Premium experience and dedicated Family programmes, every package is all-inclusive, flexible and built around your needs."
-        crumbs={[{ label: 'Umrah', href: '/umrah' }, { label: 'Umrah Packages' }]}
+        eyebrow={t.packages.hero.eyebrow}
+        title={<>{t.packages.hero.title}</>}
+        lead={t.packages.hero.lead}
+        crumbs={[{ label: t.packages.hero.crumbUmrah, href: localizedPath(locale, '/umrah') }, { label: t.packages.hero.crumb }]}
       />
 
       {/* Cards */}
       <Section>
         <SectionHeading
-          eyebrow="Year-round departures"
-          title={<>Three plans, <span className="text-gradient">one promise of care</span></>}
-          lead="All prices are per person and clearly itemised. Tell us your dates and budget and we will tailor the perfect plan."
+          eyebrow={t.packages.cards.eyebrow}
+          title={<>{t.packages.cards.titleA} <span className="text-gradient">{t.packages.cards.titleB}</span></>}
+          lead={t.packages.cards.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-6 lg:grid-cols-3">
@@ -82,8 +55,7 @@ export default function UmrahPackagesPage() {
             ))}
           </div>
           <p className="mt-8 text-center text-sm text-ink-muted">
-            Prices are indicative and may vary with airline fares, hotel availability and the season (Ramadan and
-            peak periods cost more).
+            {t.packages.cards.note}
           </p>
         </Container>
       </Section>
@@ -91,9 +63,9 @@ export default function UmrahPackagesPage() {
       {/* Comparison */}
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="Side by side"
-          title={<>Compare every <span className="text-gradient">inclusion</span></>}
-          lead="A clear, honest breakdown of how the three packages differ — so you can choose with confidence."
+          eyebrow={t.packages.compare.eyebrow}
+          title={<>{t.packages.compare.titleA} <span className="text-gradient">{t.packages.compare.titleB}</span></>}
+          lead={t.packages.compare.lead}
         />
         <Container className="mt-14">
           <Reveal className="overflow-hidden rounded-3xl border border-border bg-card shadow-soft">
@@ -101,11 +73,11 @@ export default function UmrahPackagesPage() {
               <table className="w-full min-w-[640px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="bg-brand-gradient text-white">
-                    <th className="px-5 py-4 font-display text-base font-semibold">Feature</th>
-                    <th className="px-5 py-4 font-display text-base font-semibold">Economy</th>
-                    <th className="px-5 py-4 font-display text-base font-semibold">Family</th>
+                    <th className="px-5 py-4 font-display text-base font-semibold">{t.packages.compare.feature}</th>
+                    <th className="px-5 py-4 font-display text-base font-semibold">{t.packages.compare.economy}</th>
+                    <th className="px-5 py-4 font-display text-base font-semibold">{t.packages.compare.family}</th>
                     <th className="px-5 py-4 font-display text-base font-semibold">
-                      Premium <span className="ml-1 rounded-full bg-gold-gradient px-2 py-0.5 text-[0.65rem] font-bold uppercase text-brand-900">Best value</span>
+                      {t.packages.compare.premium} <span className="ml-1 rounded-full bg-gold-gradient px-2 py-0.5 text-[0.65rem] font-bold uppercase text-brand-900">{t.packages.compare.bestValue}</span>
                     </th>
                   </tr>
                 </thead>
@@ -122,16 +94,16 @@ export default function UmrahPackagesPage() {
               </table>
             </div>
           </Reveal>
-          <p className="mt-4 text-center text-xs text-ink-muted">Scroll horizontally on smaller screens to view all columns.</p>
+          <p className="mt-4 text-center text-xs text-ink-muted">{t.packages.compare.scrollHint}</p>
         </Container>
       </Section>
 
       {/* Included / Not included */}
       <Section>
         <SectionHeading
-          eyebrow="Transparent pricing"
-          title={<>What’s <span className="text-gradient">included</span> — and what’s not</>}
-          lead="No surprises. Here is exactly what your Umrah package covers, and the few items outside it."
+          eyebrow={t.packages.incl.eyebrow}
+          title={<>{t.packages.incl.titleA} <span className="text-gradient">{t.packages.incl.titleB}</span> {t.packages.incl.titleC}</>}
+          lead={t.packages.incl.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-6 lg:grid-cols-2">
@@ -141,7 +113,7 @@ export default function UmrahPackagesPage() {
                   <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-gradient text-white">
                     <Check className="h-4 w-4" />
                   </span>
-                  Included in your package
+                  {t.packages.incl.includedHeading}
                 </h3>
                 <ul className="mt-6 space-y-3">
                   {included.map((item) => (
@@ -158,7 +130,7 @@ export default function UmrahPackagesPage() {
                   <span className="grid h-8 w-8 place-items-center rounded-full bg-gold-gradient text-brand-900">
                     <X className="h-4 w-4" />
                   </span>
-                  Not included
+                  {t.packages.incl.notIncludedHeading}
                 </h3>
                 <ul className="mt-6 space-y-3">
                   {notIncluded.map((item) => (
@@ -176,9 +148,9 @@ export default function UmrahPackagesPage() {
       {/* Booking notes */}
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="Booking & payment"
-          title={<>How booking your Umrah <span className="text-gradient">works</span></>}
-          lead="A simple, flexible process backed by 24 years of experience and full government licensing."
+          eyebrow={t.packages.booking.eyebrow}
+          title={<>{t.packages.booking.titleA} <span className="text-gradient">{t.packages.booking.titleB}</span></>}
+          lead={t.packages.booking.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-6 sm:grid-cols-2">
@@ -203,27 +175,27 @@ export default function UmrahPackagesPage() {
       <Section>
         <Container size="narrow">
           <div className="text-center">
-            <Eyebrow className="mx-auto">Umrah packages FAQ</Eyebrow>
+            <Eyebrow className="mx-auto">{t.packages.faq.eyebrow}</Eyebrow>
             <h2 className="mt-5 font-display text-3xl font-semibold leading-tight text-ink dark:text-white sm:text-4xl balance">
-              Questions about <span className="text-gradient">our packages</span>
+              {t.packages.faq.titleA} <span className="text-gradient">{t.packages.faq.titleB}</span>
             </h2>
           </div>
           <Reveal className="mt-10">
-            <Accordion items={umrahFaqs} />
+            <Accordion items={t.packages.umrahFaqs} />
           </Reveal>
           <p className="mt-6 text-center text-sm text-ink-muted">
-            Have a different question?{' '}
-            <a href="/umrah/faq" className="font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-300">
-              See the full Umrah FAQ →
+            {t.packages.faq.differentA}{' '}
+            <a href={localizedPath(locale, '/umrah/faq')} className="font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-300">
+              {t.packages.faq.differentLink}
             </a>
           </p>
         </Container>
       </Section>
 
       <CtaBand
-        title="Book your Umrah journey"
-        lead="With year-round departures and flexible dates, your Umrah can begin whenever you are ready. Speak to an advisor for a free, no-obligation quote."
-        message="Assalamu alaikum! I would like to book an Umrah package."
+        title={t.packages.cta.title}
+        lead={t.packages.cta.lead}
+        message={t.packages.cta.message}
       />
     </>
   );

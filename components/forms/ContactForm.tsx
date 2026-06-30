@@ -4,6 +4,9 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Send, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/contact';
+import { localizedPath } from '@/lib/i18n';
 
 type FormValues = {
   name: string;
@@ -13,22 +16,17 @@ type FormValues = {
   message: string;
 };
 
-const subjects = [
-  'Hajj enquiry',
-  'Umrah enquiry',
-  'Visa service',
-  'Air ticket',
-  'Hotel booking',
-  'Tour package',
-  'General question',
-];
-
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const fieldBase =
   'w-full rounded-2xl border border-border bg-background/60 px-4 py-3 text-[0.95rem] text-ink outline-none transition focus:border-brand-600 focus:bg-card focus:ring-2 focus:ring-brand-600/15 dark:text-white';
 
 export function ContactForm() {
+  const locale = useLocale();
+  const t = getDict(locale);
+  const f = t.formFields;
+  const subjects = f.subjects;
+
   const {
     register,
     handleSubmit,
@@ -49,63 +47,63 @@ export function ContactForm() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Something went wrong. Please try again or call us directly.');
+        toast.error(data?.error ?? f.toast.genericError);
         return;
       }
 
-      toast.success('Thank you! Your message has reached us — we will be in touch shortly, insha’Allah.');
+      toast.success(f.toast.success);
       reset();
     } catch {
-      toast.error('Network error. Please check your connection and try again.');
+      toast.error(f.toast.networkError);
     }
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Full name" error={errors.name?.message}>
+        <Field label={f.labels.name} error={errors.name?.message}>
           <input
             type="text"
             autoComplete="name"
-            placeholder="e.g. Md. Abdur Rahman"
+            placeholder={f.placeholders.name}
             className={cn(fieldBase, errors.name && 'border-red-400 focus:ring-red-400/15')}
             {...register('name', {
-              required: 'Please enter your full name.',
-              minLength: { value: 2, message: 'Please enter your full name.' },
+              required: f.errors.nameRequired,
+              minLength: { value: 2, message: f.errors.nameRequired },
             })}
           />
         </Field>
-        <Field label="Phone" error={errors.phone?.message}>
+        <Field label={f.labels.phone} error={errors.phone?.message}>
           <input
             type="tel"
             autoComplete="tel"
-            placeholder="01XXX XXXXXX"
+            placeholder={f.placeholders.phone}
             className={cn(fieldBase, errors.phone && 'border-red-400 focus:ring-red-400/15')}
             {...register('phone', {
-              required: 'Please enter your phone number.',
-              minLength: { value: 6, message: 'Please enter a valid phone number.' },
+              required: f.errors.phoneRequired,
+              minLength: { value: 6, message: f.errors.phoneInvalid },
             })}
           />
         </Field>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Email" error={errors.email?.message}>
+        <Field label={f.labels.email} error={errors.email?.message}>
           <input
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder={f.placeholders.email}
             className={cn(fieldBase, errors.email && 'border-red-400 focus:ring-red-400/15')}
             {...register('email', {
-              required: 'Please enter your email address.',
-              pattern: { value: emailPattern, message: 'Please enter a valid email address.' },
+              required: f.errors.emailRequired,
+              pattern: { value: emailPattern, message: f.errors.emailInvalid },
             })}
           />
         </Field>
-        <Field label="Subject" error={errors.subject?.message}>
+        <Field label={f.labels.subject} error={errors.subject?.message}>
           <select
             className={cn(fieldBase, errors.subject && 'border-red-400 focus:ring-red-400/15')}
-            {...register('subject', { required: 'Please choose a subject.' })}
+            {...register('subject', { required: f.errors.subjectRequired })}
           >
             {subjects.map((s) => (
               <option key={s} value={s}>
@@ -116,14 +114,14 @@ export function ContactForm() {
         </Field>
       </div>
 
-      <Field label="Message" error={errors.message?.message}>
+      <Field label={f.labels.message} error={errors.message?.message}>
         <textarea
           rows={5}
-          placeholder="Tell us about your plans — dates, number of travellers, budget or any questions you have."
+          placeholder={f.placeholders.message}
           className={cn(fieldBase, 'resize-y', errors.message && 'border-red-400 focus:ring-red-400/15')}
           {...register('message', {
-            required: 'Please write a short message.',
-            minLength: { value: 10, message: 'Please tell us a little more (min. 10 characters).' },
+            required: f.errors.messageRequired,
+            minLength: { value: 10, message: f.errors.messageMin },
           })}
         />
       </Field>
@@ -135,19 +133,19 @@ export function ContactForm() {
       >
         {isSubmitting ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" /> Sending…
+            <Loader2 className="h-4 w-4 animate-spin" /> {f.submitting}
           </>
         ) : (
           <>
-            Send message <Send className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            {f.submit} <Send className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </>
         )}
       </button>
 
       <p className="text-xs text-ink-muted">
-        We respect your privacy. Your details are used only to respond to your enquiry — see our{' '}
-        <a href="/privacy" className="font-medium text-brand-700 underline underline-offset-2 dark:text-brand-300">
-          Privacy Policy
+        {f.privacyA}
+        <a href={localizedPath(locale, '/privacy')} className="font-medium text-brand-700 underline underline-offset-2 dark:text-brand-300">
+          {f.privacyLink}
         </a>
         .
       </p>

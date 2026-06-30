@@ -8,6 +8,9 @@ import { Section, SectionHeading } from '@/components/ui/Section';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/Reveal';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/branches';
 
 export const metadata: Metadata = {
   title: 'Our Branches',
@@ -17,22 +20,22 @@ export const metadata: Metadata = {
 };
 
 export default function BranchesPage() {
+  const locale = getLocale();
+  const t = getDict(locale);
   return (
     <>
       <PageHero
-        eyebrow="Our Group"
-        title={<>The Inter Gulf <span className="text-gradient">family of companies</span></>}
-        lead="One trusted group, three government-approved concerns — together covering Hajj, Umrah, visa, worldwide air ticketing, tours and hotel booking under one roof."
-        crumbs={[{ label: 'Branches' }]}
+        eyebrow={t.hero.eyebrow}
+        title={<>{t.hero.titlePre}<span className="text-gradient">{t.hero.titleAccent}</span></>}
+        lead={t.hero.lead}
+        crumbs={[{ label: t.hero.crumb }]}
       />
 
       <Section>
         <Container>
           <Reveal className="mx-auto mb-14 max-w-3xl text-center">
             <p className="text-lg leading-relaxed text-ink-muted">
-              Since {siteConfig.founded}, the Inter Gulf group has grown from a single Hajj agency
-              into a family of sister concerns serving pilgrims and travellers across Bangladesh.
-              Every company shares the same office, team and promise of honest, personal service.
+              {t.intro.pre}{siteConfig.founded}{t.intro.post}
             </p>
             <div className="mt-7 flex flex-wrap items-center justify-center gap-2.5">
               {affiliations.map((a) => (
@@ -44,10 +47,12 @@ export default function BranchesPage() {
           </Reveal>
 
           <div className="grid gap-6 lg:grid-cols-3">
-            {branches.map((b, i) => (
+            {branches.map((b, i) => {
+              const tb = t.branches[b.slug];
+              return (
               <Reveal key={b.slug} delay={i * 0.08}>
                 <Link
-                  href={`/branches/${b.slug}`}
+                  href={localizedPath(locale, `/branches/${b.slug}`)}
                   className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card p-7 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-brand-600/30 hover:shadow-emerald"
                 >
                   <div className="flex items-center justify-between">
@@ -58,13 +63,13 @@ export default function BranchesPage() {
                   </div>
 
                   <span className="mt-6 inline-flex w-fit items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-wide text-brand-700 dark:bg-brand-900/40 dark:text-brand-200">
-                    {b.role}
+                    {tb.role}
                   </span>
                   <h3 className="mt-3 font-display text-xl font-semibold text-ink dark:text-white">{b.name}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-ink-muted">{b.tagline}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-ink-muted">{tb.tagline}</p>
 
                   <ul className="mt-5 space-y-2 border-t border-border pt-5">
-                    {b.services.slice(0, 3).map((s) => (
+                    {tb.services.slice(0, 3).map((s) => (
                       <li key={s} className="flex items-center gap-2 text-sm text-ink/80 dark:text-white/80">
                         <Check className="h-4 w-4 shrink-0 text-brand-600" /> {s}
                       </li>
@@ -72,20 +77,21 @@ export default function BranchesPage() {
                   </ul>
 
                   <span className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-brand-700">
-                    Learn more <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                    {t.learnMore} <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                   </span>
                 </Link>
               </Reveal>
-            ))}
+              );
+            })}
           </div>
         </Container>
       </Section>
 
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="One head office"
-          title={<>All three companies, <span className="text-gradient">one trusted address</span></>}
-          lead="Visit us at our head office in the heart of Dhaka — the home of the entire Inter Gulf group."
+          eyebrow={t.headOffice.eyebrow}
+          title={<>{t.headOffice.titlePre}<span className="text-gradient">{t.headOffice.titleAccent}</span></>}
+          lead={t.headOffice.lead}
         />
         <Container className="mt-10">
           <Reveal className="mx-auto flex max-w-2xl items-start gap-4 rounded-3xl border border-border bg-card p-7 shadow-soft">
@@ -93,14 +99,14 @@ export default function BranchesPage() {
               <Building2 className="h-6 w-6" />
             </span>
             <div>
-              <div className="font-display text-lg font-semibold text-ink dark:text-white">Head Office</div>
+              <div className="font-display text-lg font-semibold text-ink dark:text-white">{t.headOffice.label}</div>
               <p className="mt-1 flex items-start gap-2 text-sm text-ink-muted">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold-500" />
-                31, K.R. Plaza, 5th–6th Floor, Purana Paltan, Dhaka-1000
+                {t.headOffice.address}
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
-                <Button href="/contact" variant="primary" size="sm">Contact us</Button>
-                <Button href="/estimate" variant="outline" size="sm">Get a free estimate</Button>
+                <Button href={localizedPath(locale, '/contact')} variant="primary" size="sm">{t.headOffice.contactCta}</Button>
+                <Button href={localizedPath(locale, '/estimate')} variant="outline" size="sm">{t.headOffice.estimateCta}</Button>
               </div>
             </div>
           </Reveal>

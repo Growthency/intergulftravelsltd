@@ -9,27 +9,35 @@ import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/Reveal';
 import { GalleryGrid } from '@/components/gallery/GalleryGrid';
 import { getGalleryImages } from '@/lib/gallery';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/gallery';
 
-export const metadata: Metadata = {
-  title: 'Gallery',
-  description:
-    'Moments from the journey — Tawaf at the Holy Kaaba, Masjid an-Nabawi in Madinah, our pilgrims in Mina and Arafah, pre-Hajj training workshops in Dhaka and tours abroad with Inter Gulf Travels Ltd.',
-  alternates: { canonical: '/gallery' },
-};
+export function generateMetadata(): Metadata {
+  const t = getDict(getLocale());
+  return {
+    title: t.meta.title,
+    description: t.meta.description,
+    alternates: { canonical: '/gallery' },
+  };
+}
 
 export default async function GalleryPage() {
   const images = await getGalleryImages().catch(() => []);
+  const locale = getLocale();
+  const t = getDict(locale);
   return (
     <>
       <PageHero
-        eyebrow="Gallery"
+        eyebrow={t.hero.eyebrow}
         title={
           <>
-            Moments from <span className="text-gradient-gold">the journey</span>
+            {t.hero.titleA}
+            <span className="text-gradient-gold">{t.hero.titleHighlight}</span>
           </>
         }
-        lead="From Tawaf at the Holy Kaaba to training workshops in Dhaka and holidays abroad — a glimpse of the journeys our pilgrims and travellers have shared with us since 2002."
-        crumbs={[{ label: 'Gallery' }]}
+        lead={t.hero.lead}
+        crumbs={[{ label: t.hero.crumb }]}
       />
 
       <Section className="bg-sand-soft">
@@ -48,23 +56,22 @@ export default async function GalleryPage() {
             </div>
             <div className="relative mx-auto max-w-2xl">
               <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-4xl balance">
-                Picture yourself on this journey
+                {t.cta.heading}
               </h2>
               <p className="mx-auto mt-5 max-w-xl text-base text-white/80 sm:text-lg">
-                Every photo here began with a single conversation. Let yours be next — speak to an advisor and
-                start planning your Hajj, Umrah or holiday today.
+                {t.cta.body}
               </p>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Button href="/estimate" variant="gold" size="lg">
-                  Get a Free Estimate <ArrowRight className="h-4 w-4" />
+                <Button href={localizedPath(locale, '/estimate')} variant="gold" size="lg">
+                  {t.cta.estimate} <ArrowRight className="h-4 w-4" />
                 </Button>
                 <Button
-                  href={whatsappLink(contact.whatsapp, 'Assalamu alaikum! I would like to plan a journey with Inter Gulf Travels.')}
+                  href={whatsappLink(contact.whatsapp, t.cta.whatsappMessage)}
                   external
                   variant="light"
                   size="lg"
                 >
-                  <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+                  <MessageCircle className="h-4 w-4" /> {t.cta.whatsapp}
                 </Button>
               </div>
             </div>

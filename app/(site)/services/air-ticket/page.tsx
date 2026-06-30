@@ -12,6 +12,9 @@ import {
 } from 'lucide-react';
 import { contact, partners } from '@/lib/site';
 import { whatsappLink } from '@/lib/utils';
+import { localizedPath, type Locale } from '@/lib/i18n';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/services';
 import { PageHero } from '@/components/layout/PageHero';
 import { Section, SectionHeading } from '@/components/ui/Section';
 import { Container } from '@/components/ui/Container';
@@ -25,111 +28,54 @@ export const metadata: Metadata = {
   alternates: { canonical: '/services/air-ticket' },
 };
 
-const promises = [
-  {
-    icon: BadgeDollarSign,
-    title: 'Best-fare promise',
-    body: 'We compare fares across 40+ carriers and routings to find you the lowest workable price — every time.',
-  },
-  {
-    icon: Zap,
-    title: 'Instant e-ticket issuance',
-    body: 'Confirmed seats and e-tickets issued on the spot, with clear fare rules explained before you pay.',
-  },
-  {
-    icon: Users,
-    title: 'Group & Hajj fares',
-    body: 'Special negotiated group fares for families, corporate travel and our Hajj & Umrah departures.',
-  },
-  {
-    icon: Plane,
-    title: 'Re-issue & support',
-    body: 'Date changes, re-routings and refunds handled by our ticketing desk — no endless airline call queues.',
-  },
-];
-
-const routeGroups = [
-  {
-    label: 'Pilgrimage routes',
-    routes: [
-      { from: 'Dhaka', to: 'Jeddah', code: 'DAC → JED' },
-      { from: 'Dhaka', to: 'Madinah', code: 'DAC → MED' },
-      { from: 'Dhaka', to: 'Riyadh', code: 'DAC → RUH' },
-    ],
-  },
-  {
-    label: 'Gulf & Middle East',
-    routes: [
-      { from: 'Dhaka', to: 'Dubai', code: 'DAC → DXB' },
-      { from: 'Dhaka', to: 'Abu Dhabi', code: 'DAC → AUH' },
-      { from: 'Dhaka', to: 'Doha', code: 'DAC → DOH' },
-    ],
-  },
-  {
-    label: 'Asia & beyond',
-    routes: [
-      { from: 'Dhaka', to: 'Kuala Lumpur', code: 'DAC → KUL' },
-      { from: 'Dhaka', to: 'Istanbul', code: 'DAC → IST' },
-      { from: 'Dhaka', to: 'Bangkok', code: 'DAC → BKK' },
-    ],
-  },
-];
-
-const ticketTypes = [
-  {
-    title: 'Domestic',
-    body: 'Dhaka, Chattogram, Sylhet, Cox’s Bazar, Jashore, Saidpur and more — quick connections across Bangladesh.',
-  },
-  {
-    title: 'Regional',
-    body: 'Short-haul fares to India, Nepal, Bhutan, Malaysia, Thailand, the UAE and the wider Gulf.',
-  },
-  {
-    title: 'International',
-    body: 'Long-haul tickets to Saudi Arabia, Europe, the Far East and North America with the best routings.',
-  },
-];
+// Icons paired by index with t.air.promises (copy lives in the dictionary).
+const promiseIcons = [BadgeDollarSign, Zap, Users, Plane];
 
 export default function AirTicketPage() {
+  const locale = getLocale();
+  const t = getDict(locale);
   return (
     <>
       <PageHero
-        eyebrow="Air Ticket"
+        eyebrow={t.air.hero.eyebrow}
         title={
           <>
-            Fly for less, <span className="text-gradient-gold">worldwide</span>
+            {t.air.hero.titleA} <span className="text-gradient-gold">{t.air.hero.titleB}</span>
           </>
         }
-        lead="Domestic, regional and international air tickets across 40+ airlines, issued instantly at fares we are confident you will not beat — with a real human desk behind every booking."
-        crumbs={[{ label: 'Services', href: '/services' }, { label: 'Air Ticket' }]}
+        lead={t.air.hero.lead}
+        crumbs={[{ label: t.air.hero.crumbServices, href: localizedPath(locale, '/services') }, { label: t.air.hero.crumb }]}
       />
 
       {/* Best-fare promise */}
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="Why book with us"
+          eyebrow={t.air.promiseHead.eyebrow}
           title={
             <>
-              A ticketing desk that <span className="text-gradient">works for you</span>
+              {t.air.promiseHead.titleA} <span className="text-gradient">{t.air.promiseHead.titleB}</span>
             </>
           }
-          lead="Online portals leave you on your own. We do the searching, issue the ticket and stand by it from booking to boarding."
+          lead={t.air.promiseHead.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {promises.map((p, i) => (
+            {t.air.promises.map((p, i) => {
+              const PromiseIcon = promiseIcons[i];
+              return (
               <Reveal
                 key={p.title}
                 delay={i * 0.05}
                 className="group rounded-3xl border border-border bg-card p-7 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-emerald"
               >
                 <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-gradient text-white shadow-emerald">
-                  <p.icon className="h-6 w-6" />
+                  <PromiseIcon className="h-6 w-6" />
                 </span>
                 <h3 className="mt-5 font-display text-lg font-semibold text-ink dark:text-white">{p.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-ink-muted">{p.body}</p>
               </Reveal>
-            ))}
+              );
+            })}
           </div>
         </Container>
       </Section>
@@ -138,15 +84,15 @@ export default function AirTicketPage() {
       <Section>
         <Container>
           <div className="grid gap-5 md:grid-cols-3">
-            {ticketTypes.map((t, i) => (
+            {t.air.ticketTypes.map((tt, i) => (
               <Reveal
-                key={t.title}
+                key={tt.title}
                 delay={i * 0.06}
                 className="relative overflow-hidden rounded-3xl border border-border bg-card p-7 shadow-soft"
               >
                 <span className="font-display text-5xl font-semibold text-brand-600/15">{`0${i + 1}`}</span>
-                <h3 className="mt-2 font-display text-xl font-semibold text-ink dark:text-white">{t.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink-muted">{t.body}</p>
+                <h3 className="mt-2 font-display text-xl font-semibold text-ink dark:text-white">{tt.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-ink-muted">{tt.body}</p>
               </Reveal>
             ))}
           </div>
@@ -156,17 +102,17 @@ export default function AirTicketPage() {
       {/* Popular routes */}
       <Section className="bg-sand-soft pt-0">
         <SectionHeading
-          eyebrow="Popular routes from Dhaka"
+          eyebrow={t.air.routesHead.eyebrow}
           title={
             <>
-              Where our travellers <span className="text-gradient">fly most</span>
+              {t.air.routesHead.titleA} <span className="text-gradient">{t.air.routesHead.titleB}</span>
             </>
           }
-          lead="From the holy cities to the Gulf and the Far East — fares updated daily across our airline partners."
+          lead={t.air.routesHead.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-5 lg:grid-cols-3">
-            {routeGroups.map((g, gi) => (
+            {t.air.routeGroups.map((g, gi) => (
               <Reveal
                 key={g.label}
                 delay={gi * 0.06}
@@ -200,13 +146,13 @@ export default function AirTicketPage() {
       {/* Airline partners */}
       <Section>
         <SectionHeading
-          eyebrow="40+ airline partners"
+          eyebrow={t.air.partnersHead.eyebrow}
           title={
             <>
-              Booked across the world&apos;s <span className="text-gradient">leading carriers</span>
+              {t.air.partnersHead.titleA} <span className="text-gradient">{t.air.partnersHead.titleB}</span>
             </>
           }
-          lead="As an IATA-linked agency we issue on every major airline serving Bangladesh — and dozens more worldwide."
+          lead={t.air.partnersHead.lead}
         />
         <Container className="mt-12">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -226,33 +172,38 @@ export default function AirTicketPage() {
               delay={partners.length * 0.03}
               className="flex items-center justify-center rounded-2xl border border-dashed border-brand-600/40 bg-brand-50/50 px-4 py-3.5 text-sm font-semibold text-brand-700 dark:bg-brand-900/20 dark:text-brand-200"
             >
-              + 30 more carriers
+              {t.air.moreCarriers}
             </Reveal>
           </div>
           <p className="mt-6 flex items-center justify-center gap-2 text-center text-sm text-ink-muted">
-            <Check className="h-4 w-4 text-brand-600" /> Can&apos;t see your preferred airline? Just ask — we
-            most likely issue on it.
+            <Check className="h-4 w-4 text-brand-600" /> {t.air.askAirline}
           </p>
         </Container>
       </Section>
 
       <ServiceCTA
-        heading="Looking for your best fare?"
-        body="Tell us your route and dates. Our ticketing desk will come back with the lowest workable fare across our 40+ carriers."
-        waMessage="Assalamu alaikum! I would like a fare quote for an air ticket."
+        locale={locale}
+        heading={t.air.ctaHeading}
+        body={t.air.ctaBody}
+        waMessage={t.air.ctaWa}
+        cta={t.cta}
       />
     </>
   );
 }
 
 function ServiceCTA({
+  locale,
   heading,
   body,
   waMessage,
+  cta,
 }: {
+  locale: Locale;
   heading: string;
   body: string;
   waMessage: string;
+  cta: { estimate: string; whatsapp: string; callPrefix: string };
 }) {
   return (
     <Section className="bg-sand-soft pt-0">
@@ -266,18 +217,18 @@ function ServiceCTA({
             <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-4xl balance">{heading}</h2>
             <p className="mx-auto mt-5 max-w-xl text-base text-white/80 sm:text-lg">{body}</p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button href="/estimate" variant="gold" size="lg">
-                Get a Free Estimate <ArrowRight className="h-4 w-4" />
+              <Button href={localizedPath(locale, '/estimate')} variant="gold" size="lg">
+                {cta.estimate} <ArrowRight className="h-4 w-4" />
               </Button>
               <Button href={whatsappLink(contact.whatsapp, waMessage)} external variant="light" size="lg">
-                <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+                <MessageCircle className="h-4 w-4" /> {cta.whatsapp}
               </Button>
             </div>
             <a
               href={`tel:${contact.phones[0].replace(/\s/g, '')}`}
               className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white/85 hover:text-white"
             >
-              <Phone className="h-4 w-4" /> Or call us directly: {contact.phones[0]}
+              <Phone className="h-4 w-4" /> {cta.callPrefix} {contact.phones[0]}
             </a>
           </div>
         </Reveal>

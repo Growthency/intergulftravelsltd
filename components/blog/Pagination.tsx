@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/blog';
 
 /** Build a compact page list with ellipses, e.g. 1 … 4 [5] 6 … 12 */
 function pageList(current: number, total: number): (number | '…')[] {
@@ -27,13 +29,14 @@ export function Pagination({
   hrefFor: (page: number) => string;
 }) {
   if (totalPages <= 1) return null;
+  const t = getDict(getLocale()).pagination;
   const base =
     'grid h-10 min-w-10 place-items-center rounded-xl border px-3 text-sm font-semibold transition';
 
   return (
-    <nav className="mt-14 flex flex-wrap items-center justify-center gap-1.5" aria-label="Blog pagination">
+    <nav className="mt-14 flex flex-wrap items-center justify-center gap-1.5" aria-label={t.ariaLabel}>
       {currentPage > 1 ? (
-        <Link href={hrefFor(currentPage - 1)} className={cn(base, 'border-border bg-card text-ink-muted hover:border-brand-600/40 hover:text-brand-700')} aria-label="Previous page">
+        <Link href={hrefFor(currentPage - 1)} className={cn(base, 'border-border bg-card text-ink-muted hover:border-brand-600/40 hover:text-brand-700')} aria-label={t.previous}>
           <ChevronLeft className="h-4 w-4" />
         </Link>
       ) : (
@@ -65,7 +68,7 @@ export function Pagination({
       )}
 
       {currentPage < totalPages ? (
-        <Link href={hrefFor(currentPage + 1)} className={cn(base, 'border-border bg-card text-ink-muted hover:border-brand-600/40 hover:text-brand-700')} aria-label="Next page">
+        <Link href={hrefFor(currentPage + 1)} className={cn(base, 'border-border bg-card text-ink-muted hover:border-brand-600/40 hover:text-brand-700')} aria-label={t.next}>
           <ChevronRight className="h-4 w-4" />
         </Link>
       ) : (

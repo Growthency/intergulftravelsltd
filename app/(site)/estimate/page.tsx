@@ -7,56 +7,38 @@ import { Section } from '@/components/ui/Section';
 import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
 import { EstimateForm } from '@/components/forms/EstimateForm';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/estimate';
 
-export const metadata: Metadata = {
-  title: 'Get a Free Estimate',
-  description:
-    'Request a free, no-obligation estimate for Hajj, Umrah, visa, air tickets, hotels or tours from Inter Gulf Travels Ltd, Dhaka. Tell us your plans and receive a clear, tailored quote.',
-  alternates: { canonical: '/estimate' },
-};
+const valuePropIcons = [Wallet, Clock4, ShieldCheck, HeartHandshake];
 
-const valueProps = [
-  {
-    icon: Wallet,
-    title: 'Completely free',
-    body: 'No charge and no obligation — request as many estimates as you like.',
-  },
-  {
-    icon: Clock4,
-    title: 'Fast turnaround',
-    body: 'Our advisors prepare your tailored quote quickly, usually within a working day.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Transparent pricing',
-    body: 'Every quote is clearly itemised — what is included, and what is not.',
-  },
-  {
-    icon: HeartHandshake,
-    title: 'Tailored to you',
-    body: 'Tell us your dates, budget and party size; we shape the plan around you.',
-  },
-];
-
-const includedNotes = [
-  'A clear breakdown of what your package includes',
-  'Honest guidance on the best option for your budget',
-  'Answers to your visa, flight and hotel questions',
-  'Zero pressure — decide in your own time',
-];
+export function generateMetadata(): Metadata {
+  const t = getDict(getLocale());
+  return {
+    title: t.meta.title,
+    description: t.meta.description,
+    alternates: { canonical: '/estimate' },
+  };
+}
 
 export default function EstimatePage() {
+  const locale = getLocale();
+  const t = getDict(locale);
+  const valueProps = t.valueProps.map((v, i) => ({ ...v, icon: valuePropIcons[i] }));
+  const includedNotes = t.includedNotes;
+
   return (
     <>
       <PageHero
-        eyebrow="Free Estimate"
+        eyebrow={t.hero.eyebrow}
         title={
           <>
-            Get a free, tailored <span className="text-gradient-gold">quote today</span>
+            {t.hero.titlePrefix}
+            <span className="text-gradient-gold">{t.hero.titleHighlight}</span>
           </>
         }
-        lead="Share a few details about your trip and our advisors will prepare a clear, no-obligation estimate — for Hajj, Umrah, visas, flights, hotels or tours."
-        crumbs={[{ label: 'Free Estimate' }]}
+        lead={t.hero.lead}
+        crumbs={[{ label: t.hero.crumb }]}
       />
 
       {/* Value props */}
@@ -87,14 +69,13 @@ export default function EstimatePage() {
             {/* Form */}
             <Reveal className="rounded-3xl border border-border bg-card p-7 shadow-soft sm:p-9">
               <span className="inline-flex items-center gap-2 rounded-full border border-brand-600/15 bg-brand-50 px-3.5 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-brand-700 dark:border-brand-400/20 dark:bg-brand-900/30 dark:text-brand-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-gold-500" /> Estimate request
+                <span className="h-1.5 w-1.5 rounded-full bg-gold-500" /> {t.formPanel.badge}
               </span>
               <h2 className="mt-5 font-display text-2xl font-semibold text-ink dark:text-white sm:text-3xl">
-                Tell us about your trip
+                {t.formPanel.heading}
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-                The more you share, the more accurate your estimate will be. Every field with a date or number
-                helps us tailor it.
+                {t.formPanel.sub}
               </p>
               <div className="mt-7">
                 <EstimateForm />
@@ -113,7 +94,7 @@ export default function EstimatePage() {
                     backgroundSize: '36px 36px',
                   }}
                 />
-                <h3 className="relative font-display text-xl font-semibold">What you&apos;ll receive</h3>
+                <h3 className="relative font-display text-xl font-semibold">{t.receive.heading}</h3>
                 <ul className="relative mt-5 space-y-3">
                   {includedNotes.map((n) => (
                     <li key={n} className="flex items-start gap-3 text-sm text-white/90">
@@ -124,10 +105,9 @@ export default function EstimatePage() {
               </div>
 
               <div className="rounded-3xl border border-border bg-card p-7 shadow-soft">
-                <h3 className="font-display text-lg font-semibold text-ink dark:text-white">Rather talk it through?</h3>
+                <h3 className="font-display text-lg font-semibold text-ink dark:text-white">{t.talk.heading}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-                  Our advisors are a call or message away — happy to answer questions before you commit to
-                  anything.
+                  {t.talk.body}
                 </p>
                 <div className="mt-5 flex flex-col gap-3">
                   <a
@@ -137,12 +117,12 @@ export default function EstimatePage() {
                     <Phone className="h-4 w-4" /> {contact.phones[0]}
                   </a>
                   <a
-                    href={whatsappLink(contact.whatsapp, 'Assalamu alaikum! I would like a free estimate for a trip.')}
+                    href={whatsappLink(contact.whatsapp, t.talk.whatsappMessage)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-emerald transition hover:bg-brand-700"
                   >
-                    <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+                    <MessageCircle className="h-4 w-4" /> {t.talk.whatsappCta}
                   </a>
                 </div>
               </div>

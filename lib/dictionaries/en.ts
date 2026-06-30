@@ -98,6 +98,170 @@ export const en = {
       callDirect: 'Or call us directly:',
       whatsappMsg: 'Assalamu alaikum! I would like a free Hajj/Umrah consultation.',
     },
+    packages: {
+      eyebrow: '2026 Season',
+      titleA: 'Packages built for ',
+      titleHighlight: 'every pilgrim',
+      lead: 'Transparent, all-inclusive pricing with no hidden charges. Choose a plan or let us tailor one to your family and budget.',
+      tabHajj: 'Hajj Packages',
+      tabUmrah: 'Umrah Packages',
+      book: 'Book this package',
+      disclaimer: 'Prices are indicative and may vary with airline fares and hotel availability.',
+      contactCta: 'Contact us for a precise quote →',
+      items: [
+        {
+          id: 'hajj-economy',
+          name: 'Economy Hajj 2026',
+          priceNote: 'starting per person',
+          duration: '40–42 days',
+          highlights: [
+            'Direct Saudia / Biman return flights',
+            'Makkah & Madinah hotel accommodation',
+            'Breakfast, lunch & dinner included',
+            'Full Ziyarat, guide & da’ee',
+            'Pre-Hajj training workshop',
+          ],
+        },
+        {
+          id: 'hajj-standard',
+          name: 'Standard Hajj 2026',
+          badge: 'Most chosen',
+          priceNote: 'per person',
+          duration: '30–35 days',
+          highlights: [
+            'Direct flights, premium routing',
+            'Hotels within 700m of the Haram',
+            'Full-board buffet meals',
+            'Dedicated Bangla-speaking guide',
+            'Complete Ziyarat in Makkah & Madinah',
+            'Maktab service in Mina & Arafah',
+          ],
+        },
+        {
+          id: 'hajj-premium',
+          name: 'Premium Hajj 2026',
+          badge: 'VIP',
+          priceNote: 'per person',
+          duration: '21–25 days',
+          highlights: [
+            'Shortest, most comfortable itinerary',
+            '5-star hotels facing the Haram',
+            'Premium meals & private transport',
+            'Small group with senior guide',
+            'VIP Mina tent (upgraded camp)',
+          ],
+        },
+        {
+          id: 'umrah-economy',
+          name: 'Economy Umrah',
+          priceNote: 'starting per person',
+          duration: '10–14 days',
+          highlights: [
+            'Return air ticket & Umrah visa',
+            'Comfortable shared accommodation',
+            'Makkah ⇄ Madinah transfers',
+            'Group Ziyarat with guide',
+          ],
+        },
+        {
+          id: 'umrah-premium',
+          name: 'Premium Umrah',
+          badge: 'Best value',
+          priceNote: 'per person',
+          duration: '14 days',
+          highlights: [
+            'Return air ticket & fast-track visa',
+            '4-star hotels near the Haramain',
+            'Private AC transport throughout',
+            'Daily breakfast & dinner',
+            'Complete Ziyarat & dedicated guide',
+          ],
+        },
+        {
+          id: 'umrah-family',
+          name: 'Family Umrah',
+          priceNote: 'per person (4+)',
+          duration: '12–14 days',
+          highlights: [
+            'Designed for families & elders',
+            'Connecting family rooms',
+            'Wheelchair & special assistance',
+            'Flexible departure dates',
+          ],
+        },
+      ],
+    },
+    testimonials: {
+      eyebrow: 'Pilgrim stories',
+      titleA: 'Trusted by thousands of ',
+      titleHighlight: 'happy pilgrims',
+      lead: 'Real words from families who placed their journey in our hands.',
+      reviewLabel: 'Review',
+      prev: 'Previous',
+      next: 'Next',
+      items: [
+        {
+          name: 'Md. Abdur Rahman',
+          role: 'Hajj 2024 · Dhaka',
+          quote:
+            'From the airport in Dhaka to standing before the Kaaba, every single step was organised. The hotel was minutes from the Haram and our guide treated us like his own family. Alhamdulillah.',
+        },
+        {
+          name: 'Fatema Begum',
+          role: 'Umrah · Chattogram',
+          quote:
+            'I travelled with my elderly mother and was nervous, but Inter Gulf arranged wheelchair support and everything we needed. Truly a smooth, worry-free journey.',
+        },
+        {
+          name: 'Imam Hossain',
+          role: 'Group Hajj Leader',
+          quote:
+            'I have led several groups and Inter Gulf is the most professional team I have worked with. Honest pricing, clear communication and outstanding on-ground service.',
+        },
+        {
+          name: 'Nusrat Jahan',
+          role: 'Family Umrah · Sylhet',
+          quote:
+            'Booking was simple, the visa came quickly and the hotels were exactly as promised. Our whole family felt cared for the entire time. Highly recommended.',
+        },
+        {
+          name: 'Kazi Anwar',
+          role: 'Premium Hajj 2023',
+          quote:
+            'The premium package was worth every taka — short itinerary, hotel facing the Haram, and a guide who anticipated our every need. JazakAllah khair.',
+        },
+      ],
+    },
+    moments: {
+      eyebrow: 'Gallery',
+      titleA: 'Moments from the ',
+      titleHighlight: 'journeys we’ve shared',
+      lead: 'Real pilgrims, real smiles — a glimpse of the families we have had the honour to serve.',
+      viewGallery: 'View full gallery',
+      leadCaption: 'Our pilgrims before the Holy Kaaba',
+      sideCaptions: [
+        'Inter Gulf Hajj group, Makkah',
+        'Handing over documents · Dhaka office',
+      ],
+    },
+    affiliations: {
+      eyebrow: 'Our Affiliations',
+      titleA: 'Trusted airline & hotel ',
+      titleHighlight: 'partners',
+      lead: "We work hand in hand with the world's leading airlines and Makkah & Madinah hotels to give every pilgrim a seamless, comfortable journey.",
+      flightTitle: 'Airlines & Flight Partners',
+      flightSubtitle: 'Reliable carriers for a smooth journey to the Holy Land.',
+      hotelTitle: 'Hotel Partners',
+      hotelSubtitle: 'Comfortable stays close to the Haram in Makkah & Madinah.',
+      visit: 'Visit',
+    },
+    blogPreview: {
+      eyebrow: 'From our journal',
+      titleA: 'Guides, tips & ',
+      titleHighlight: 'spiritual reflections',
+      lead: 'Practical advice and inspiration to help you prepare for the journey of a lifetime.',
+      readAll: 'Read all articles',
+    },
   },
 };
 
@@ -166,6 +330,62 @@ export type Dictionary = {
       whatsapp: string;
       callDirect: string;
       whatsappMsg: string;
+    };
+    packages: {
+      eyebrow: string;
+      titleA: string;
+      titleHighlight: string;
+      lead: string;
+      tabHajj: string;
+      tabUmrah: string;
+      book: string;
+      disclaimer: string;
+      contactCta: string;
+      items: {
+        id: string;
+        name: string;
+        badge?: string;
+        priceNote: string;
+        duration: string;
+        highlights: string[];
+      }[];
+    };
+    testimonials: {
+      eyebrow: string;
+      titleA: string;
+      titleHighlight: string;
+      lead: string;
+      reviewLabel: string;
+      prev: string;
+      next: string;
+      items: { name: string; role: string; quote: string }[];
+    };
+    moments: {
+      eyebrow: string;
+      titleA: string;
+      titleHighlight: string;
+      lead: string;
+      viewGallery: string;
+      leadCaption: string;
+      sideCaptions: string[];
+    };
+    affiliations: {
+      eyebrow: string;
+      titleA: string;
+      titleHighlight: string;
+      lead: string;
+      flightTitle: string;
+      flightSubtitle: string;
+      hotelTitle: string;
+      hotelSubtitle: string;
+      visit: string;
+    };
+    blogPreview: {
+      eyebrow: string;
+      titleA: string;
+      titleHighlight: string;
+      lead: string;
+      readAll: string;
     };
   };
 };

@@ -16,20 +16,18 @@ import { Reveal, RevealGroup } from '@/components/ui/Reveal';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { AuroraBackdrop } from '@/components/effects/AuroraBackdrop';
 import { partners, affiliations, contact } from '@/lib/site';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/about';
 
-export const metadata: Metadata = {
-  title: 'Business Associates — Partners & Affiliations',
-  description:
-    'The airlines, hotels, ground operators and regulatory bodies behind Inter Gulf Travels Ltd — including MoRA, HAAB, ATAB and IATA, plus 40+ airline partners and trusted Saudi hotel and transport providers.',
-  alternates: { canonical: '/about/associates' },
-};
-
-const affiliationDetails: Record<string, string> = {
-  MoRA: 'The government authority that licenses and regulates every Hajj operator in Bangladesh. Our Hajj License No. 071 is issued and overseen by the Ministry, ensuring full compliance and accountability.',
-  HAAB: 'The Hajj Agencies Association of Bangladesh — the apex body for licensed Hajj agencies. Our membership binds us to its code of conduct and pilgrim-protection standards.',
-  ATAB: 'The Association of Travel Agents of Bangladesh, the national platform for IATA and travel agencies, upholding professional and ethical standards across the industry.',
-  IATA: 'International Air Transport Association accreditation lets us issue worldwide air tickets directly, securing better fares and trusted routings for our pilgrims and travellers.',
-};
+export function generateMetadata(): Metadata {
+  const t = getDict(getLocale());
+  return {
+    title: t.associates.meta.title,
+    description: t.associates.meta.description,
+    alternates: { canonical: '/about/associates' },
+  };
+}
 
 const affiliationIcons: Record<string, typeof Landmark> = {
   MoRA: Landmark,
@@ -38,63 +36,45 @@ const affiliationIcons: Record<string, typeof Landmark> = {
   IATA: Plane,
 };
 
-const saudiPartners = [
-  {
-    icon: BedDouble,
-    title: 'Hotel Partners — Makkah',
-    body: 'A trusted network of vetted hotels in the Ajyad and Jabal Omar districts, many within 300–700 metres of the Masjid al-Haram, secured at favourable group rates.',
-    tags: ['Walking distance to Haram', 'Verified properties', 'Group allocations'],
-  },
-  {
-    icon: BedDouble,
-    title: 'Hotel Partners — Madinah',
-    body: 'Quality accommodation in the Central Haram area, steps from the Masjid an-Nabawi, so pilgrims spend less time travelling and more time in prayer.',
-    tags: ['Central Haram area', 'Family rooms', 'Best-rate booking'],
-  },
-  {
-    icon: Bus,
-    title: 'Ground Transport & Maktab',
-    body: 'Licensed Saudi transport operators provide air-conditioned coaches for airport, inter-city and Ziyarat transfers, alongside accredited Maktab services in Mina and Arafah.',
-    tags: ['AC coaches', 'Mina & Arafah Maktab', 'Ziyarat transfers'],
-  },
-  {
-    icon: Handshake,
-    title: 'On-ground Support Teams',
-    body: 'Dedicated Bangla-speaking representatives stationed in Makkah and Madinah, reachable around the clock to assist our pilgrims with anything they need.',
-    tags: ['24/7 assistance', 'Bangla-speaking', 'Local coordination'],
-  },
-];
+const saudiIcons = [BedDouble, BedDouble, Bus, Handshake];
 
 export default function AssociatesPage() {
+  const locale = getLocale();
+  const t = getDict(locale).associates;
+  const affiliationDetails = t.affiliations.details;
+  const affiliationNames = t.affiliations.names;
+  const saudiPartners = t.saudi.items.map((p, i) => ({ icon: saudiIcons[i], ...p }));
   return (
     <>
       <PageHero
-        eyebrow="Business Associates"
+        eyebrow={t.hero.eyebrow}
         title={
           <>
-            The trusted partners behind every <span className="text-gradient-gold">smooth journey</span>
+            {t.hero.titleA}<span className="text-gradient-gold">{t.hero.titleHighlight}</span>{t.hero.titleB}
           </>
         }
-        lead="A pilgrimage runs on the strength of its network. From regulators to airlines, hotels and ground operators, these are the associates who help us deliver on every promise."
-        crumbs={[{ label: 'About Us', href: '/about' }, { label: 'Business Associates' }]}
+        lead={t.hero.lead}
+        crumbs={[{ label: t.hero.crumbAbout, href: localizedPath(locale, '/about') }, { label: t.hero.crumb }]}
       />
 
       {/* Affiliations / regulatory bodies */}
       <Section className="relative overflow-hidden">
         <AuroraBackdrop />
         <SectionHeading
-          eyebrow="Regulatory affiliations"
+          eyebrow={t.affiliations.eyebrow}
           title={
             <>
-              Licensed, accredited and <span className="text-gradient">accountable</span>
+              {t.affiliations.titleA}<span className="text-gradient">{t.affiliations.titleHighlight}</span>
             </>
           }
-          lead="Our work is anchored to the country’s leading regulatory and industry bodies — your assurance of a legitimate, protected pilgrimage."
+          lead={t.affiliations.lead}
         />
         <Container className="mt-14">
           <RevealGroup className="grid gap-5 sm:grid-cols-2">
             {affiliations.map((a) => {
               const Icon = affiliationIcons[a.short] ?? Landmark;
+              const localName = affiliationNames[a.short as keyof typeof affiliationNames] ?? a.name;
+              const detail = affiliationDetails[a.short as keyof typeof affiliationDetails] ?? '';
               return (
                 <Reveal key={a.short} className="h-full">
                   <article className="flex h-full items-start gap-5 rounded-3xl border border-border bg-card p-7 shadow-soft transition-all duration-300 hover:border-gold-400/40 hover:shadow-gold">
@@ -106,10 +86,10 @@ export default function AssociatesPage() {
                         <h3 className="font-display text-lg font-semibold text-ink dark:text-white">
                           {a.short}
                         </h3>
-                        <span className="text-sm text-ink-muted">{a.name}</span>
+                        <span className="text-sm text-ink-muted">{localName}</span>
                       </div>
                       <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-                        {affiliationDetails[a.short]}
+                        {detail}
                       </p>
                     </div>
                   </article>
@@ -123,13 +103,13 @@ export default function AssociatesPage() {
       {/* Airline partners */}
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="Airline partners"
+          eyebrow={t.airlines.eyebrow}
           title={
             <>
-              Booking across <span className="text-gradient">40+ airlines</span> worldwide
+              {t.airlines.titleA}<span className="text-gradient">{t.airlines.titleHighlight}</span>{t.airlines.titleB}
             </>
           }
-          lead="As an IATA-accredited agency we issue tickets directly across a wide network of carriers, securing the best fares and most convenient routings to Jeddah, Madinah and beyond."
+          lead={t.airlines.lead}
         />
         <Container className="mt-12">
           <RevealGroup className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
@@ -145,7 +125,7 @@ export default function AssociatesPage() {
             ))}
           </RevealGroup>
           <p className="mt-6 text-center text-sm text-ink-muted">
-            …and many more domestic, regional and international carriers.
+            {t.airlines.more}
           </p>
         </Container>
       </Section>
@@ -154,13 +134,13 @@ export default function AssociatesPage() {
       <Section className="relative overflow-hidden">
         <AuroraBackdrop />
         <SectionHeading
-          eyebrow="On-ground in Saudi Arabia"
+          eyebrow={t.saudi.eyebrow}
           title={
             <>
-              Trusted hotels &amp; operators in the <span className="text-gradient">Holy Cities</span>
+              {t.saudi.titleA}<span className="text-gradient">{t.saudi.titleHighlight}</span>{t.saudi.titleB}
             </>
           }
-          lead="Our long-standing relationships in Makkah and Madinah let us place pilgrims close to the Haramain and look after them at every step on the ground."
+          lead={t.saudi.lead}
         />
         <Container className="mt-14">
           <RevealGroup className="grid gap-5 sm:grid-cols-2">
@@ -202,18 +182,17 @@ export default function AssociatesPage() {
                 <Handshake className="h-7 w-7" />
               </span>
               <h2 className="mt-6 font-display text-3xl font-semibold leading-tight text-white sm:text-4xl balance">
-                Become a partner of Inter Gulf Travels
+                {t.cta.title}
               </h2>
               <p className="mx-auto mt-5 max-w-xl text-base text-white/80 sm:text-lg">
-                Are you a hotel, airline, ground operator or agency looking to work with one of
-                Bangladesh’s most trusted Hajj &amp; Umrah names? We would love to hear from you.
+                {t.cta.lead}
               </p>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Button href="/contact" variant="gold" size="lg">
-                  Partner With Us <ArrowRight className="h-4 w-4" />
+                <Button href={localizedPath(locale, '/contact')} variant="gold" size="lg">
+                  {t.cta.partner} <ArrowRight className="h-4 w-4" />
                 </Button>
                 <Button href={`mailto:${contact.emails[0]}`} external variant="light" size="lg">
-                  Email Our Team
+                  {t.cta.email}
                 </Button>
               </div>
             </div>

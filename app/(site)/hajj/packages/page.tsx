@@ -6,8 +6,11 @@ import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Accordion } from '@/components/ui/Accordion';
-import { packages, hajjFaqs } from '@/lib/site';
+import { packages } from '@/lib/site';
 import { PackageCard, CtaBand } from '@/components/hajj-umrah/shared';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/hajjpages';
 
 export const metadata: Metadata = {
   title: 'Hajj Packages 2026 — Economy, Standard & Premium from Dhaka',
@@ -18,64 +21,30 @@ export const metadata: Metadata = {
 
 const hajjPackages = packages.filter((p) => p.type === 'hajj');
 
-const compareRows: { label: string; economy: string; standard: string; premium: string }[] = [
-  { label: 'Itinerary length', economy: '40–42 days', standard: '30–35 days', premium: '21–25 days' },
-  { label: 'Flights', economy: 'Direct Saudia / Biman', standard: 'Direct, premium routing', premium: 'Direct, best schedules' },
-  { label: 'Makkah hotel distance', economy: 'Shuttle service', standard: 'Within 700m of Haram', premium: '5-star facing Haram' },
-  { label: 'Madinah hotel distance', economy: 'Walking / shuttle', standard: 'Within 500m of Masjid an-Nabawi', premium: 'Premium, Haram-side' },
-  { label: 'Meals', economy: 'Breakfast, lunch & dinner', standard: 'Full-board buffet', premium: 'Premium buffet & à la carte' },
-  { label: 'Room occupancy', economy: '4–5 per room', standard: '3–4 per room', premium: '2 per room' },
-  { label: 'Mina & Arafah camp', economy: 'Standard Maktab tent', standard: 'Maktab service', premium: 'VIP upgraded camp' },
-  { label: 'Guide', economy: 'Group Bangla guide', standard: 'Dedicated Bangla guide', premium: 'Senior guide, small group' },
-  { label: 'Ziyarat', economy: 'Group Ziyarat', standard: 'Complete Makkah & Madinah', premium: 'Complete, private transport' },
-  { label: 'Pre-Hajj training', economy: 'Included', standard: 'Included', premium: 'Included + 1-to-1 briefing' },
-];
-
-const included = [
-  'Return air tickets (Dhaka ⇄ Jeddah / Madinah)',
-  'Hajj visa processing & e-Hajj registration',
-  'Hotel accommodation in Makkah & Madinah',
-  'Daily Bengali meals (full board)',
-  'Maktab service & tents in Mina, Arafah, Muzdalifah',
-  'All internal transport & airport transfers',
-  'Complete Ziyarat with experienced da’ee',
-  'Bangla-speaking muallim throughout',
-  'Pre-Hajj training workshop in Dhaka',
-  'Zamzam water (as per airline allowance)',
-];
-
-const notIncluded = [
-  'Passport issuance / renewal fees',
-  'Qurbani (sacrifice) cost — payable separately',
-  'Personal expenses, shopping & phone/SIM',
-  'Travel & health insurance (optional, arranged on request)',
-  'Excess baggage charges beyond airline limit',
-  'Any expense due to flight delays beyond our control',
-];
-
-const bookingNotes = [
-  { icon: CreditCard, title: 'Booking & Payment', body: 'A booking confirms your seat with an initial deposit; the balance is payable in agreed instalments before departure. We accept bank transfer, cheque and cash — every payment is receipted.' },
-  { icon: CalendarClock, title: 'Pre-registration', body: 'Hajj requires government pre-registration through the e-Hajj system. We complete your pre-registration the same day you book and keep you updated on quota and serial status.' },
-  { icon: FileText, title: 'Documents', body: 'A passport valid for at least six months, recent photographs, national ID and a meningitis vaccination certificate are required. Our team prepares and submits the rest on your behalf.' },
-  { icon: ShieldCheck, title: 'Our Guarantee', body: 'Transparent, itemised pricing with no hidden charges. Should the Saudi authorities change any fee or service, we inform you immediately and adjust honestly.' },
-];
+const bookingNoteIcons = [CreditCard, CalendarClock, FileText, ShieldCheck];
 
 export default function HajjPackagesPage() {
+  const locale = getLocale();
+  const t = getDict(locale);
+  const compareRows = t.packages.compareRows;
+  const included = t.packages.included;
+  const notIncluded = t.packages.notIncluded;
+  const bookingNotes = t.packages.bookingNotes.map((n, i) => ({ icon: bookingNoteIcons[i], ...n }));
   return (
     <>
       <PageHero
-        eyebrow="Hajj Packages 2026"
-        title={<>Choose the Hajj package that fits your journey</>}
-        lead="From a budget-friendly Economy plan to a VIP Premium experience, every package is government-approved, all-inclusive and built around your comfort and worship."
-        crumbs={[{ label: 'Hajj', href: '/hajj' }, { label: 'Hajj Packages' }]}
+        eyebrow={t.packages.hero.eyebrow}
+        title={<>{t.packages.hero.title}</>}
+        lead={t.packages.hero.lead}
+        crumbs={[{ label: t.packages.hero.crumbHajj, href: localizedPath(locale, '/hajj') }, { label: t.packages.hero.crumb }]}
       />
 
       {/* Cards */}
       <Section>
         <SectionHeading
-          eyebrow="2026 Season"
-          title={<>Three tiers, <span className="text-gradient">one promise of care</span></>}
-          lead="All prices are per person and clearly itemised. Tell us your dates and budget and we will tailor the perfect plan for you."
+          eyebrow={t.packages.cards.eyebrow}
+          title={<>{t.packages.cards.titleA} <span className="text-gradient">{t.packages.cards.titleB}</span></>}
+          lead={t.packages.cards.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-6 lg:grid-cols-3">
@@ -86,8 +55,7 @@ export default function HajjPackagesPage() {
             ))}
           </div>
           <p className="mt-8 text-center text-sm text-ink-muted">
-            Prices are indicative for the 2026 season and may vary with airline fares, hotel availability and Saudi
-            government charges.
+            {t.packages.cards.note}
           </p>
         </Container>
       </Section>
@@ -95,9 +63,9 @@ export default function HajjPackagesPage() {
       {/* Comparison table */}
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="Side by side"
-          title={<>Compare every <span className="text-gradient">inclusion</span></>}
-          lead="A clear, honest breakdown of how the three packages differ — so you can choose with complete confidence."
+          eyebrow={t.packages.compare.eyebrow}
+          title={<>{t.packages.compare.titleA} <span className="text-gradient">{t.packages.compare.titleB}</span></>}
+          lead={t.packages.compare.lead}
         />
         <Container className="mt-14">
           <Reveal className="overflow-hidden rounded-3xl border border-border bg-card shadow-soft">
@@ -105,12 +73,12 @@ export default function HajjPackagesPage() {
               <table className="w-full min-w-[640px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="bg-brand-gradient text-white">
-                    <th className="px-5 py-4 font-display text-base font-semibold">Feature</th>
-                    <th className="px-5 py-4 font-display text-base font-semibold">Economy</th>
+                    <th className="px-5 py-4 font-display text-base font-semibold">{t.packages.compare.feature}</th>
+                    <th className="px-5 py-4 font-display text-base font-semibold">{t.packages.compare.economy}</th>
                     <th className="px-5 py-4 font-display text-base font-semibold">
-                      Standard <span className="ml-1 rounded-full bg-gold-gradient px-2 py-0.5 text-[0.65rem] font-bold uppercase text-brand-900">Most chosen</span>
+                      {t.packages.compare.standard} <span className="ml-1 rounded-full bg-gold-gradient px-2 py-0.5 text-[0.65rem] font-bold uppercase text-brand-900">{t.packages.compare.mostChosen}</span>
                     </th>
-                    <th className="px-5 py-4 font-display text-base font-semibold">Premium</th>
+                    <th className="px-5 py-4 font-display text-base font-semibold">{t.packages.compare.premium}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -126,16 +94,16 @@ export default function HajjPackagesPage() {
               </table>
             </div>
           </Reveal>
-          <p className="mt-4 text-center text-xs text-ink-muted">Scroll horizontally on smaller screens to view all columns.</p>
+          <p className="mt-4 text-center text-xs text-ink-muted">{t.packages.compare.scrollHint}</p>
         </Container>
       </Section>
 
       {/* Included / Not included */}
       <Section>
         <SectionHeading
-          eyebrow="Transparent pricing"
-          title={<>What’s <span className="text-gradient">included</span> — and what’s not</>}
-          lead="No surprises. Here is exactly what your package covers, and the few items that fall outside it."
+          eyebrow={t.packages.incl.eyebrow}
+          title={<>{t.packages.incl.titleA} <span className="text-gradient">{t.packages.incl.titleB}</span> {t.packages.incl.titleC}</>}
+          lead={t.packages.incl.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-6 lg:grid-cols-2">
@@ -145,7 +113,7 @@ export default function HajjPackagesPage() {
                   <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-gradient text-white">
                     <Check className="h-4 w-4" />
                   </span>
-                  Included in your package
+                  {t.packages.incl.includedHeading}
                 </h3>
                 <ul className="mt-6 space-y-3">
                   {included.map((item) => (
@@ -162,7 +130,7 @@ export default function HajjPackagesPage() {
                   <span className="grid h-8 w-8 place-items-center rounded-full bg-gold-gradient text-brand-900">
                     <X className="h-4 w-4" />
                   </span>
-                  Not included
+                  {t.packages.incl.notIncludedHeading}
                 </h3>
                 <ul className="mt-6 space-y-3">
                   {notIncluded.map((item) => (
@@ -180,9 +148,9 @@ export default function HajjPackagesPage() {
       {/* Payment & booking notes */}
       <Section className="bg-sand-soft">
         <SectionHeading
-          eyebrow="Booking & payment"
-          title={<>How booking your Hajj <span className="text-gradient">works</span></>}
-          lead="A simple, honest process backed by 24 years of experience and full government licensing."
+          eyebrow={t.packages.booking.eyebrow}
+          title={<>{t.packages.booking.titleA} <span className="text-gradient">{t.packages.booking.titleB}</span></>}
+          lead={t.packages.booking.lead}
         />
         <Container className="mt-14">
           <div className="grid gap-6 sm:grid-cols-2">
@@ -207,27 +175,27 @@ export default function HajjPackagesPage() {
       <Section>
         <Container size="narrow">
           <div className="text-center">
-            <Eyebrow className="mx-auto">Hajj packages FAQ</Eyebrow>
+            <Eyebrow className="mx-auto">{t.packages.faq.eyebrow}</Eyebrow>
             <h2 className="mt-5 font-display text-3xl font-semibold leading-tight text-ink dark:text-white sm:text-4xl balance">
-              Questions about <span className="text-gradient">our packages</span>
+              {t.packages.faq.titleA} <span className="text-gradient">{t.packages.faq.titleB}</span>
             </h2>
           </div>
           <Reveal className="mt-10">
-            <Accordion items={hajjFaqs} />
+            <Accordion items={t.faq.hajjFaqs} />
           </Reveal>
           <p className="mt-6 text-center text-sm text-ink-muted">
-            Have a different question?{' '}
-            <a href="/hajj/faq" className="font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-300">
-              See the full Hajj FAQ →
+            {t.packages.faq.differentA}{' '}
+            <a href={localizedPath(locale, '/hajj/faq')} className="font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-300">
+              {t.packages.faq.differentLink}
             </a>
           </p>
         </Container>
       </Section>
 
       <CtaBand
-        title="Reserve your place for Hajj 2026"
-        lead="Quotas are limited and fill quickly. Secure your package today with a free, no-obligation consultation."
-        message="Assalamu alaikum! I would like to book a Hajj 2026 package."
+        title={t.packages.cta.title}
+        lead={t.packages.cta.lead}
+        message={t.packages.cta.message}
       />
     </>
   );

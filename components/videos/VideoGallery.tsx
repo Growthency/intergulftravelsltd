@@ -6,6 +6,8 @@ import { Play } from 'lucide-react';
 import type { Video } from '@/lib/youtube';
 import { youtubeEmbed, youtubeId, youtubeThumb } from '@/lib/youtube';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/videos';
 
 /** Resolve the 11-char id from the stored column or by parsing the URL. */
 function idOf(video: Video): string | null {
@@ -13,6 +15,7 @@ function idOf(video: Video): string | null {
 }
 
 export function VideoGallery({ videos }: { videos: Video[] }) {
+  const t = getDict(useLocale()).gallery;
   // Only videos we can actually embed.
   const playable = videos.filter((v) => idOf(v));
   const [activeId, setActiveId] = useState<string>(() => playable[0]?.id ?? '');
@@ -55,7 +58,7 @@ export function VideoGallery({ videos }: { videos: Video[] }) {
                   type="button"
                   onClick={() => setPlaying(true)}
                   className="group absolute inset-0 h-full w-full"
-                  aria-label={`Play ${active.title}`}
+                  aria-label={`${t.playLabel} ${active.title}`}
                 >
                   <Image
                     src={youtubeThumb(activeYt)}
@@ -88,7 +91,7 @@ export function VideoGallery({ videos }: { videos: Video[] }) {
         {/* Playlist */}
         <div className="lg:max-h-[34rem]">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">
-            Up next
+            {t.upNext}
           </p>
           <ul className="space-y-2.5 lg:max-h-[31rem] lg:overflow-y-auto lg:pr-1">
             {playable.map((video) => {
@@ -136,7 +139,7 @@ export function VideoGallery({ videos }: { videos: Video[] }) {
                       </span>
                       {isActive && (
                         <span className="mt-1 inline-block text-xs font-medium text-brand-600">
-                          Now playing
+                          {t.nowPlaying}
                         </span>
                       )}
                     </span>
@@ -152,8 +155,10 @@ export function VideoGallery({ videos }: { videos: Video[] }) {
       {playable.length > 1 && (
         <div>
           <div className="mb-6 flex items-end justify-between gap-4">
-            <h3 className="font-display text-2xl font-semibold text-ink">All videos</h3>
-            <span className="text-sm text-ink-muted">{playable.length} videos</span>
+            <h3 className="font-display text-2xl font-semibold text-ink">{t.allVideos}</h3>
+            <span className="text-sm text-ink-muted">
+              {playable.length} {t.videoCount}
+            </span>
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {playable.map((video) => {
@@ -182,7 +187,7 @@ export function VideoGallery({ videos }: { videos: Video[] }) {
                     </span>
                     {isActive && (
                       <span className="absolute left-3 top-3 rounded-full bg-gold-gradient px-2.5 py-0.5 text-xs font-semibold text-brand-900 shadow-gold">
-                        Now playing
+                        {t.nowPlaying}
                       </span>
                     )}
                   </span>

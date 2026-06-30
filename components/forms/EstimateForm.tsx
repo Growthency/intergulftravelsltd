@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { Calculator, Loader2 } from 'lucide-react';
 import { services } from '@/lib/site';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/estimate';
 
 type FormValues = {
   name: string;
@@ -17,21 +19,14 @@ type FormValues = {
   message: string;
 };
 
-const packageHints = [
-  'Economy',
-  'Standard',
-  'Premium / VIP',
-  'Family',
-  'Group',
-  'Custom / not sure yet',
-];
-
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const fieldBase =
   'w-full rounded-2xl border border-border bg-background/60 px-4 py-3 text-[0.95rem] text-ink outline-none transition focus:border-brand-600 focus:bg-card focus:ring-2 focus:ring-brand-600/15 dark:text-white';
 
 export function EstimateForm() {
+  const t = getDict(useLocale());
+  const packageHints = t.form.packageHints;
   const {
     register,
     handleSubmit,
@@ -61,64 +56,64 @@ export function EstimateForm() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Something went wrong. Please try again or call us directly.');
+        toast.error(data?.error ?? t.form.toast.genericError);
         return;
       }
 
-      toast.success('Request received! Our advisor will prepare your free estimate and contact you soon, insha’Allah.');
+      toast.success(t.form.toast.success);
       reset();
     } catch {
-      toast.error('Network error. Please check your connection and try again.');
+      toast.error(t.form.toast.networkError);
     }
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Full name" error={errors.name?.message}>
+        <Field label={t.form.labels.name} error={errors.name?.message}>
           <input
             type="text"
             autoComplete="name"
-            placeholder="e.g. Md. Abdur Rahman"
+            placeholder={t.form.placeholders.name}
             className={cn(fieldBase, errors.name && 'border-red-400 focus:ring-red-400/15')}
             {...register('name', {
-              required: 'Please enter your full name.',
-              minLength: { value: 2, message: 'Please enter your full name.' },
+              required: t.form.errors.nameRequired,
+              minLength: { value: 2, message: t.form.errors.nameRequired },
             })}
           />
         </Field>
-        <Field label="Phone" error={errors.phone?.message}>
+        <Field label={t.form.labels.phone} error={errors.phone?.message}>
           <input
             type="tel"
             autoComplete="tel"
-            placeholder="01XXX XXXXXX"
+            placeholder={t.form.placeholders.phone}
             className={cn(fieldBase, errors.phone && 'border-red-400 focus:ring-red-400/15')}
             {...register('phone', {
-              required: 'Please enter your phone number.',
-              minLength: { value: 6, message: 'Please enter a valid phone number.' },
+              required: t.form.errors.phoneRequired,
+              minLength: { value: 6, message: t.form.errors.phoneInvalid },
             })}
           />
         </Field>
       </div>
 
-      <Field label="Email" error={errors.email?.message}>
+      <Field label={t.form.labels.email} error={errors.email?.message}>
         <input
           type="email"
           autoComplete="email"
-          placeholder="you@example.com"
+          placeholder={t.form.placeholders.email}
           className={cn(fieldBase, errors.email && 'border-red-400 focus:ring-red-400/15')}
           {...register('email', {
-            required: 'Please enter your email address.',
-            pattern: { value: emailPattern, message: 'Please enter a valid email address.' },
+            required: t.form.errors.emailRequired,
+            pattern: { value: emailPattern, message: t.form.errors.emailInvalid },
           })}
         />
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Service" error={errors.service?.message}>
+        <Field label={t.form.labels.service} error={errors.service?.message}>
           <select
             className={cn(fieldBase, errors.service && 'border-red-400 focus:ring-red-400/15')}
-            {...register('service', { required: 'Please select a service.' })}
+            {...register('service', { required: t.form.errors.serviceRequired })}
           >
             {services.map((s) => (
               <option key={s.slug} value={s.title}>
@@ -127,7 +122,7 @@ export function EstimateForm() {
             ))}
           </select>
         </Field>
-        <Field label="Package / tier" error={errors.package?.message}>
+        <Field label={t.form.labels.package} error={errors.package?.message}>
           <select className={fieldBase} {...register('package')}>
             {packageHints.map((p) => (
               <option key={p} value={p}>
@@ -139,34 +134,34 @@ export function EstimateForm() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Preferred travel date" error={errors.travel_date?.message}>
+        <Field label={t.form.labels.travelDate} error={errors.travel_date?.message}>
           <input
             type="date"
             className={cn(fieldBase, errors.travel_date && 'border-red-400 focus:ring-red-400/15')}
             {...register('travel_date')}
           />
         </Field>
-        <Field label="Travellers (pax)" error={errors.pax?.message}>
+        <Field label={t.form.labels.pax} error={errors.pax?.message}>
           <input
             type="number"
             min={1}
             max={500}
             inputMode="numeric"
-            placeholder="1"
+            placeholder={t.form.placeholders.pax}
             className={cn(fieldBase, errors.pax && 'border-red-400 focus:ring-red-400/15')}
             {...register('pax', {
-              required: 'Please enter the number of travellers.',
-              min: { value: 1, message: 'At least one traveller is required.' },
-              max: { value: 500, message: 'Please contact us directly for groups over 500.' },
+              required: t.form.errors.paxRequired,
+              min: { value: 1, message: t.form.errors.paxMin },
+              max: { value: 500, message: t.form.errors.paxMax },
             })}
           />
         </Field>
       </div>
 
-      <Field label="Anything else? (optional)" error={errors.message?.message}>
+      <Field label={t.form.labels.message} error={errors.message?.message}>
         <textarea
           rows={4}
-          placeholder="Budget, hotel preference, special assistance, departure city — anything that helps us tailor your estimate."
+          placeholder={t.form.placeholders.message}
           className={cn(fieldBase, 'resize-y')}
           {...register('message')}
         />
@@ -179,18 +174,17 @@ export function EstimateForm() {
       >
         {isSubmitting ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" /> Submitting…
+            <Loader2 className="h-4 w-4 animate-spin" /> {t.form.submitting}
           </>
         ) : (
           <>
-            Get my free estimate <Calculator className="h-4 w-4 transition-transform group-hover:scale-105" />
+            {t.form.submit} <Calculator className="h-4 w-4 transition-transform group-hover:scale-105" />
           </>
         )}
       </button>
 
       <p className="text-xs text-ink-muted">
-        No payment required. Submitting this form places you under no obligation — we will simply prepare a
-        tailored quote and answer your questions.
+        {t.form.disclaimer}
       </p>
     </form>
   );

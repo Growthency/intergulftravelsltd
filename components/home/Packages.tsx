@@ -8,10 +8,26 @@ import { Section, SectionHeading } from '@/components/ui/Section';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
+import { useDictionary, useLocale } from '@/components/providers/LocaleProvider';
+import { localizedPath } from '@/lib/i18n';
 
 export function Packages() {
+  const t = useDictionary().home.packages;
+  const locale = useLocale();
   const [tab, setTab] = useState<'hajj' | 'umrah'>('hajj');
-  const list = packages.filter((p) => p.type === tab);
+  const list = packages
+    .filter((p) => p.type === tab)
+    .map((p) => {
+      const tr = t.items.find((it) => it.id === p.id);
+      return {
+        ...p,
+        name: tr?.name ?? p.name,
+        badge: tr?.badge ?? p.badge,
+        priceNote: tr?.priceNote ?? p.priceNote,
+        duration: tr?.duration ?? p.duration,
+        highlights: tr?.highlights ?? p.highlights,
+      };
+    });
 
   return (
     <Section className="relative overflow-hidden bg-brand-900 text-white">
@@ -23,31 +39,31 @@ export function Packages() {
       <div className="relative">
         <SectionHeading
           light
-          eyebrow="2026 Season"
-          title={<>Packages built for <span className="text-gradient-gold">every pilgrim</span></>}
-          lead="Transparent, all-inclusive pricing with no hidden charges. Choose a plan or let us tailor one to your family and budget."
+          eyebrow={t.eyebrow}
+          title={<>{t.titleA}<span className="text-gradient-gold">{t.titleHighlight}</span></>}
+          lead={t.lead}
         />
 
         <Container className="mt-10">
           {/* toggle */}
           <div className="mx-auto mb-10 flex w-fit items-center gap-1 rounded-full border border-white/15 bg-white/5 p-1 backdrop-blur">
-            {(['hajj', 'umrah'] as const).map((t) => (
+            {(['hajj', 'umrah'] as const).map((tabKey) => (
               <button
-                key={t}
-                onClick={() => setTab(t)}
+                key={tabKey}
+                onClick={() => setTab(tabKey)}
                 className={cn(
                   'relative rounded-full px-6 py-2.5 text-sm font-semibold capitalize transition-colors',
-                  tab === t ? 'text-brand-900' : 'text-white/70 hover:text-white',
+                  tab === tabKey ? 'text-brand-900' : 'text-white/70 hover:text-white',
                 )}
               >
-                {tab === t && (
+                {tab === tabKey && (
                   <motion.span
                     layoutId="pkg-pill"
                     className="absolute inset-0 -z-10 rounded-full bg-gold-gradient"
                     transition={{ type: 'spring', stiffness: 360, damping: 30 }}
                   />
                 )}
-                {t} Packages
+                {tabKey === 'hajj' ? t.tabHajj : t.tabUmrah}
               </button>
             ))}
           </div>
@@ -92,12 +108,12 @@ export function Packages() {
                     ))}
                   </ul>
                   <Button
-                    href="/estimate"
+                    href={localizedPath(locale, '/estimate')}
                     variant={p.featured ? 'gold' : 'light'}
                     size="md"
                     className="mt-7 w-full"
                   >
-                    Book this package <ArrowRight className="h-4 w-4" />
+                    {t.book} <ArrowRight className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
@@ -105,9 +121,9 @@ export function Packages() {
           </AnimatePresence>
 
           <p className="mt-8 text-center text-sm text-white/55">
-            Prices are indicative and may vary with airline fares and hotel availability.{' '}
-            <a href="/contact" className="font-semibold text-gold-300 hover:text-gold-200">
-              Contact us for a precise quote →
+            {t.disclaimer}{' '}
+            <a href={localizedPath(locale, '/contact')} className="font-semibold text-gold-300 hover:text-gold-200">
+              {t.contactCta}
             </a>
           </p>
         </Container>
