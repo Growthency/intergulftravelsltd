@@ -9,6 +9,8 @@ import { EmptyState } from '@/components/admin/ui';
 import { Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
 import { confirmDialog } from '@/components/admin/confirm';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminsystem';
 
 export type StaffRow = {
   id: string;
@@ -21,20 +23,18 @@ export type StaffRow = {
 };
 
 const ROLES = [
-  { value: 'user', label: 'Customer' },
-  { value: 'operator', label: 'Operator' },
-  { value: 'accountant', label: 'Accountant' },
-  { value: 'staff', label: 'Staff' },
-  { value: 'admin', label: 'Administrator' },
+  { value: 'user', labelKey: 'roleCustomer' },
+  { value: 'operator', labelKey: 'roleOperator' },
+  { value: 'accountant', labelKey: 'roleAccountant' },
+  { value: 'staff', labelKey: 'roleStaff' },
+  { value: 'admin', labelKey: 'roleAdministrator' },
 ] as const;
 
-const ROLE_LABEL: Record<string, string> = Object.fromEntries(ROLES.map((r) => [r.value, r.label]));
-
 const TABS = [
-  { key: 'all', label: 'All' },
-  { key: 'staff', label: 'Staff & Admins' },
-  { key: 'user', label: 'Customers' },
-];
+  { key: 'all', labelKey: 'tabAll' },
+  { key: 'staff', labelKey: 'tabStaffAdmins' },
+  { key: 'user', labelKey: 'tabCustomers' },
+] as const;
 
 const STAFF_ROLES = ['admin', 'accountant', 'operator', 'staff'];
 
@@ -47,6 +47,11 @@ export function StaffTable({
   canEdit: boolean;
   currentUserId: string | null;
 }) {
+  const t = getDict(useLocale());
+  const roleLabel = (value: string) => {
+    const r = ROLES.find((x) => x.value === value);
+    return r ? t[r.labelKey] : value;
+  };
   const router = useRouter();
   const [tab, setTab] = useState('all');
   const [query, setQuery] = useState('');
@@ -84,13 +89,13 @@ export function StaffTable({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not update the role.');
+        toast.error(data?.error ?? t.couldNotUpdateRole);
         return;
       }
-      toast.success(`Role set to ${ROLE_LABEL[role] ?? role}.`);
+      toast.success(t.roleSetTo(roleLabel(role)));
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setBusyId(null);
     }
@@ -99,8 +104,8 @@ export function StaffTable({
   async function deleteRow(row: StaffRow) {
     if (
       !(await confirmDialog({
-        message: `Delete ${row.full_name || row.email}? Their login is removed permanently and they can no longer sign in. This cannot be undone.`,
-        confirmText: 'Delete account',
+        message: t.confirmDeleteStaff(row.full_name || row.email),
+        confirmText: t.deleteAccountConfirm,
         danger: true,
       }))
     ) {
@@ -111,13 +116,13 @@ export function StaffTable({
       const res = await fetch(`/api/admin/staff/${row.id}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not delete the account.');
+        toast.error(data?.error ?? t.couldNotDeleteAccount);
         return;
       }
-      toast.success('Account deleted.');
+      toast.success(t.accountDeleted);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setBusyId(null);
     }
@@ -136,23 +141,23 @@ export function StaffTable({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-1.5">
-          {TABS.map((t) => (
+          {TABS.map((tabItem) => (
             <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
+              key={tabItem.key}
+              onClick={() => setTab(tabItem.key)}
               className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                tab === t.key
+                tab === tabItem.key
                   ? 'bg-brand-600 text-white shadow-emerald'
                   : 'border border-border text-ink-muted hover:border-brand-600/40 hover:text-brand-700'
               }`}
             >
-              {t.label}
+              {t[tabItem.labelKey]}
               <span
                 className={`rounded-full px-1.5 text-xs ${
-                  tab === t.key ? 'bg-white/20' : 'bg-muted text-ink-muted'
+                  tab === tabItem.key ? 'bg-white/20' : 'bg-muted text-ink-muted'
                 }`}
               >
-                {counts[t.key as keyof typeof counts]}
+                {counts[tabItem.key as keyof typeof counts]}
               </span>
             </button>
           ))}
@@ -162,7 +167,7 @@ export function StaffTable({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name or email…"
+            placeholder={t.searchByNameEmail}
             className="w-full rounded-full border border-border bg-card py-2.5 pl-9 pr-4 text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-600/15"
           />
         </div>
@@ -171,11 +176,11 @@ export function StaffTable({
       {filtered.length === 0 ? (
         <EmptyState
           icon={<UsersIcon className="h-6 w-6" />}
-          title={rows.length === 0 ? 'No accounts yet' : 'No accounts match your filters'}
+          title={rows.length === 0 ? t.noAccountsYet : t.noAccountsMatch}
           description={
             rows.length === 0
-              ? 'Registered accounts and staff you create will appear here.'
-              : 'Try a different tab or clear your search.'
+              ? t.accountsEmptyDesc
+              : t.tryDifferentTab
           }
         />
       ) : (
@@ -184,11 +189,11 @@ export function StaffTable({
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-xs uppercase tracking-wide text-ink-muted">
-                  <th className="px-5 py-3 font-semibold">Person</th>
-                  <th className="px-5 py-3 font-semibold">Phone</th>
-                  <th className="px-5 py-3 font-semibold">Joined</th>
-                  <th className="px-5 py-3 font-semibold">Role</th>
-                  {canEdit && <th className="px-5 py-3 text-right font-semibold">Actions</th>}
+                  <th className="px-5 py-3 font-semibold">{t.colPerson}</th>
+                  <th className="px-5 py-3 font-semibold">{t.colPhone}</th>
+                  <th className="px-5 py-3 font-semibold">{t.colJoined}</th>
+                  <th className="px-5 py-3 font-semibold">{t.colRole}</th>
+                  {canEdit && <th className="px-5 py-3 text-right font-semibold">{t.colActions}</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -200,7 +205,7 @@ export function StaffTable({
                           {initials(row) || 'U'}
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate font-semibold text-ink">{row.full_name || 'Unnamed'}</p>
+                          <p className="truncate font-semibold text-ink">{row.full_name || t.unnamed}</p>
                           <p className="truncate text-xs text-ink-muted">{row.email}</p>
                         </div>
                       </div>
@@ -214,10 +219,10 @@ export function StaffTable({
                     <td className="px-5 py-3.5">
                       {row.locked ? (
                         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-muted">
-                          <Lock className="h-3.5 w-3.5" /> Permanent admin
+                          <Lock className="h-3.5 w-3.5" /> {t.permanentAdmin}
                         </span>
                       ) : !canEdit ? (
-                        <span className="text-sm font-medium text-ink">{ROLE_LABEL[row.role] ?? row.role}</span>
+                        <span className="text-sm font-medium text-ink">{roleLabel(row.role)}</span>
                       ) : (
                         <div className="flex items-center gap-2">
                           <select
@@ -228,7 +233,7 @@ export function StaffTable({
                           >
                             {ROLES.map((r) => (
                               <option key={r.value} value={r.value}>
-                                {r.label}
+                                {t[r.labelKey]}
                               </option>
                             ))}
                           </select>
@@ -247,7 +252,7 @@ export function StaffTable({
                               onClick={() => setEditing(row)}
                               className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-ink-muted transition hover:border-brand-600/40 hover:text-brand-700"
                             >
-                              <Pencil className="h-3.5 w-3.5" /> Edit
+                              <Pencil className="h-3.5 w-3.5" /> {t.edit}
                             </button>
                             {row.id !== currentUserId && (
                               <button
@@ -255,7 +260,7 @@ export function StaffTable({
                                 onClick={() => deleteRow(row)}
                                 disabled={busyId === row.id}
                                 className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-ink-muted transition hover:border-red-300 hover:text-red-600 disabled:opacity-50"
-                                aria-label="Delete account"
+                                aria-label={t.deleteAccountAria}
                               >
                                 {busyId === row.id ? (
                                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -299,6 +304,7 @@ function StaffEditModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = getDict(useLocale());
   const [saving, setSaving] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -308,7 +314,7 @@ function StaffEditModal({
     const password = String(fd.get('password') ?? '');
     const confirm = String(fd.get('confirm') ?? '');
     if (password && password !== confirm) {
-      toast.error('The two passwords do not match.');
+      toast.error(t.passwordsDoNotMatch);
       return;
     }
     const payload: Record<string, unknown> = {
@@ -316,7 +322,7 @@ function StaffEditModal({
       phone: String(fd.get('phone') ?? '').trim(),
     };
     if (!payload.full_name) {
-      toast.error('Name cannot be empty.');
+      toast.error(t.nameCannotBeEmpty);
       return;
     }
     if (password) payload.password = password;
@@ -330,13 +336,13 @@ function StaffEditModal({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not update the account.');
+        toast.error(data?.error ?? t.couldNotUpdateAccount);
         return;
       }
-      toast.success('Account updated.');
+      toast.success(t.accountUpdated);
       onSaved();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setSaving(false);
     }
@@ -346,12 +352,12 @@ function StaffEditModal({
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" role="dialog" aria-modal="true">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 text-left shadow-soft">
         <div className="mb-1 flex items-center justify-between">
-          <h2 className="font-display text-base font-semibold text-ink">Edit account</h2>
+          <h2 className="font-display text-base font-semibold text-ink">{t.editAccount}</h2>
           <button
             type="button"
             onClick={onClose}
             className="grid h-8 w-8 place-items-center rounded-full text-ink-muted hover:bg-muted"
-            aria-label="Close"
+            aria-label={t.close}
           >
             <X className="h-4 w-4" />
           </button>
@@ -359,28 +365,28 @@ function StaffEditModal({
         <p className="mb-4 truncate text-xs text-ink-muted">{row.email}</p>
 
         <form onSubmit={onSubmit} className="grid gap-4">
-          <Field label="Full name" required>
+          <Field label={t.fullName} required>
             <input name="full_name" defaultValue={row.full_name ?? ''} className={inputClass} />
           </Field>
-          <Field label="Phone">
+          <Field label={t.phone}>
             <input name="phone" defaultValue={row.phone ?? ''} className={inputClass} placeholder="01XXXXXXXXX" />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="New password" hint="Leave blank to keep current.">
+            <Field label={t.newPassword} hint={t.newPasswordHint}>
               <input name="password" type="password" className={inputClass} placeholder="••••••••" autoComplete="new-password" />
             </Field>
-            <Field label="Confirm password">
+            <Field label={t.confirmPassword}>
               <input name="confirm" type="password" className={inputClass} placeholder="••••••••" autoComplete="new-password" />
             </Field>
           </div>
-          <p className="text-xs text-ink-muted">The email ({row.email}) is the sign-in identity and isn&apos;t changed here.</p>
+          <p className="text-xs text-ink-muted">{t.emailSignInNote(row.email)}</p>
           <div className="flex items-center gap-3">
             <Button type="submit" disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Save changes
+              {t.saveChanges}
             </Button>
             <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>
-              Cancel
+              {t.cancel}
             </Button>
           </div>
         </form>

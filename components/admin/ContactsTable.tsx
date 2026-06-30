@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { formatDate, whatsappLink } from '@/lib/utils';
 import { Badge, EmptyState, StatusBadge } from '@/components/admin/ui';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminwebsite';
 
 export type ContactRow = {
   id: string;
@@ -27,14 +29,15 @@ export type ContactRow = {
   created_at: string;
 };
 
-const TABS = [
-  { key: 'all', label: 'All' },
-  { key: 'pending', label: 'Pending' },
-  { key: 'handled', label: 'Handled' },
-];
-
 export function ContactsTable({ rows }: { rows: ContactRow[] }) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = getDict(locale).contactsTable;
+  const TABS = [
+    { key: 'all', label: t.tabAll },
+    { key: 'pending', label: t.tabPending },
+    { key: 'handled', label: t.tabHandled },
+  ];
   const [tab, setTab] = useState('pending');
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -69,13 +72,13 @@ export function ContactsTable({ rows }: { rows: ContactRow[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not update the request.');
+        toast.error(data?.error ?? t.couldNotUpdate);
         return;
       }
-      toast.success(row.handled ? 'Marked as pending.' : 'Marked as handled.');
+      toast.success(row.handled ? t.markedPending : t.markedHandled);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setBusyId(null);
     }
@@ -111,7 +114,7 @@ export function ContactsTable({ rows }: { rows: ContactRow[] }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name, email or subject…"
+            placeholder={t.searchPlaceholder}
             className="w-full rounded-full border border-border bg-card py-2.5 pl-9 pr-4 text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-600/15"
           />
         </div>
@@ -120,12 +123,8 @@ export function ContactsTable({ rows }: { rows: ContactRow[] }) {
       {filtered.length === 0 ? (
         <EmptyState
           icon={<Inbox className="h-6 w-6" />}
-          title={rows.length === 0 ? 'No contact requests yet' : 'Nothing to show here'}
-          description={
-            rows.length === 0
-              ? 'Enquiries submitted through the website contact form will appear here.'
-              : 'Try a different tab or clear your search.'
-          }
+          title={rows.length === 0 ? t.emptyTitleNone : t.emptyTitleFiltered}
+          description={rows.length === 0 ? t.emptyDescNone : t.emptyDescFiltered}
         />
       ) : (
         <div className="space-y-3">
@@ -149,10 +148,10 @@ export function ContactsTable({ rows }: { rows: ContactRow[] }) {
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold text-ink">{row.name}</span>
-                        <StatusBadge status={row.handled ? 'handled' : 'pending'} />
+                        <StatusBadge status={row.handled ? 'handled' : 'pending'} locale={locale} />
                       </div>
                       <p className="mt-0.5 truncate text-sm text-ink-muted">
-                        {row.subject || 'General enquiry'} ·{' '}
+                        {row.subject || t.generalEnquiry} ·{' '}
                         {formatDate(row.created_at, { day: 'numeric', month: 'short', year: 'numeric' })}
                       </p>
                     </div>
@@ -162,7 +161,7 @@ export function ContactsTable({ rows }: { rows: ContactRow[] }) {
                     <a
                       href={`mailto:${row.email}`}
                       className="grid h-9 w-9 place-items-center rounded-lg border border-border text-ink-muted transition hover:border-brand-600/40 hover:text-brand-700"
-                      aria-label="Email"
+                      aria-label={t.ariaEmail}
                     >
                       <Mail className="h-4 w-4" />
                     </a>
@@ -171,7 +170,7 @@ export function ContactsTable({ rows }: { rows: ContactRow[] }) {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="grid h-9 w-9 place-items-center rounded-lg border border-border text-ink-muted transition hover:border-brand-600/40 hover:text-brand-700"
-                      aria-label="Phone / WhatsApp"
+                      aria-label={t.ariaPhone}
                     >
                       <Phone className="h-4 w-4" />
                     </a>
@@ -192,7 +191,7 @@ export function ContactsTable({ rows }: { rows: ContactRow[] }) {
                         <Check className="h-4 w-4" />
                       )}
                       <span className="hidden sm:inline">
-                        {row.handled ? 'Reopen' : 'Mark handled'}
+                        {row.handled ? t.reopen : t.markHandled}
                       </span>
                     </button>
                   </div>
@@ -213,9 +212,9 @@ export function ContactsTable({ rows }: { rows: ContactRow[] }) {
                       </span>
                     </div>
                     <div>
-                      <Badge tone="gray">Message</Badge>
+                      <Badge tone="gray">{t.messageBadge}</Badge>
                       <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-ink">
-                        {row.message || 'No message provided.'}
+                        {row.message || t.noMessage}
                       </p>
                     </div>
                   </div>

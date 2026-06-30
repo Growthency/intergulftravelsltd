@@ -1,4 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/adminsystem';
 import { PageHeader } from '@/components/admin/ui';
 import { FooterManager, type FooterLink } from '@/components/admin/FooterManager';
 
@@ -25,13 +27,14 @@ async function loadFooter(): Promise<FooterLink[]> {
 }
 
 export default async function FooterPage() {
+  const t = getDict(getLocale());
   const links = await loadFooter();
 
   return (
     <>
       <PageHeader
-        title="Footer"
-        description="Manage the links shown in the site footer, organised into columns."
+        title={t.footerTitle}
+        description={t.footerDesc}
       />
       <FooterManager links={links} />
     </>

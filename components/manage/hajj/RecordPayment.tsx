@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminhajj';
 
 export type BankOption = { id: string; name: string };
 
@@ -17,6 +19,7 @@ export function RecordPayment({
   bankAccounts: BankOption[];
 }) {
   const router = useRouter();
+  const t = getDict(useLocale());
   const [saving, setSaving] = useState(false);
   const [method, setMethod] = useState<'cash' | 'bank'>('cash');
 
@@ -30,11 +33,11 @@ export function RecordPayment({
 
     const amount = Number(fd.get('amount') ?? 0);
     if (!(amount > 0)) {
-      toast.error('Enter an amount greater than zero.');
+      toast.error(t.toastAmountPositive);
       return;
     }
     if (method === 'bank' && !fd.get('bank_account_id')) {
-      toast.error('Select a bank account.');
+      toast.error(t.toastSelectBank);
       return;
     }
 
@@ -56,15 +59,15 @@ export function RecordPayment({
       });
       const data = await res.json();
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not record the payment.');
+        toast.error(data?.error ?? t.toastPaymentFail);
         return;
       }
-      toast.success('Payment recorded.');
+      toast.success(t.toastPaymentRecorded);
       form.reset();
       setMethod('cash');
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.toastNetwork);
     } finally {
       setSaving(false);
     }
@@ -72,27 +75,27 @@ export function RecordPayment({
 
   return (
     <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
-      <Field label="Amount (৳)" required>
+      <Field label={t.amountTaka} required>
         <input name="amount" type="number" min={0} step="any" className={inputClass} placeholder="0" />
       </Field>
-      <Field label="Date">
+      <Field label={t.date}>
         <input name="date" type="date" defaultValue={today} className={inputClass} />
       </Field>
-      <Field label="Method" required>
+      <Field label={t.method} required>
         <select
           name="method"
           className={inputClass}
           value={method}
           onChange={(e) => setMethod(e.target.value as 'cash' | 'bank')}
         >
-          <option value="cash">Cash</option>
-          <option value="bank">Bank</option>
+          <option value="cash">{t.methodCash}</option>
+          <option value="bank">{t.methodBank}</option>
         </select>
       </Field>
       {method === 'bank' && (
-        <Field label="Bank account" required>
+        <Field label={t.bankAccount} required>
           <select name="bank_account_id" className={inputClass} defaultValue="">
-            <option value="">Select account…</option>
+            <option value="">{t.selectAccount}</option>
             {bankAccounts.map((b) => (
               <option key={b.id} value={b.id}>
                 {b.name}
@@ -100,26 +103,26 @@ export function RecordPayment({
             ))}
           </select>
           {bankAccounts.length === 0 && (
-            <span className="mt-1 block text-xs text-red-600">No bank accounts set up yet.</span>
+            <span className="mt-1 block text-xs text-red-600">{t.noBankAccounts}</span>
           )}
         </Field>
       )}
-      <Field label="Type">
+      <Field label={t.typeLabel}>
         <select name="type" className={inputClass} defaultValue="installment">
-          <option value="installment">Installment</option>
-          <option value="advance">Advance</option>
-          <option value="token">Token</option>
-          <option value="full">Full payment</option>
-          <option value="refund">Refund</option>
+          <option value="installment">{t.typeInstallment}</option>
+          <option value="advance">{t.typeAdvance}</option>
+          <option value="token">{t.typeToken}</option>
+          <option value="full">{t.typeFull}</option>
+          <option value="refund">{t.typeRefund}</option>
         </select>
       </Field>
-      <Field label="Narration" className="sm:col-span-2">
-        <input name="narration" className={inputClass} placeholder="Optional note for the receipt" />
+      <Field label={t.narration} className="sm:col-span-2">
+        <input name="narration" className={inputClass} placeholder={t.narrationPlaceholder} />
       </Field>
       <div className="sm:col-span-2">
         <Button type="submit" disabled={saving}>
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-          {saving ? 'Recording…' : 'Record payment'}
+          {saving ? t.recordingEllipsis : t.recordPayment}
         </Button>
       </div>
     </form>

@@ -10,6 +10,9 @@ import { BRANCHES } from '@/lib/management/branches';
 import type { MgmtPackage, UmrahPassenger } from '@/lib/management/types';
 import { money } from '@/lib/management/format';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminumrah';
+import { localizedPath } from '@/lib/i18n';
 
 type PackageOption = Pick<MgmtPackage, 'id' | 'name' | 'price' | 'year'>;
 
@@ -24,6 +27,8 @@ export function PassengerForm({
   passengerId?: string;
   initial?: Partial<UmrahPassenger>;
 }) {
+  const locale = useLocale();
+  const t = getDict(locale);
   const router = useRouter();
   const isEdit = mode === 'edit';
   const [saving, setSaving] = useState(false);
@@ -49,7 +54,7 @@ export function PassengerForm({
 
   async function uploadPhoto(file: File) {
     if (!file.type.startsWith('image/')) {
-      toast.error('Please choose an image file.');
+      toast.error(t.toastChooseImage);
       return;
     }
     setUploading(true);
@@ -60,13 +65,13 @@ export function PassengerForm({
       const res = await fetch('/api/admin/upload', { method: 'POST', body });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok || !data?.url) {
-        toast.error(data?.error ?? 'Upload failed. Please try again.');
+        toast.error(data?.error ?? t.toastUploadFail);
         return;
       }
       setPhotoUrl(data.url as string);
-      toast.success('Photo uploaded.');
+      toast.success(t.toastPhotoUploaded);
     } catch {
-      toast.error('Network error while uploading.');
+      toast.error(t.toastUploadNetwork);
     } finally {
       setUploading(false);
     }
@@ -75,7 +80,7 @@ export function PassengerForm({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) {
-      toast.error('Passenger name is required.');
+      toast.error(t.toastNameRequired);
       return;
     }
     setSaving(true);
@@ -110,14 +115,14 @@ export function PassengerForm({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not save the passenger.');
+        toast.error(data?.error ?? t.toastSaveFail);
         return;
       }
-      toast.success(isEdit ? 'Passenger updated.' : 'Passenger added.');
-      router.push(`/admin/umrah/${isEdit ? passengerId : data.id}`);
+      toast.success(isEdit ? t.toastPassengerUpdated : t.toastPassengerAdded);
+      router.push(localizedPath(locale, `/admin/umrah/${isEdit ? passengerId : data.id}`));
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.toastNetwork);
     } finally {
       setSaving(false);
     }
@@ -127,45 +132,45 @@ export function PassengerForm({
     <form onSubmit={submit} className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
         <Card className="space-y-5">
-          <h2 className="font-display text-lg font-semibold text-ink">Passenger details</h2>
+          <h2 className="font-display text-lg font-semibold text-ink">{t.passengerDetails}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Full name (English)" required>
-              <input className={inputClass} value={form.name} onChange={set('name')} placeholder="As in passport" />
+            <Field label={t.fullNameEnglish} required>
+              <input className={inputClass} value={form.name} onChange={set('name')} placeholder={t.asInPassport} />
             </Field>
-            <Field label="Name (Bangla)">
-              <input className={inputClass} value={form.name_bn} onChange={set('name_bn')} placeholder="বাংলায় নাম" />
+            <Field label={t.nameBangla}>
+              <input className={inputClass} value={form.name_bn} onChange={set('name_bn')} placeholder={t.nameBanglaPlaceholder} />
             </Field>
-            <Field label="Phone">
-              <input className={inputClass} value={form.phone} onChange={set('phone')} placeholder="01XXXXXXXXX" />
+            <Field label={t.phone}>
+              <input className={inputClass} value={form.phone} onChange={set('phone')} placeholder={t.phonePlaceholder} />
             </Field>
-            <Field label="Date of birth">
+            <Field label={t.dateOfBirth}>
               <input type="date" className={inputClass} value={form.dob} onChange={set('dob')} />
             </Field>
-            <Field label="Address" className="sm:col-span-2">
-              <textarea className={inputClass} rows={2} value={form.address} onChange={set('address')} placeholder="Village / Road, Thana, District" />
+            <Field label={t.address} className="sm:col-span-2">
+              <textarea className={inputClass} rows={2} value={form.address} onChange={set('address')} placeholder={t.addressPlaceholder} />
             </Field>
           </div>
 
           <h3 className="border-t border-border pt-4 font-display text-base font-semibold text-ink">
-            Passport information
+            {t.passportInformation}
           </h3>
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Passport no.">
-              <input className={inputClass} value={form.passport_no} onChange={set('passport_no')} placeholder="A01234567" />
+            <Field label={t.passportNo}>
+              <input className={inputClass} value={form.passport_no} onChange={set('passport_no')} placeholder={t.passportNoPlaceholder} />
             </Field>
-            <Field label="Issue date">
+            <Field label={t.issueDate}>
               <input type="date" className={inputClass} value={form.passport_issue} onChange={set('passport_issue')} />
             </Field>
-            <Field label="Expiry date">
+            <Field label={t.expiryDate}>
               <input type="date" className={inputClass} value={form.passport_expiry} onChange={set('passport_expiry')} />
             </Field>
           </div>
 
           <h3 className="border-t border-border pt-4 font-display text-base font-semibold text-ink">
-            Booking
+            {t.booking}
           </h3>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Branch / Concern" required>
+            <Field label={t.branchConcern} required>
               <select className={inputClass} value={form.branch} onChange={set('branch')} disabled={isEdit}>
                 {BRANCHES.map((b) => (
                   <option key={b.value} value={b.value}>{b.label}</option>
@@ -173,9 +178,9 @@ export function PassengerForm({
               </select>
             </Field>
             {!isEdit && (
-              <Field label="Umrah package" hint="Optional — assigning charges the package price.">
+              <Field label={t.umrahPackage} hint={t.packageOptionalHint}>
                 <select className={inputClass} value={form.package_id} onChange={set('package_id')}>
-                  <option value="">Not assigned yet</option>
+                  <option value="">{t.notAssignedYet}</option>
                   {packages.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name}{p.year ? ` (${p.year})` : ''} — {money(p.price)}
@@ -185,7 +190,7 @@ export function PassengerForm({
               </Field>
             )}
             {!isEdit && (
-              <Field label="Token money (৳)" hint="Recorded as a received cash payment.">
+              <Field label={t.tokenMoney} hint={t.tokenMoneyHint}>
                 <input
                   type="number"
                   min={0}
@@ -197,32 +202,32 @@ export function PassengerForm({
                 />
               </Field>
             )}
-            <Field label="Note" className="sm:col-span-2">
-              <textarea className={inputClass} rows={2} value={form.note} onChange={set('note')} placeholder="Any internal remarks" />
+            <Field label={t.note} className="sm:col-span-2">
+              <textarea className={inputClass} rows={2} value={form.note} onChange={set('note')} placeholder={t.notePlaceholder} />
             </Field>
             {isEdit && (
               <p className="sm:col-span-2 text-xs text-ink-muted">
-                Package assignment and branch are managed from the passenger profile so the ledger charge stays accurate.
+                {t.editPackageHint}
               </p>
             )}
           </div>
         </Card>
 
         <Card className="space-y-3">
-          <h2 className="font-display text-lg font-semibold text-ink">Photo</h2>
+          <h2 className="font-display text-lg font-semibold text-ink">{t.photo}</h2>
           {photoUrl ? (
             <div className="group relative overflow-hidden rounded-2xl border border-border bg-muted">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photoUrl} alt="Passenger" className="aspect-[3/4] w-full object-cover" />
+              <img src={photoUrl} alt={t.passengerAlt} className="aspect-[3/4] w-full object-cover" />
               <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-ink/80 to-transparent p-3">
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-white">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-gold-300" /> Stored
+                  <CheckCircle2 className="h-3.5 w-3.5 text-gold-300" /> {t.stored}
                 </span>
                 <button
                   type="button"
                   onClick={() => setPhotoUrl(null)}
                   className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-rose-600 transition hover:bg-white"
-                  aria-label="Remove photo"
+                  aria-label={t.removePhoto}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -243,9 +248,9 @@ export function PassengerForm({
                 </span>
               )}
               <span className="text-sm font-semibold text-ink">
-                {uploading ? 'Uploading…' : 'Upload photo'}
+                {uploading ? t.uploadingEllipsis : t.uploadPhoto}
               </span>
-              <span className="text-xs text-ink-muted">Passport-size · auto WebP</span>
+              <span className="text-xs text-ink-muted">{t.photoFormatHint}</span>
               <input
                 type="file"
                 accept="image/*"
@@ -260,18 +265,18 @@ export function PassengerForm({
           )}
           <p className="flex items-start gap-1.5 text-xs text-ink-muted">
             <User className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            A customer ledger account is created automatically for every passenger.
+            {t.ledgerAutoHint}
           </p>
         </Card>
       </div>
 
       <div className="flex items-center justify-end gap-3">
         <Button type="button" variant="outline" onClick={() => router.back()} disabled={saving}>
-          Cancel
+          {t.cancel}
         </Button>
         <Button type="submit" disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Save passenger'}
+          {saving ? t.savingEllipsis : isEdit ? t.saveChanges : t.savePassenger}
         </Button>
       </div>
     </form>

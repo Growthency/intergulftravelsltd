@@ -1,5 +1,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/admin';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/adminsystem';
 import { PageHeader } from '@/components/admin/ui';
 import { StaffTable, type StaffRow } from '@/components/manage/StaffTable';
 import { CreateStaff } from '@/components/manage/CreateStaff';
@@ -50,14 +52,15 @@ async function resolveViewer(): Promise<{ isAdmin: boolean; userId: string | nul
 }
 
 export default async function StaffPage() {
+  const t = getDict(getLocale());
   const [rows, viewer] = await Promise.all([loadStaff(), resolveViewer()]);
   const { isAdmin, userId } = viewer;
 
   return (
     <>
       <PageHeader
-        title="Staff & Roles"
-        description="Manage who can access the management console. Assign roles — operator, accountant, staff or administrator — and create new staff logins."
+        title={t.staffTitle}
+        description={t.staffDesc}
       />
 
       {isAdmin && (

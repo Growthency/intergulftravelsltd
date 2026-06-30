@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/admin/ui';
 import { EstimatesTable, type EstimateRow } from '@/components/admin/EstimatesTable';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/adminwebsite';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Estimate Requests' };
@@ -26,13 +28,11 @@ async function loadEstimates(): Promise<EstimateRow[]> {
 
 export default async function EstimatesPage() {
   const rows = await loadEstimates();
+  const t = getDict(getLocale());
 
   return (
     <>
-      <PageHeader
-        title="Estimate Requests"
-        description="Quote requests from the website. Track each one from new through to closed."
-      />
+      <PageHeader title={t.estimates.title} description={t.estimates.description} />
       <EstimatesTable rows={rows} />
     </>
   );

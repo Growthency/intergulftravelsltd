@@ -4,6 +4,8 @@ import { useCallback, useId, useRef, useState } from 'react';
 import { UploadCloud, Loader2, ImageIcon, X, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminwebsite';
 
 type Folder = 'blog' | 'gallery' | 'media' | 'settings';
 
@@ -22,6 +24,7 @@ export function ImageUploader({
   aspect?: 'video' | 'square';
   className?: string;
 }) {
+  const t = getDict(useLocale()).uploader;
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -30,7 +33,7 @@ export function ImageUploader({
   const upload = useCallback(
     async (file: File) => {
       if (!file.type.startsWith('image/')) {
-        toast.error('Please choose an image file.');
+        toast.error(t.chooseImageError);
         return;
       }
       setBusy(true);
@@ -43,18 +46,18 @@ export function ImageUploader({
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok || !data?.ok || !data?.url) {
-          toast.error(data?.error ?? 'Upload failed. Please try again.');
+          toast.error(data?.error ?? t.uploadFailed);
           return;
         }
         onChange(data.url as string);
-        toast.success('Image uploaded and converted to WebP.');
+        toast.success(t.uploadedConverted);
       } catch {
-        toast.error('Network error while uploading. Please try again.');
+        toast.error(t.uploadNetworkError);
       } finally {
         setBusy(false);
       }
     },
-    [folder, onChange],
+    [folder, onChange, t],
   );
 
   const onDrop = useCallback(
@@ -82,7 +85,7 @@ export function ImageUploader({
           />
           <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-ink/80 to-transparent p-3">
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-white">
-              <CheckCircle2 className="h-3.5 w-3.5 text-gold-300" /> WebP · stored
+              <CheckCircle2 className="h-3.5 w-3.5 text-gold-300" /> {t.webpStored}
             </span>
             <div className="flex gap-2">
               <button
@@ -91,13 +94,13 @@ export function ImageUploader({
                 disabled={busy}
                 className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-brand-800 transition hover:bg-white disabled:opacity-60"
               >
-                Replace
+                {t.replace}
               </button>
               <button
                 type="button"
                 onClick={() => onChange(null)}
                 className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-rose-600 transition hover:bg-white"
-                aria-label="Remove image"
+                aria-label={t.removeImage}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -129,11 +132,9 @@ export function ImageUploader({
             </span>
           )}
           <span className="text-sm font-semibold text-ink">
-            {busy ? 'Uploading…' : 'Drop an image or click to upload'}
+            {busy ? t.uploading : t.dropOrClick}
           </span>
-          <span className="text-xs text-ink-muted">
-            JPG, PNG, GIF, AVIF, TIFF or BMP · auto-converted to WebP
-          </span>
+          <span className="text-xs text-ink-muted">{t.formatsHint}</span>
         </label>
       )}
 

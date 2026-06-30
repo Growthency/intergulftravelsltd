@@ -20,6 +20,8 @@ import {
 import { Card, Field, inputClass, AdminButton, EmptyState } from '@/components/admin/ui';
 import { confirmDialog } from '@/components/admin/confirm';
 import { navigation } from '@/lib/site';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminsystem';
 
 /** Row shape loaded from the DB (`menu_items`, header location). */
 export type BuilderItem = {
@@ -39,19 +41,23 @@ type Node = {
   parentTempId: string | null;
 };
 
-/** This site's real pages, offered as one-click quick links. */
-const QUICK_LINKS: { label: string; href: string }[] = [
-  { label: 'Home', href: '/' },
-  { label: 'Hajj', href: '/hajj' },
-  { label: 'Umrah', href: '/umrah' },
-  { label: 'Services', href: '/services' },
-  { label: 'Branches', href: '/branches' },
-  { label: 'Gallery', href: '/gallery' },
-  { label: 'Videos', href: '/videos' },
-  { label: 'Blog', href: '/blog' },
-  { label: 'About Us', href: '/about' },
-  { label: 'Contact Us', href: '/contact' },
-  { label: 'Get Free Estimate', href: '/estimate' },
+/**
+ * This site's real pages, offered as one-click quick links. The label that is
+ * saved to the menu comes from the dictionary (so it matches the active
+ * locale); `labelKey` only selects which translation to use.
+ */
+const QUICK_LINKS: { labelKey: keyof ReturnType<typeof getDict>; href: string }[] = [
+  { labelKey: 'qlHome', href: '/' },
+  { labelKey: 'qlHajj', href: '/hajj' },
+  { labelKey: 'qlUmrah', href: '/umrah' },
+  { labelKey: 'qlServices', href: '/services' },
+  { labelKey: 'qlBranches', href: '/branches' },
+  { labelKey: 'qlGallery', href: '/gallery' },
+  { labelKey: 'qlVideos', href: '/videos' },
+  { labelKey: 'qlBlog', href: '/blog' },
+  { labelKey: 'qlAbout', href: '/about' },
+  { labelKey: 'qlContact', href: '/contact' },
+  { labelKey: 'qlEstimate', href: '/estimate' },
 ];
 
 let counter = 0;
@@ -112,6 +118,8 @@ function defaultNodes(): Node[] {
 }
 
 export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
+  const locale = useLocale();
+  const t = getDict(locale);
   const router = useRouter();
   const [nodes, setNodes] = useState<Node[]>(() => buildInitialNodes(initial));
   const [saving, setSaving] = useState(false);
@@ -129,7 +137,7 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
     const trimmedLabel = label.trim();
     const trimmedHref = href.trim();
     if (!trimmedLabel || !trimmedHref) {
-      toast.error('A label and a link are both required.');
+      toast.error(t.labelLinkRequired);
       return;
     }
     setNodes((prev) => [
@@ -140,7 +148,7 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
 
   function addCustom() {
     if (!customLabel.trim() || !customHref.trim()) {
-      toast.error('Enter both a label and a URL for the custom link.');
+      toast.error(t.customBothRequired);
       return;
     }
     addItem(customLabel, customHref);
@@ -224,18 +232,18 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
     setNodes((prev) => {
       const idx = prev.findIndex((n) => n.tempId === tempId);
       if (idx === -1 || idx === 0) {
-        toast.error('Nothing above to nest under.');
+        toast.error(t.nothingAbove);
         return prev;
       }
       const node = prev[idx];
       if (node.parentTempId) {
-        toast.error('This item is already nested.');
+        toast.error(t.alreadyNested);
         return prev;
       }
       // It must not have its own children (max depth = 2).
       const hasChildren = prev.some((n) => n.parentTempId === tempId);
       if (hasChildren) {
-        toast.error('Items with sub-items cannot be nested. Move its sub-items out first.');
+        toast.error(t.cannotNestParent);
         return prev;
       }
       // Walk upward to find the first top-level item to be the parent.
@@ -247,7 +255,7 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
         }
       }
       if (!parentTemp) {
-        toast.error('No top-level item above to nest under.');
+        toast.error(t.noTopAbove);
         return prev;
       }
       // Re-place the node as the last child of that parent's block.
@@ -297,12 +305,12 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
     if (nodes.length === 0) {
       // An empty save is allowed — it clears the menu and the site falls back
       // to the default nav. Confirm so it isn't accidental.
-      if (!(await confirmDialog({ message: 'Save an empty menu? The site will use the default navigation.', confirmText: 'Save', danger: false }))) return;
+      if (!(await confirmDialog({ message: t.confirmEmptyMenu, confirmText: t.save, danger: false }))) return;
     }
     // Validate.
     for (const n of nodes) {
       if (!n.label.trim() || !n.href.trim()) {
-        toast.error('Every item needs a label and a link.');
+        toast.error(t.everyItemNeeds);
         return;
       }
     }
@@ -328,13 +336,13 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not save the menu.');
+        toast.error(data?.error ?? t.couldNotSaveMenu);
         return;
       }
-      toast.success('Menu saved.');
+      toast.success(t.menuSaved);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setSaving(false);
     }
@@ -343,16 +351,15 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
   /** Fill the builder with the site's default menu so it can be edited. */
   function loadDefault() {
     setNodes(defaultNodes());
-    toast.success('Default menu loaded — edit if you like, then Save to apply.');
+    toast.success(t.defaultLoaded);
   }
 
   /** Clear the custom menu entirely → the site reverts to the built-in nav. */
   async function resetToDefault() {
     if (
       !(await confirmDialog({
-        message:
-          'Reset to the default menu? This clears your custom menu and the site uses the built-in navigation (with Branches and icons) again.',
-        confirmText: 'Reset',
+        message: t.confirmReset,
+        confirmText: t.reset,
         danger: true,
       }))
     )
@@ -366,14 +373,14 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not reset the menu.');
+        toast.error(data?.error ?? t.couldNotResetMenu);
         return;
       }
       setNodes([]);
-      toast.success('Menu reset — the site now uses the default navigation.');
+      toast.success(t.menuReset);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setSaving(false);
     }
@@ -383,14 +390,14 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-end gap-2">
         <AdminButton variant="outline" size="sm" onClick={loadDefault} disabled={saving}>
-          <Download className="h-4 w-4" /> Load default
+          <Download className="h-4 w-4" /> {t.loadDefault}
         </AdminButton>
         <AdminButton variant="outline" size="sm" onClick={resetToDefault} disabled={saving}>
-          <RotateCcw className="h-4 w-4" /> Reset to default
+          <RotateCcw className="h-4 w-4" /> {t.resetToDefault}
         </AdminButton>
         <AdminButton variant="primary" onClick={save} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Save menu
+          {t.saveMenu}
         </AdminButton>
       </div>
 
@@ -399,34 +406,37 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
         <div className="space-y-5">
           <Card className="space-y-4">
             <div>
-              <p className="text-sm font-semibold text-ink">Quick links</p>
-              <p className="mt-1 text-xs text-ink-muted">Add one of your site pages.</p>
+              <p className="text-sm font-semibold text-ink">{t.quickLinks}</p>
+              <p className="mt-1 text-xs text-ink-muted">{t.quickLinksHint}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {QUICK_LINKS.map((q) => (
-                <button
-                  key={q.href}
-                  type="button"
-                  onClick={() => addItem(q.label, q.href)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs font-semibold text-ink-muted transition hover:border-brand-600/40 hover:bg-brand-50 hover:text-brand-700"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  {q.label}
-                </button>
-              ))}
+              {QUICK_LINKS.map((q) => {
+                const qLabel = t[q.labelKey] as string;
+                return (
+                  <button
+                    key={q.href}
+                    type="button"
+                    onClick={() => addItem(qLabel, q.href)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs font-semibold text-ink-muted transition hover:border-brand-600/40 hover:bg-brand-50 hover:text-brand-700"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    {qLabel}
+                  </button>
+                );
+              })}
             </div>
           </Card>
 
           <Card className="space-y-4">
             <div>
-              <p className="text-sm font-semibold text-ink">Custom link</p>
-              <p className="mt-1 text-xs text-ink-muted">Link to any page or external URL.</p>
+              <p className="text-sm font-semibold text-ink">{t.customLink}</p>
+              <p className="mt-1 text-xs text-ink-muted">{t.customLinkHint}</p>
             </div>
-            <Field label="Label">
+            <Field label={t.label}>
               <input
                 className={inputClass}
                 value={customLabel}
-                placeholder="e.g. Special Offers"
+                placeholder={t.customLabelPlaceholder}
                 onChange={(e) => setCustomLabel(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -436,11 +446,11 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
                 }}
               />
             </Field>
-            <Field label="URL" hint="Path or full URL">
+            <Field label={t.url} hint={t.pathOrFullUrl}>
               <input
                 className={inputClass}
                 value={customHref}
-                placeholder="/offers or https://…"
+                placeholder={t.customHrefPlaceholder}
                 onChange={(e) => setCustomHref(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -451,7 +461,7 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
               />
             </Field>
             <AdminButton variant="outline" size="sm" onClick={addCustom} className="w-full">
-              <Link2 className="h-4 w-4" /> Add custom link
+              <Link2 className="h-4 w-4" /> {t.addCustomLink}
             </AdminButton>
           </Card>
         </div>
@@ -461,14 +471,14 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
           <Card className="space-y-4">
             <div className="flex items-center gap-2">
               <ListTree className="h-4 w-4 text-brand-600" />
-              <p className="text-sm font-semibold text-ink">Menu structure</p>
+              <p className="text-sm font-semibold text-ink">{t.menuStructure}</p>
             </div>
 
             {nodes.length === 0 ? (
               <EmptyState
                 icon={<ListTree className="h-6 w-6" />}
-                title="Your menu is empty"
-                description="Add pages or custom links from the left. While empty, the site shows its automatic default navigation."
+                title={t.menuEmptyTitle}
+                description={t.menuEmptyDesc}
               />
             ) : (
               <ul className="space-y-2">
@@ -496,7 +506,7 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
                       >
                         <button
                           type="button"
-                          aria-label="Drag to reorder"
+                          aria-label={t.dragToReorder}
                           draggable
                           onDragStart={() => setDragId(n.tempId)}
                           onDragEnd={() => setDragId(null)}
@@ -512,26 +522,26 @@ export function MenuBuilder({ initial }: { initial: BuilderItem[] }) {
 
                         <div className="flex shrink-0 items-center gap-0.5">
                           {isChild ? (
-                            <IconBtn label="Make top level" onClick={() => outdent(n.tempId)}>
+                            <IconBtn label={t.makeTopLevel} onClick={() => outdent(n.tempId)}>
                               <ChevronLeft className="h-4 w-4" />
                             </IconBtn>
                           ) : (
                             <IconBtn
-                              label="Nest under the item above"
+                              label={t.nestUnderAbove}
                               disabled={!aboveIsTop}
                               onClick={() => indent(n.tempId)}
                             >
                               <ChevronRight className="h-4 w-4" />
                             </IconBtn>
                           )}
-                          <IconBtn label="Move up" onClick={() => move(n.tempId, -1)}>
+                          <IconBtn label={t.moveUp} onClick={() => move(n.tempId, -1)}>
                             <ArrowUp className="h-4 w-4" />
                           </IconBtn>
-                          <IconBtn label="Move down" onClick={() => move(n.tempId, 1)}>
+                          <IconBtn label={t.moveDown} onClick={() => move(n.tempId, 1)}>
                             <ArrowDown className="h-4 w-4" />
                           </IconBtn>
                           <IconBtn
-                            label="Remove"
+                            label={t.remove}
                             danger
                             onClick={() => removeNode(n.tempId)}
                           >

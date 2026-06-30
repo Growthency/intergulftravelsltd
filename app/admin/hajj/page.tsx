@@ -19,9 +19,14 @@ import { loadHeadMap, dueForHead, loadHajjPackages } from '@/lib/management/hajj
 import { branchShort } from '@/lib/management/branches';
 import { money } from '@/lib/management/format';
 import type { HajjPilgrim, MgmtPackage } from '@/lib/management/types';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminhajj';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Hajj Pilgrims' };
+export function generateMetadata() {
+  return { title: getDict(getLocale()).metaPilgrims };
+}
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -52,6 +57,8 @@ async function loadPilgrims(): Promise<HajjPilgrim[]> {
 }
 
 export default async function HajjPilgrimsPage({ searchParams }: { searchParams: Search }) {
+  const locale = getLocale();
+  const t = getDict(locale);
   const [allPilgrims, packages, heads] = await Promise.all([
     loadPilgrims(),
     loadHajjPackages(),
@@ -114,7 +121,7 @@ export default async function HajjPilgrimsPage({ searchParams }: { searchParams:
     r.p.name,
     r.p.phone ?? '',
     r.p.year,
-    r.p.reg_type === 'registered' ? 'Registered' : 'Pre-registration',
+    r.p.reg_type === 'registered' ? t.exTypeRegistered : t.exTypePreRegistration,
     r.pkgName,
     money(r.paid, false),
     money(Math.max(0, r.due), false),
@@ -127,26 +134,26 @@ export default async function HajjPilgrimsPage({ searchParams }: { searchParams:
     const merged = { year: String(selectedYear), reg_type: regType, package: pkgFilter, branch: branchFilter, status: statusFilter, q: searchParams.q ?? '', ...patch };
     for (const [k, v] of Object.entries(merged)) if (v) sp.set(k, String(v));
     const s = sp.toString();
-    return s ? `/admin/hajj?${s}` : '/admin/hajj';
+    return localizedPath(locale, s ? `/admin/hajj?${s}` : '/admin/hajj');
   };
 
   return (
     <>
       <PageHeader
-        title="Hajj Pilgrims"
-        subtitle="Pre-registration, registration, packages and dues."
+        title={t.pilgrimsTitle}
+        subtitle={t.pilgrimsSubtitle}
         actions={
           <>
             <ExportBar
               filename={`hajj-pilgrims-${selectedYear}`}
-              title={`Hajj Pilgrims — ${selectedYear}`}
-              subtitle={`${filtered.length} record${filtered.length === 1 ? '' : 's'}`}
-              headers={['Tracking', 'Name', 'Phone', 'Year', 'Type', 'Package', 'Paid', 'Due', 'Branch', 'Status']}
+              title={`${t.pilgrimsTitle} — ${selectedYear}`}
+              subtitle={`${filtered.length} ${filtered.length === 1 ? t.recordSingular : t.recordPlural}`}
+              headers={[t.exTracking, t.exName, t.exPhone, t.exYear, t.exType, t.exPackage, t.exPaid, t.exDue, t.exBranch, t.exStatus]}
               rows={exportRows}
               orientation="l"
             />
-            <Button href="/admin/hajj/new" size="sm">
-              <UserPlus className="h-4 w-4" /> New Pre-registration
+            <Button href={localizedPath(locale, '/admin/hajj/new')} size="sm">
+              <UserPlus className="h-4 w-4" /> {t.newPreReg}
             </Button>
           </>
         }
@@ -154,10 +161,10 @@ export default async function HajjPilgrimsPage({ searchParams }: { searchParams:
 
       {/* Stat cards */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label={`Pilgrims · ${selectedYear}`} value={yearPilgrims.length} icon={Users} accent="emerald" />
-        <StatCard label="Pre-registered" value={preReg} icon={UserPlus} accent="slate" />
-        <StatCard label="Registered" value={registered} icon={BadgeCheck} accent="gold" />
-        <StatCard label="Total due" value={<Money value={totalDue} />} icon={Wallet} accent="red" />
+        <StatCard label={`${t.statPilgrims} · ${selectedYear}`} value={yearPilgrims.length} icon={Users} accent="emerald" />
+        <StatCard label={t.statPreRegistered} value={preReg} icon={UserPlus} accent="slate" />
+        <StatCard label={t.statRegistered} value={registered} icon={BadgeCheck} accent="gold" />
+        <StatCard label={t.statTotalDue} value={<Money value={totalDue} />} icon={Wallet} accent="red" />
       </div>
 
       {/* Year tabs */}
@@ -186,16 +193,16 @@ export default async function HajjPilgrimsPage({ searchParams }: { searchParams:
         <input
           name="q"
           defaultValue={searchParams.q ?? ''}
-          placeholder="Search name, tracking, phone…"
+          placeholder={t.searchPlaceholder}
           className="rounded-xl border border-border bg-card px-3.5 py-2 text-sm text-ink outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 lg:col-span-2"
         />
         <select name="reg_type" defaultValue={regType} className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-ink">
-          <option value="">All types</option>
-          <option value="pre-registration">Pre-registration</option>
-          <option value="registered">Registered</option>
+          <option value="">{t.allTypes}</option>
+          <option value="pre-registration">{t.optPreRegistration}</option>
+          <option value="registered">{t.optRegistered}</option>
         </select>
         <select name="package" defaultValue={pkgFilter} className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-ink">
-          <option value="">All packages</option>
+          <option value="">{t.allPackages}</option>
           {packages.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
@@ -203,35 +210,35 @@ export default async function HajjPilgrimsPage({ searchParams }: { searchParams:
           ))}
         </select>
         <select name="status" defaultValue={statusFilter} className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-ink">
-          <option value="">All statuses</option>
-          <option value="active">Active</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
+          <option value="">{t.allStatuses}</option>
+          <option value="active">{t.optActive}</option>
+          <option value="completed">{t.optCompleted}</option>
+          <option value="cancelled">{t.optCancelled}</option>
         </select>
         <div className="flex gap-2 sm:col-span-2 lg:col-span-5">
           <Button type="submit" size="sm" variant="outline">
-            Apply filters
+            {t.applyFilters}
           </Button>
           <Link
-            href={`/admin/hajj?year=${selectedYear}`}
+            href={localizedPath(locale, `/admin/hajj?year=${selectedYear}`)}
             className="inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium text-ink-muted hover:text-brand-700"
           >
-            Reset
+            {t.reset}
           </Link>
         </div>
       </form>
 
       {rows.length === 0 ? (
         <EmptyState
-          title="No pilgrims found"
+          title={t.noPilgrimsFound}
           hint={
             yearPilgrims.length === 0
-              ? `No pilgrims have been entered for ${selectedYear} yet.`
-              : 'No records match the current filters.'
+              ? t.noPilgrimsYearHint.replace('{year}', String(selectedYear))
+              : t.noMatchHint
           }
           action={
-            <Button href="/admin/hajj/new" size="sm">
-              <UserPlus className="h-4 w-4" /> Add a pilgrim
+            <Button href={localizedPath(locale, '/admin/hajj/new')} size="sm">
+              <UserPlus className="h-4 w-4" /> {t.addPilgrim}
             </Button>
           }
         />
@@ -239,27 +246,27 @@ export default async function HajjPilgrimsPage({ searchParams }: { searchParams:
         <TableWrap>
           <thead>
             <tr>
-              <th className={thClass}>Tracking</th>
-              <th className={thClass}>Name</th>
-              <th className={thClass}>Phone</th>
-              <th className={thClass}>Type</th>
-              <th className={thClass}>Package</th>
-              <th className={`${thClass} text-right`}>Paid</th>
-              <th className={`${thClass} text-right`}>Due</th>
-              <th className={thClass}>Status</th>
-              <th className={`${thClass} text-right`}>Manage</th>
+              <th className={thClass}>{t.thTracking}</th>
+              <th className={thClass}>{t.thName}</th>
+              <th className={thClass}>{t.thPhone}</th>
+              <th className={thClass}>{t.thType}</th>
+              <th className={thClass}>{t.thPackage}</th>
+              <th className={`${thClass} text-right`}>{t.thPaid}</th>
+              <th className={`${thClass} text-right`}>{t.thDue}</th>
+              <th className={thClass}>{t.thStatus}</th>
+              <th className={`${thClass} text-right`}>{t.thManage}</th>
             </tr>
           </thead>
           <tbody>
             {rows.map(({ p, pkgName, paid, due }) => (
               <tr key={p.id} className="transition hover:bg-muted/40">
                 <td className={tdClass}>
-                  <Link href={`/admin/hajj/${p.id}`} className="font-medium text-brand-700 hover:underline">
+                  <Link href={localizedPath(locale, `/admin/hajj/${p.id}`)} className="font-medium text-brand-700 hover:underline">
                     {p.tracking_no ?? '—'}
                   </Link>
                 </td>
                 <td className={tdClass}>
-                  <Link href={`/admin/hajj/${p.id}`} className="font-medium text-ink hover:text-brand-700">
+                  <Link href={localizedPath(locale, `/admin/hajj/${p.id}`)} className="font-medium text-ink hover:text-brand-700">
                     {p.name}
                   </Link>
                   {p.name_bn && <span className="block text-xs text-ink-muted">{p.name_bn}</span>}
@@ -267,9 +274,9 @@ export default async function HajjPilgrimsPage({ searchParams }: { searchParams:
                 <td className={tdClass}>{p.phone ?? '—'}</td>
                 <td className={tdClass}>
                   {p.reg_type === 'registered' ? (
-                    <Badge tone="emerald">Registered</Badge>
+                    <Badge tone="emerald">{t.badgeRegistered}</Badge>
                   ) : (
-                    <Badge tone="slate">Pre-reg</Badge>
+                    <Badge tone="slate">{t.badgePreReg}</Badge>
                   )}
                 </td>
                 <td className={tdClass}>{pkgName}</td>
@@ -280,16 +287,18 @@ export default async function HajjPilgrimsPage({ searchParams }: { searchParams:
                   <Money value={Math.max(0, due)} className={due > 0 ? 'font-semibold text-red-600' : ''} />
                 </td>
                 <td className={tdClass}>
-                  {p.status === 'active' && <Badge tone="blue">Active</Badge>}
-                  {p.status === 'completed' && <Badge tone="emerald">Completed</Badge>}
-                  {p.status === 'cancelled' && <Badge tone="red">Cancelled</Badge>}
+                  {p.status === 'active' && <Badge tone="blue">{t.badgeActive}</Badge>}
+                  {p.status === 'completed' && <Badge tone="emerald">{t.badgeCompleted}</Badge>}
+                  {p.status === 'cancelled' && <Badge tone="red">{t.badgeCancelled}</Badge>}
                 </td>
                 <td className={`${tdClass} whitespace-nowrap text-right`}>
                   <RecordRowActions
-                    editHref={`/admin/hajj/${p.id}/edit`}
+                    editHref={localizedPath(locale, `/admin/hajj/${p.id}/edit`)}
                     deleteEndpoint={`/api/admin/hajj/${p.id}`}
                     name={p.name}
-                    confirmMessage={`Delete ${p.name}${p.tracking_no ? ` (${p.tracking_no})` : ''}? This permanently removes the pilgrim, their payments and all ledger entries. This cannot be undone.`}
+                    confirmMessage={t.confirmDelete
+                      .replace('{name}', p.name)
+                      .replace('{suffix}', p.tracking_no ? ` (${p.tracking_no})` : '')}
                   />
                 </td>
               </tr>

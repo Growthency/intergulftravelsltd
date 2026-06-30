@@ -6,11 +6,14 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminhajj';
 
 type Status = 'active' | 'cancelled' | 'completed';
 
 export function StatusControl({ pilgrimId, current }: { pilgrimId: string; current: Status }) {
   const router = useRouter();
+  const t = getDict(useLocale());
   const [status, setStatus] = useState<Status>(current);
   const [saving, setSaving] = useState(false);
 
@@ -25,13 +28,13 @@ export function StatusControl({ pilgrimId, current }: { pilgrimId: string; curre
       });
       const data = await res.json();
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not update status.');
+        toast.error(data?.error ?? t.toastStatusFail);
         return;
       }
-      toast.success('Status updated.');
+      toast.success(t.toastStatusUpdated);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.toastNetwork);
     } finally {
       setSaving(false);
     }
@@ -40,16 +43,16 @@ export function StatusControl({ pilgrimId, current }: { pilgrimId: string; curre
   return (
     <div className="flex items-end gap-3">
       <label className="block flex-1">
-        <span className="mb-1 block text-sm font-medium text-ink">Status</span>
+        <span className="mb-1 block text-sm font-medium text-ink">{t.statusHeading}</span>
         <select className={inputClass} value={status} onChange={(e) => setStatus(e.target.value as Status)}>
-          <option value="active">Active</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
+          <option value="active">{t.statusActive}</option>
+          <option value="completed">{t.statusCompleted}</option>
+          <option value="cancelled">{t.statusCancelled}</option>
         </select>
       </label>
       <Button type="button" variant="outline" size="sm" onClick={save} disabled={saving || status === current}>
         {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-        Update
+        {t.update}
       </Button>
     </div>
   );

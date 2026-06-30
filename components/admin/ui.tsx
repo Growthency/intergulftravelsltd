@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { type Locale } from '@/lib/i18n';
 
 /* ------------------------------------------------------------------ *
  *  Shared admin building blocks — page headers, cards, badges, empty
@@ -84,19 +85,46 @@ export function Badge({
   );
 }
 
-export function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { tone: Tone; label: string }> = {
-    published: { tone: 'emerald', label: 'Published' },
-    draft: { tone: 'gray', label: 'Draft' },
-    scheduled: { tone: 'sky', label: 'Scheduled' },
-    new: { tone: 'gold', label: 'New' },
-    contacted: { tone: 'sky', label: 'Contacted' },
-    quoted: { tone: 'emerald', label: 'Quoted' },
-    closed: { tone: 'gray', label: 'Closed' },
-    handled: { tone: 'emerald', label: 'Handled' },
-    pending: { tone: 'amber', label: 'Pending' },
-  };
-  const { tone, label } = map[status] ?? { tone: 'gray' as Tone, label: status };
+const STATUS_TONE: Record<string, Tone> = {
+  published: 'emerald',
+  draft: 'gray',
+  scheduled: 'sky',
+  new: 'gold',
+  contacted: 'sky',
+  quoted: 'emerald',
+  closed: 'gray',
+  handled: 'emerald',
+  pending: 'amber',
+};
+
+const STATUS_LABEL: Record<Locale, Record<string, string>> = {
+  en: {
+    published: 'Published',
+    draft: 'Draft',
+    scheduled: 'Scheduled',
+    new: 'New',
+    contacted: 'Contacted',
+    quoted: 'Quoted',
+    closed: 'Closed',
+    handled: 'Handled',
+    pending: 'Pending',
+  },
+  bn: {
+    published: 'প্রকাশিত',
+    draft: 'খসড়া',
+    scheduled: 'নির্ধারিত',
+    new: 'নতুন',
+    contacted: 'যোগাযোগ হয়েছে',
+    quoted: 'কোটেশন দেওয়া',
+    closed: 'বন্ধ',
+    handled: 'সম্পন্ন',
+    pending: 'অপেক্ষমাণ',
+  },
+};
+
+export function StatusBadge({ status, locale = 'bn' }: { status: string; locale?: Locale }) {
+  const tone = STATUS_TONE[status] ?? 'gray';
+  const label = STATUS_LABEL[locale]?.[status] ?? status;
   return <Badge tone={tone}>{label}</Badge>;
 }
 

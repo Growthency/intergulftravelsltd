@@ -9,15 +9,36 @@ import { Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
 import { BRANCHES } from '@/lib/management/branches';
 import type { AccountHead, AccountType, AccountSubtype } from '@/lib/management/types';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
 
 const TYPES: AccountType[] = ['asset', 'liability', 'income', 'expense', 'equity'];
 const SUBTYPES: AccountSubtype[] = [
   'cash', 'bank', 'customer', 'supplier', 'loan', 'expense', 'income', 'general', 'equity',
 ];
+const TYPE_LABEL_KEY: Record<AccountType, keyof ReturnType<typeof getDict>['headForm']> = {
+  asset: 'typeAsset',
+  liability: 'typeLiability',
+  income: 'typeIncome',
+  expense: 'typeExpense',
+  equity: 'typeEquity',
+};
+const SUBTYPE_LABEL_KEY: Record<AccountSubtype, keyof ReturnType<typeof getDict>['headForm']> = {
+  general: 'subGeneral',
+  cash: 'subCash',
+  bank: 'subBank',
+  customer: 'subCustomer',
+  supplier: 'subSupplier',
+  loan: 'subLoan',
+  income: 'subIncome',
+  expense: 'subExpense',
+  equity: 'subEquity',
+};
 
 /** Edit (modal) or deactivate a non-system account head. */
 export function HeadRowActions({ head }: { head: AccountHead }) {
   const router = useRouter();
+  const tt = getDict(useLocale());
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -26,8 +47,8 @@ export function HeadRowActions({ head }: { head: AccountHead }) {
   async function remove() {
     if (
       !(await confirmDialog({
-        message: `Remove "${head.name}"? Its ledger history is preserved, but it will no longer be selectable.`,
-        confirmText: 'Delete',
+        message: tt.headRowActions.removeConfirm(head.name),
+        confirmText: tt.headRowActions.delete,
         danger: true,
       }))
     ) {
@@ -38,13 +59,13 @@ export function HeadRowActions({ head }: { head: AccountHead }) {
       const res = await fetch(`/api/admin/accounts/heads?id=${encodeURIComponent(head.id)}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not remove the account.');
+        toast.error(data?.error ?? tt.headRowActions.errRemove);
         return;
       }
-      toast.success(`${head.name} removed.`);
+      toast.success(tt.headRowActions.removed(head.name));
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(tt.common.networkError);
     } finally {
       setBusy(false);
     }
@@ -66,7 +87,7 @@ export function HeadRowActions({ head }: { head: AccountHead }) {
       account_no: subtype === 'bank' ? String(fd.get('account_no') ?? '').trim() : '',
     };
     if (!payload.name) {
-      toast.error('Account name is required.');
+      toast.error(tt.headRowActions.errName);
       return;
     }
     setSaving(true);
@@ -78,14 +99,14 @@ export function HeadRowActions({ head }: { head: AccountHead }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not update the account.');
+        toast.error(data?.error ?? tt.headRowActions.errUpdate);
         return;
       }
-      toast.success('Account updated.');
+      toast.success(tt.headRowActions.updated);
       setOpen(false);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(tt.common.networkError);
     } finally {
       setSaving(false);
     }
@@ -97,31 +118,31 @@ export function HeadRowActions({ head }: { head: AccountHead }) {
         type="button"
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-ink-muted transition hover:border-brand-600/40 hover:text-brand-700"
-        aria-label={`Edit ${head.name}`}
+        aria-label={tt.headRowActions.editAria(head.name)}
       >
-        <Pencil className="h-3.5 w-3.5" /> Edit
+        <Pencil className="h-3.5 w-3.5" /> {tt.headRowActions.edit}
       </button>
       <button
         type="button"
         onClick={remove}
         disabled={busy}
         className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-ink-muted transition hover:border-red-300 hover:text-red-600 disabled:opacity-50"
-        aria-label={`Remove ${head.name}`}
+        aria-label={tt.headRowActions.removeAria(head.name)}
       >
         {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-        Remove
+        {tt.headRowActions.remove}
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" role="dialog" aria-modal="true">
           <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-5 text-left shadow-soft">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-base font-semibold text-ink">Edit account head</h2>
+              <h2 className="font-display text-base font-semibold text-ink">{tt.headRowActions.editAccountHead}</h2>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 className="grid h-8 w-8 place-items-center rounded-full text-ink-muted hover:bg-muted"
-                aria-label="Close"
+                aria-label={tt.common.close}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -129,26 +150,25 @@ export function HeadRowActions({ head }: { head: AccountHead }) {
 
             {head.is_system && (
               <p className="mb-4 rounded-xl bg-muted/60 px-3 py-2 text-xs text-ink-muted">
-                System account — its type &amp; subtype are fixed, but you can rename it, change the code, branch or
-                contact details.
+                {tt.headRowActions.systemNote}
               </p>
             )}
 
             <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
-              <Field label="Account name" required className="sm:col-span-2">
-                <input name="name" defaultValue={head.name} className={inputClass} placeholder="e.g. City Bank — Current" />
+              <Field label={tt.headRowActions.accountName} required className="sm:col-span-2">
+                <input name="name" defaultValue={head.name} className={inputClass} placeholder={tt.headRowActions.accountNamePlaceholder} />
               </Field>
-              <Field label="Code">
-                <input name="code" defaultValue={head.code ?? ''} className={inputClass} placeholder="Optional" />
+              <Field label={tt.headRowActions.code}>
+                <input name="code" defaultValue={head.code ?? ''} className={inputClass} placeholder={tt.headRowActions.codePlaceholder} />
               </Field>
-              <Field label="Type" required>
+              <Field label={tt.headRowActions.type} required>
                 <select name="type" defaultValue={head.type} className={inputClass} disabled={head.is_system}>
-                  {TYPES.map((t) => (
-                    <option key={t} value={t} className="capitalize">{t}</option>
+                  {TYPES.map((tv) => (
+                    <option key={tv} value={tv} className="capitalize">{tt.headForm[TYPE_LABEL_KEY[tv]] as string}</option>
                   ))}
                 </select>
               </Field>
-              <Field label="Subtype" required>
+              <Field label={tt.headRowActions.subtype} required>
                 <select
                   name="subtype"
                   value={subtype}
@@ -157,27 +177,27 @@ export function HeadRowActions({ head }: { head: AccountHead }) {
                   disabled={head.is_system}
                 >
                   {SUBTYPES.map((s) => (
-                    <option key={s} value={s} className="capitalize">{s}</option>
+                    <option key={s} value={s} className="capitalize">{tt.headForm[SUBTYPE_LABEL_KEY[s]] as string}</option>
                   ))}
                 </select>
               </Field>
-              <Field label="Branch / concern">
+              <Field label={tt.headRowActions.branchConcern}>
                 <select name="branch" defaultValue={head.branch} className={inputClass}>
-                  <option value="general">General / Head office</option>
+                  <option value="general">{tt.headRowActions.generalHeadOffice}</option>
                   {BRANCHES.map((b) => (
                     <option key={b.value} value={b.value}>{b.label}</option>
                   ))}
                 </select>
               </Field>
-              <Field label="Contact phone">
-                <input name="party_phone" defaultValue={head.party_phone ?? ''} className={inputClass} placeholder="01XXXXXXXXX" />
+              <Field label={tt.headRowActions.contactPhone}>
+                <input name="party_phone" defaultValue={head.party_phone ?? ''} className={inputClass} placeholder={tt.headRowActions.contactPhonePlaceholder} />
               </Field>
               {subtype === 'bank' && (
                 <>
-                  <Field label="Bank name">
+                  <Field label={tt.headRowActions.bankName}>
                     <input name="bank_name" defaultValue={head.bank_name ?? ''} className={inputClass} />
                   </Field>
-                  <Field label="Bank account no.">
+                  <Field label={tt.headRowActions.bankAccountNo}>
                     <input name="account_no" defaultValue={head.account_no ?? ''} className={inputClass} />
                   </Field>
                 </>
@@ -186,10 +206,10 @@ export function HeadRowActions({ head }: { head: AccountHead }) {
               <div className="mt-1 flex items-center gap-3 sm:col-span-2">
                 <Button type="submit" disabled={saving}>
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Save changes
+                  {tt.headRowActions.saveChanges}
                 </Button>
                 <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={saving}>
-                  Cancel
+                  {tt.headRowActions.cancel}
                 </Button>
               </div>
             </form>

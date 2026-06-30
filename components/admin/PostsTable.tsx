@@ -8,6 +8,9 @@ import { toast } from 'sonner';
 import { formatDate } from '@/lib/utils';
 import { StatusBadge, Badge, EmptyState, AdminButton } from '@/components/admin/ui';
 import { confirmDialog } from '@/components/admin/confirm';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminwebsite';
 
 export type PostRow = {
   id: string;
@@ -21,15 +24,16 @@ export type PostRow = {
   created_at: string | null;
 };
 
-const TABS: { key: string; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'published', label: 'Published' },
-  { key: 'draft', label: 'Drafts' },
-  { key: 'scheduled', label: 'Scheduled' },
-];
-
 export function PostsTable({ posts }: { posts: PostRow[] }) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = getDict(locale).postsTable;
+  const TABS: { key: string; label: string }[] = [
+    { key: 'all', label: t.tabAll },
+    { key: 'published', label: t.tabPublished },
+    { key: 'draft', label: t.tabDraft },
+    { key: 'scheduled', label: t.tabScheduled },
+  ];
   const [tab, setTab] = useState('all');
   const [query, setQuery] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -50,19 +54,19 @@ export function PostsTable({ posts }: { posts: PostRow[] }) {
   }, [posts, tab, query]);
 
   async function remove(post: PostRow) {
-    if (!(await confirmDialog({ message: `Delete "${post.title}"? This cannot be undone.`, confirmText: 'Delete', danger: true }))) return;
+    if (!(await confirmDialog({ message: t.confirmDelete(post.title), confirmText: t.confirmText, danger: true }))) return;
     setDeletingId(post.id);
     try {
       const res = await fetch(`/api/admin/posts/${post.id}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not delete the post.');
+        toast.error(data?.error ?? t.couldNotDelete);
         return;
       }
-      toast.success('Post deleted.');
+      toast.success(t.postDeleted);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setDeletingId(null);
     }
@@ -99,7 +103,7 @@ export function PostsTable({ posts }: { posts: PostRow[] }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search posts…"
+            placeholder={t.searchPlaceholder}
             className="w-full rounded-full border border-border bg-card py-2.5 pl-9 pr-4 text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-600/15"
           />
         </div>
@@ -109,16 +113,12 @@ export function PostsTable({ posts }: { posts: PostRow[] }) {
       {filtered.length === 0 ? (
         <EmptyState
           icon={<FileText className="h-6 w-6" />}
-          title={posts.length === 0 ? 'No posts yet' : 'No posts match your filters'}
-          description={
-            posts.length === 0
-              ? 'Create your first article to start building the blog.'
-              : 'Try a different status tab or clear your search.'
-          }
+          title={posts.length === 0 ? t.emptyTitleNone : t.emptyTitleFiltered}
+          description={posts.length === 0 ? t.emptyDescNone : t.emptyDescFiltered}
           action={
             posts.length === 0 ? (
-              <AdminButton href="/admin/posts/new" variant="primary">
-                Write your first post
+              <AdminButton href={localizedPath(locale, '/admin/posts/new')} variant="primary">
+                {t.writeFirst}
               </AdminButton>
             ) : undefined
           }
@@ -129,11 +129,11 @@ export function PostsTable({ posts }: { posts: PostRow[] }) {
             <table className="w-full min-w-[680px] text-left text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-xs uppercase tracking-wide text-ink-muted">
-                  <th className="px-5 py-3 font-semibold">Title</th>
-                  <th className="px-5 py-3 font-semibold">Category</th>
-                  <th className="px-5 py-3 font-semibold">Status</th>
-                  <th className="px-5 py-3 font-semibold">Date</th>
-                  <th className="px-5 py-3 text-right font-semibold">Actions</th>
+                  <th className="px-5 py-3 font-semibold">{t.thTitle}</th>
+                  <th className="px-5 py-3 font-semibold">{t.thCategory}</th>
+                  <th className="px-5 py-3 font-semibold">{t.thStatus}</th>
+                  <th className="px-5 py-3 font-semibold">{t.thDate}</th>
+                  <th className="px-5 py-3 text-right font-semibold">{t.thActions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -141,23 +141,23 @@ export function PostsTable({ posts }: { posts: PostRow[] }) {
                   <tr key={p.id} className="transition hover:bg-muted/30">
                     <td className="px-5 py-3.5">
                       <Link
-                        href={`/admin/posts/${p.id}`}
+                        href={localizedPath(locale, `/admin/posts/${p.id}`)}
                         className="font-semibold text-ink hover:text-brand-700"
                       >
                         {p.title}
                       </Link>
                       <div className="mt-0.5 flex items-center gap-2">
                         <span className="truncate text-xs text-ink-muted">/{p.slug}</span>
-                        {p.featured && <Badge tone="gold">Featured</Badge>}
+                        {p.featured && <Badge tone="gold">{t.featured}</Badge>}
                       </div>
                     </td>
                     <td className="px-5 py-3.5">
                       <Badge tone={p.category === 'hajj-umrah' ? 'emerald' : 'gray'}>
-                        {p.category === 'hajj-umrah' ? 'Hajj & Umrah' : 'Others'}
+                        {p.category === 'hajj-umrah' ? t.catHajjUmrah : t.catOthers}
                       </Badge>
                     </td>
                     <td className="px-5 py-3.5">
-                      <StatusBadge status={p.status} />
+                      <StatusBadge status={p.status} locale={locale} />
                     </td>
                     <td className="px-5 py-3.5 text-ink-muted">
                       {p.published_at || p.created_at
@@ -171,9 +171,9 @@ export function PostsTable({ posts }: { posts: PostRow[] }) {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1.5">
                         <Link
-                          href={`/admin/posts/${p.id}`}
+                          href={localizedPath(locale, `/admin/posts/${p.id}`)}
                           className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition hover:bg-brand-50 hover:text-brand-700"
-                          aria-label={`Edit ${p.title}`}
+                          aria-label={t.ariaEdit(p.title)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Link>
@@ -181,7 +181,7 @@ export function PostsTable({ posts }: { posts: PostRow[] }) {
                           onClick={() => remove(p)}
                           disabled={deletingId === p.id}
                           className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
-                          aria-label={`Delete ${p.title}`}
+                          aria-label={t.ariaDelete(p.title)}
                         >
                           {deletingId === p.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />

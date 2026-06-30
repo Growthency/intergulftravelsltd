@@ -7,6 +7,8 @@ import { Loader2, Plus, Trash2, GalleryHorizontalEnd, X } from 'lucide-react';
 import { Card, Field, inputClass, AdminButton, EmptyState, Badge } from '@/components/admin/ui';
 import { confirmDialog } from '@/components/admin/confirm';
 import { ImageUploader } from '@/components/admin/ImageUploader';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminwebsite';
 
 export type GalleryImage = {
   id: string;
@@ -18,6 +20,7 @@ export type GalleryImage = {
 
 export function GalleryManager({ images }: { images: GalleryImage[] }) {
   const router = useRouter();
+  const t = getDict(useLocale()).galleryMgr;
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -36,11 +39,11 @@ export function GalleryManager({ images }: { images: GalleryImage[] }) {
 
   async function add() {
     if (!url) {
-      toast.error('Please upload an image first.');
+      toast.error(t.uploadFirstError);
       return;
     }
     if (title.trim().length < 1) {
-      toast.error('Please add a title.');
+      toast.error(t.addTitleError);
       return;
     }
     setSaving(true);
@@ -57,22 +60,22 @@ export function GalleryManager({ images }: { images: GalleryImage[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not add the image.');
+        toast.error(data?.error ?? t.couldNotAdd);
         return;
       }
-      toast.success('Image added to the gallery.');
+      toast.success(t.imageAdded);
       resetForm();
       setOpen(false);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setSaving(false);
     }
   }
 
   async function remove(image: GalleryImage) {
-    if (!(await confirmDialog({ message: `Remove "${image.title}" from the gallery?`, confirmText: 'Delete', danger: true }))) return;
+    if (!(await confirmDialog({ message: t.confirmRemove(image.title), confirmText: t.confirmText, danger: true }))) return;
     setDeletingId(image.id);
     try {
       const res = await fetch(`/api/admin/gallery?id=${encodeURIComponent(image.id)}`, {
@@ -80,13 +83,13 @@ export function GalleryManager({ images }: { images: GalleryImage[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not delete the image.');
+        toast.error(data?.error ?? t.couldNotDelete);
         return;
       }
-      toast.success('Image removed.');
+      toast.success(t.imageRemoved);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setDeletingId(null);
     }
@@ -96,43 +99,43 @@ export function GalleryManager({ images }: { images: GalleryImage[] }) {
     <div className="space-y-5">
       <div className="flex justify-end">
         <AdminButton variant="primary" onClick={() => setOpen((o) => !o)}>
-          <Plus className="h-4 w-4" /> Add image
+          <Plus className="h-4 w-4" /> {t.addImage}
         </AdminButton>
       </div>
 
       {open && (
         <Card className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-ink">New gallery image</p>
+            <p className="text-sm font-semibold text-ink">{t.newImage}</p>
             <button
               onClick={() => setOpen(false)}
               className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition hover:bg-muted"
-              aria-label="Close"
+              aria-label={t.ariaClose}
             >
               <X className="h-4 w-4" />
             </button>
           </div>
           <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-            <ImageUploader folder="gallery" label="Gallery image" value={url} onChange={setUrl} />
+            <ImageUploader folder="gallery" label={t.galleryImageLabel} value={url} onChange={setUrl} />
             <div className="space-y-3">
-              <Field label="Title">
+              <Field label={t.titleLabel}>
                 <input
                   className={inputClass}
                   value={title}
-                  placeholder="e.g. Pilgrims at the Haram"
+                  placeholder={t.titlePlaceholder}
                   onChange={(e) => setTitle(e.target.value)}
                 />
               </Field>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Category">
+                <Field label={t.categoryLabel}>
                   <input
                     className={inputClass}
                     value={category}
-                    placeholder="Hajj"
+                    placeholder={t.categoryPlaceholder}
                     onChange={(e) => setCategory(e.target.value)}
                   />
                 </Field>
-                <Field label="Sort order" hint="Lower shows first">
+                <Field label={t.sortOrderLabel} hint={t.sortOrderHint}>
                   <input
                     type="number"
                     className={inputClass}
@@ -143,7 +146,7 @@ export function GalleryManager({ images }: { images: GalleryImage[] }) {
               </div>
               <AdminButton variant="primary" onClick={add} disabled={saving} className="w-full">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                Add to gallery
+                {t.addToGallery}
               </AdminButton>
             </div>
           </div>
@@ -153,11 +156,11 @@ export function GalleryManager({ images }: { images: GalleryImage[] }) {
       {images.length === 0 ? (
         <EmptyState
           icon={<GalleryHorizontalEnd className="h-6 w-6" />}
-          title="No gallery images yet"
-          description="Add your first image to start building the public gallery."
+          title={t.emptyTitle}
+          description={t.emptyDesc}
           action={
             <AdminButton variant="primary" onClick={() => setOpen(true)}>
-              <Plus className="h-4 w-4" /> Add image
+              <Plus className="h-4 w-4" /> {t.addImage}
             </AdminButton>
           }
         />
@@ -179,7 +182,7 @@ export function GalleryManager({ images }: { images: GalleryImage[] }) {
                   onClick={() => remove(img)}
                   disabled={deletingId === img.id}
                   className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-white/90 text-rose-600 opacity-0 shadow transition group-hover:opacity-100 hover:bg-white disabled:opacity-100"
-                  aria-label={`Delete ${img.title}`}
+                  aria-label={t.ariaDelete(img.title)}
                 >
                   {deletingId === img.id ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

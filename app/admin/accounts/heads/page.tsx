@@ -6,33 +6,38 @@ import { HeadRowActions } from '@/components/manage/accounts/HeadRowActions';
 import { loadActiveHeads } from '@/lib/management/accounts-data';
 import { naturalBalance, isCoreHead, type AccountHead, type AccountType } from '@/lib/management/types';
 import { branchShort } from '@/lib/management/branches';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath, type Locale } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Account Heads' };
 
 const TYPE_ORDER: AccountType[] = ['asset', 'liability', 'income', 'expense', 'equity'];
-const TYPE_LABEL: Record<AccountType, string> = {
-  asset: 'Assets',
-  liability: 'Liabilities',
-  income: 'Income',
-  expense: 'Expenses',
-  equity: 'Equity',
+const TYPE_LABEL_KEY: Record<AccountType, keyof ReturnType<typeof getDict>['heads']> = {
+  asset: 'assets',
+  liability: 'liabilities',
+  income: 'income',
+  expense: 'expenses',
+  equity: 'equity',
 };
 
 export default async function HeadsPage() {
+  const locale = getLocale();
+  const t = getDict(locale);
   const heads = await loadActiveHeads();
 
   const grouped = TYPE_ORDER.map((type) => ({
     type,
-    label: TYPE_LABEL[type],
+    label: t.heads[TYPE_LABEL_KEY[type]],
     rows: heads.filter((h) => h.type === type),
   })).filter((g) => g.rows.length > 0);
 
   return (
     <>
       <PageHeader
-        title="Account Heads"
-        subtitle="The chart of accounts. Each head carries its own running balance."
+        title={t.heads.title}
+        subtitle={t.heads.subtitle}
       />
 
       <div className="mb-6">
@@ -41,8 +46,8 @@ export default async function HeadsPage() {
 
       {heads.length === 0 ? (
         <EmptyState
-          title="No account heads yet"
-          hint="The chart of accounts will populate once the database is set up. You can also add your own heads above."
+          title={t.heads.noHeadsTitle}
+          hint={t.heads.noHeadsHint}
         />
       ) : (
         <div className="space-y-8">
@@ -52,17 +57,17 @@ export default async function HeadsPage() {
               <TableWrap>
                 <thead>
                   <tr>
-                    <th className={thClass}>Name</th>
-                    <th className={thClass}>Code</th>
-                    <th className={thClass}>Subtype</th>
-                    <th className={thClass}>Branch</th>
-                    <th className={`${thClass} text-right`}>Balance</th>
-                    <th className={`${thClass} text-right`}>Action</th>
+                    <th className={thClass}>{t.heads.thName}</th>
+                    <th className={thClass}>{t.heads.thCode}</th>
+                    <th className={thClass}>{t.heads.thSubtype}</th>
+                    <th className={thClass}>{t.heads.thBranch}</th>
+                    <th className={`${thClass} text-right`}>{t.heads.thBalance}</th>
+                    <th className={`${thClass} text-right`}>{t.heads.thAction}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {g.rows.map((h) => (
-                    <HeadRow key={h.id} head={h} />
+                    <HeadRow key={h.id} head={h} locale={locale} t={t} />
                   ))}
                 </tbody>
               </TableWrap>
@@ -74,17 +79,17 @@ export default async function HeadsPage() {
   );
 }
 
-function HeadRow({ head }: { head: AccountHead }) {
+function HeadRow({ head, locale, t }: { head: AccountHead; locale: Locale; t: ReturnType<typeof getDict> }) {
   const balance = naturalBalance(head);
   return (
     <tr>
       <td className={tdClass}>
-        <Link href={`/admin/accounts/heads/${head.id}`} className="font-medium text-brand-700 hover:underline">
+        <Link href={localizedPath(locale, `/admin/accounts/heads/${head.id}`)} className="font-medium text-brand-700 hover:underline">
           {head.name}
         </Link>
         {head.is_system && (
           <span className="ml-2 align-middle">
-            <Badge tone="slate">System</Badge>
+            <Badge tone="slate">{t.heads.system}</Badge>
           </span>
         )}
       </td>
@@ -96,8 +101,8 @@ function HeadRow({ head }: { head: AccountHead }) {
       </td>
       <td className={`${tdClass} text-right`}>
         {isCoreHead(head) ? (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted" title="Core control account — used by the system, cannot be changed">
-            <Lock className="h-3.5 w-3.5" /> Locked
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted" title={t.heads.lockedTitle}>
+            <Lock className="h-3.5 w-3.5" /> {t.heads.locked}
           </span>
         ) : (
           <HeadRowActions head={head} />

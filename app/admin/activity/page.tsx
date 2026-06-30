@@ -3,6 +3,9 @@ import { mgmtDb } from '@/lib/management/server';
 import type { ActivityLog } from '@/lib/management/types';
 import { branchLabel } from '@/lib/management/branches';
 import { formatDate } from '@/lib/utils';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminsystem';
 import { PageHeader, Card, EmptyState, TableWrap, thClass, tdClass, Badge, inputClass } from '@/components/manage/ui';
 import { ExportBar } from '@/components/manage/ExportBar';
 
@@ -17,7 +20,17 @@ const ACTION_TONE: Record<string, 'emerald' | 'gold' | 'red' | 'blue' | 'slate'>
   payment: 'gold',
 };
 
-function actionLabel(a: string) {
+function actionLabel(a: string, t?: ReturnType<typeof getDict>) {
+  if (t) {
+    const map: Record<string, string> = {
+      create: t.actionCreate,
+      update: t.actionUpdate,
+      delete: t.actionDelete,
+      login: t.actionLogin,
+      payment: t.actionPayment,
+    };
+    if (map[a]) return map[a];
+  }
   return a.charAt(0).toUpperCase() + a.slice(1);
 }
 
@@ -67,13 +80,15 @@ export default async function ActivityPage({
     user: searchParams.user || '',
     action: searchParams.action || '',
   };
+  const locale = getLocale();
+  const t = getDict(locale);
   const [{ rows }, actions] = await Promise.all([loadActivity(filters), loadActions()]);
 
-  const exportHeaders = ['Time', 'User', 'Action', 'Entity', 'Branch', 'Detail'];
+  const exportHeaders = [t.exportTime, t.exportUser, t.exportAction, t.exportEntity, t.exportBranch, t.exportDetail];
   const exportRows = rows.map((r) => [
     formatDate(r.created_at, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
     r.user_email ?? '—',
-    actionLabel(r.action),
+    actionLabel(r.action, t),
     [r.entity, r.entity_id].filter(Boolean).join(' · ') || '—',
     r.branch ? branchLabel(r.branch) : '—',
     r.detail ? JSON.stringify(r.detail) : '',
@@ -82,14 +97,14 @@ export default async function ActivityPage({
   return (
     <>
       <PageHeader
-        title="Activity Log"
-        subtitle="A chronological record of everything staff have changed across the system. Newest first."
+        title={t.activityTitle}
+        subtitle={t.activitySubtitle}
         actions={
           rows.length > 0 ? (
             <ExportBar
               filename={`activity-log-${new Date().toISOString().slice(0, 10)}`}
-              title="Activity Log"
-              subtitle={`${rows.length} record${rows.length === 1 ? '' : 's'}`}
+              title={t.activityTitle}
+              subtitle={`${rows.length} ${rows.length === 1 ? t.recordSingular : t.recordPlural}`}
               headers={exportHeaders}
               rows={exportRows}
               orientation="l"
@@ -102,26 +117,26 @@ export default async function ActivityPage({
       <Card className="mb-5">
         <form method="get" className="flex flex-wrap items-end gap-3">
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Date</span>
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">{t.date}</span>
             <input type="date" name="date" defaultValue={filters.date} className={`${inputClass} sm:w-48`} />
           </label>
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">User email</span>
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">{t.userEmail}</span>
             <input
               type="text"
               name="user"
               defaultValue={filters.user}
-              placeholder="name@example.com"
+              placeholder={t.userEmailPlaceholder}
               className={`${inputClass} sm:w-56`}
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Action</span>
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">{t.action}</span>
             <select name="action" defaultValue={filters.action} className={`${inputClass} sm:w-44`}>
-              <option value="">All actions</option>
+              <option value="">{t.allActions}</option>
               {actions.map((a) => (
                 <option key={a} value={a}>
-                  {actionLabel(a)}
+                  {actionLabel(a, t)}
                 </option>
               ))}
             </select>
@@ -130,14 +145,14 @@ export default async function ActivityPage({
             type="submit"
             className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-emerald transition hover:bg-brand-700"
           >
-            <Filter className="h-4 w-4" /> Apply
+            <Filter className="h-4 w-4" /> {t.apply}
           </button>
           {(filters.date || filters.user || filters.action) && (
             <a
-              href="/admin/activity"
+              href={localizedPath(locale, '/admin/activity')}
               className="inline-flex items-center rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-ink-muted transition hover:text-brand-700"
             >
-              Clear
+              {t.clear}
             </a>
           )}
         </form>
@@ -147,24 +162,24 @@ export default async function ActivityPage({
         <EmptyState
           title={
             filters.date || filters.user || filters.action
-              ? 'No activity matches your filters'
-              : 'No activity recorded yet'
+              ? t.noActivityMatch
+              : t.noActivityYet
           }
           hint={
             filters.date || filters.user || filters.action
-              ? 'Try a different date, user or action.'
-              : 'Staff actions such as creating pilgrims, posting vouchers and changing roles will be logged here.'
+              ? t.activityHintFiltered
+              : t.activityHintEmpty
           }
         />
       ) : (
         <TableWrap>
           <thead>
             <tr>
-              <th className={thClass}>Time</th>
-              <th className={thClass}>User</th>
-              <th className={thClass}>Action</th>
-              <th className={thClass}>Entity</th>
-              <th className={thClass}>Branch</th>
+              <th className={thClass}>{t.colTime}</th>
+              <th className={thClass}>{t.exportUser}</th>
+              <th className={thClass}>{t.colAction}</th>
+              <th className={thClass}>{t.colEntity}</th>
+              <th className={thClass}>{t.colBranch}</th>
             </tr>
           </thead>
           <tbody>
@@ -180,7 +195,7 @@ export default async function ActivityPage({
                 </td>
                 <td className={`${tdClass} font-medium`}>{r.user_email ?? '—'}</td>
                 <td className={tdClass}>
-                  <Badge tone={ACTION_TONE[r.action] ?? 'slate'}>{actionLabel(r.action)}</Badge>
+                  <Badge tone={ACTION_TONE[r.action] ?? 'slate'}>{actionLabel(r.action, t)}</Badge>
                 </td>
                 <td className={tdClass}>
                   {r.entity ? (

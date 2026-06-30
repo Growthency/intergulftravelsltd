@@ -9,6 +9,8 @@ import { confirmDialog } from '@/components/admin/confirm';
 import { Button } from '@/components/ui/Button';
 import { BRANCHES } from '@/lib/management/branches';
 import type { MgmtPackage } from '@/lib/management/types';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminhajj';
 
 type Props = {
   /** When editing, the existing package; otherwise undefined for a new one. */
@@ -20,6 +22,7 @@ type Props = {
 
 export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
   const router = useRouter();
+  const t = getDict(useLocale());
   const isEdit = Boolean(pkg);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -42,7 +45,7 @@ export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
     if (isEdit && pkg) payload.id = pkg.id;
 
     if (!payload.name) {
-      toast.error('Package name is required.');
+      toast.error(t.toastPkgNameRequired);
       return;
     }
 
@@ -55,14 +58,14 @@ export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
       });
       const data = await res.json();
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not save the package.');
+        toast.error(data?.error ?? t.toastPkgSaveFail);
         return;
       }
-      toast.success(isEdit ? 'Package updated.' : 'Package created.');
+      toast.success(isEdit ? t.toastPkgUpdated : t.toastPkgCreated);
       setOpen(false);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.toastNetwork);
     } finally {
       setSaving(false);
     }
@@ -70,7 +73,7 @@ export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
 
   async function onDelete() {
     if (!pkg || deleting) return;
-    if (!(await confirmDialog({ message: `Delete the package “${pkg.name}”? This cannot be undone.`, confirmText: 'Delete', danger: true }))) return;
+    if (!(await confirmDialog({ message: t.confirmDeletePackage.replace('{name}', pkg.name), confirmText: t.confirmDeleteText, danger: true }))) return;
     setDeleting(true);
     try {
       const res = await fetch('/api/admin/hajj/packages', {
@@ -80,14 +83,14 @@ export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
       });
       const data = await res.json();
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not delete the package.');
+        toast.error(data?.error ?? t.toastPkgDeleteFail);
         return;
       }
-      toast.success('Package deleted.');
+      toast.success(t.toastPkgDeleted);
       setOpen(false);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.toastNetwork);
     } finally {
       setDeleting(false);
     }
@@ -100,11 +103,11 @@ export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:text-brand-800"
       >
-        <Pencil className="h-3.5 w-3.5" /> Edit
+        <Pencil className="h-3.5 w-3.5" /> {t.editLabel}
       </button>
     ) : (
       <Button type="button" onClick={() => setOpen(true)}>
-        <Plus className="h-4 w-4" /> New package
+        <Plus className="h-4 w-4" /> {t.newPackage}
       </Button>
     );
 
@@ -115,23 +118,23 @@ export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
       <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-5 shadow-soft">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-base font-semibold text-ink">
-            {isEdit ? 'Edit package' : 'New Hajj package'}
+            {isEdit ? t.editPackage : t.newHajjPackage}
           </h2>
           <button
             type="button"
             onClick={() => setOpen(false)}
             className="grid h-8 w-8 place-items-center rounded-full text-ink-muted hover:bg-muted"
-            aria-label="Close"
+            aria-label={t.closeLabel}
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
-          <Field label="Package name" required className="sm:col-span-2">
-            <input name="name" defaultValue={pkg?.name ?? ''} className={inputClass} placeholder="e.g. Hajj Premium Package" />
+          <Field label={t.packageName} required className="sm:col-span-2">
+            <input name="name" defaultValue={pkg?.name ?? ''} className={inputClass} placeholder={t.packageNamePlaceholder} />
           </Field>
-          <Field label="Year">
+          <Field label={t.year}>
             <input
               name="year"
               type="number"
@@ -141,13 +144,13 @@ export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
               className={inputClass}
             />
           </Field>
-          <Field label="Price (৳)" required>
+          <Field label={t.priceTaka} required>
             <input name="price" type="number" min={0} step="any" defaultValue={pkg?.price ?? 0} className={inputClass} />
           </Field>
-          <Field label="Seats">
+          <Field label={t.seats}>
             <input name="seats" type="number" min={0} defaultValue={pkg?.seats ?? ''} className={inputClass} />
           </Field>
-          <Field label="Branch / concern" required>
+          <Field label={t.branchConcern} required>
             <select name="branch" className={inputClass} defaultValue={pkg?.branch ?? 'inter-gulf-travels'}>
               {BRANCHES.map((b) => (
                 <option key={b.value} value={b.value}>
@@ -156,22 +159,22 @@ export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
               ))}
             </select>
           </Field>
-          <Field label="Description" className="sm:col-span-2">
+          <Field label={t.description} className="sm:col-span-2">
             <textarea name="description" rows={2} defaultValue={pkg?.description ?? ''} className={inputClass} />
           </Field>
           <label className="flex items-center gap-2 sm:col-span-2">
             <input type="checkbox" name="active" defaultChecked={pkg?.active ?? true} className="h-4 w-4 rounded border-border" />
-            <span className="text-sm text-ink">Active (available for assignment)</span>
+            <span className="text-sm text-ink">{t.activeForAssignment}</span>
           </label>
 
           <div className="mt-1 flex items-center justify-between sm:col-span-2">
             <div className="flex items-center gap-3">
               <Button type="submit" disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isEdit ? 'Save changes' : 'Create package'}
+                {isEdit ? t.saveChanges : t.createPackage}
               </Button>
               <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={saving}>
-                Cancel
+                {t.cancel}
               </Button>
             </div>
             {isEdit && (
@@ -182,7 +185,7 @@ export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
                 className="inline-flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-60"
               >
                 {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                Delete
+                {t.deleteLabel}
               </button>
             )}
           </div>

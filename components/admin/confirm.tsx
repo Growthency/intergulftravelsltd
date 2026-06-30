@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminshell';
 
 type ConfirmOptions = {
   title?: string;
@@ -35,6 +37,7 @@ export function confirmDialog(options: ConfirmOptions | string): Promise<boolean
 
 /** Mounted once (in the admin shell). Renders the active confirm modal. */
 export function ConfirmHost() {
+  const t = getDict(useLocale()).confirm;
   const [pending, setPending] = useState<Pending | null>(null);
 
   useEffect(() => {
@@ -77,7 +80,7 @@ export function ConfirmHost() {
           </span>
           <div className="min-w-0">
             <h2 className="font-display text-lg font-semibold text-ink">
-              {pending.title ?? (pending.danger ? 'Please confirm' : 'Confirm')}
+              {pending.title ?? (pending.danger ? t.pleaseConfirm : t.confirm)}
             </h2>
             <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{pending.message}</p>
           </div>
@@ -88,7 +91,7 @@ export function ConfirmHost() {
             onClick={() => close(false)}
             className="rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-ink-muted transition hover:bg-muted"
           >
-            {pending.cancelText ?? 'Cancel'}
+            {pending.cancelText ?? t.cancel}
           </button>
           <button
             type="button"
@@ -99,7 +102,7 @@ export function ConfirmHost() {
               pending.danger ? 'bg-red-600 hover:bg-red-700' : 'bg-brand-600 hover:bg-brand-700',
             )}
           >
-            {pending.confirmText ?? 'Confirm'}
+            {pending.confirmText ?? t.confirm}
           </button>
         </div>
       </div>

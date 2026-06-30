@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/admin/ui';
 import { ContactsTable, type ContactRow } from '@/components/admin/ContactsTable';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/adminwebsite';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Contact Requests' };
@@ -26,13 +28,11 @@ async function loadContacts(): Promise<ContactRow[]> {
 
 export default async function ContactsPage() {
   const rows = await loadContacts();
+  const t = getDict(getLocale());
 
   return (
     <>
-      <PageHeader
-        title="Contact Requests"
-        description="Enquiries submitted through the website contact form. Mark each as handled once answered."
-      />
+      <PageHeader title={t.contacts.title} description={t.contacts.description} />
       <ContactsTable rows={rows} />
     </>
   );

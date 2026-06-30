@@ -8,26 +8,30 @@ import { Card, Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
 import { BRANCHES } from '@/lib/management/branches';
 import type { AccountType, AccountSubtype } from '@/lib/management/types';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
 
-const TYPES: { value: AccountType; label: string }[] = [
-  { value: 'asset', label: 'Asset' },
-  { value: 'liability', label: 'Liability' },
-  { value: 'income', label: 'Income' },
-  { value: 'expense', label: 'Expense' },
-  { value: 'equity', label: 'Equity' },
-];
+const TYPE_VALUES: AccountType[] = ['asset', 'liability', 'income', 'expense', 'equity'];
+const TYPE_LABEL_KEY: Record<AccountType, keyof ReturnType<typeof getDict>['headForm']> = {
+  asset: 'typeAsset',
+  liability: 'typeLiability',
+  income: 'typeIncome',
+  expense: 'typeExpense',
+  equity: 'typeEquity',
+};
 
-const SUBTYPES: { value: AccountSubtype; label: string }[] = [
-  { value: 'general', label: 'General' },
-  { value: 'cash', label: 'Cash' },
-  { value: 'bank', label: 'Bank' },
-  { value: 'customer', label: 'Customer' },
-  { value: 'supplier', label: 'Supplier' },
-  { value: 'loan', label: 'Loan' },
-  { value: 'income', label: 'Income' },
-  { value: 'expense', label: 'Expense' },
-  { value: 'equity', label: 'Equity' },
-];
+const SUBTYPE_VALUES: AccountSubtype[] = ['general', 'cash', 'bank', 'customer', 'supplier', 'loan', 'income', 'expense', 'equity'];
+const SUBTYPE_LABEL_KEY: Record<AccountSubtype, keyof ReturnType<typeof getDict>['headForm']> = {
+  general: 'subGeneral',
+  cash: 'subCash',
+  bank: 'subBank',
+  customer: 'subCustomer',
+  supplier: 'subSupplier',
+  loan: 'subLoan',
+  income: 'subIncome',
+  expense: 'subExpense',
+  equity: 'subEquity',
+};
 
 /**
  * Account-head creator. In `bankOnly` mode the form is locked to a bank
@@ -42,6 +46,7 @@ export function HeadForm({
   buttonLabel?: string;
 }) {
   const router = useRouter();
+  const t = getDict(useLocale());
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -69,7 +74,7 @@ export function HeadForm({
 
   async function submit() {
     if (!name.trim()) {
-      toast.error('Enter an account name.');
+      toast.error(t.headForm.errName);
       return;
     }
     setSaving(true);
@@ -90,21 +95,21 @@ export function HeadForm({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not create the account.');
+        toast.error(data?.error ?? t.headForm.errCreate);
         return;
       }
-      toast.success(`${name.trim()} created.`);
+      toast.success(t.headForm.created(name.trim()));
       reset();
       setOpen(false);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.common.networkError);
     } finally {
       setSaving(false);
     }
   }
 
-  const label = buttonLabel ?? (bankOnly ? 'Add Bank Account' : 'New Head');
+  const label = buttonLabel ?? (bankOnly ? t.headForm.addBankAccount : t.headForm.newHead);
 
   if (!open) {
     return (
@@ -118,52 +123,52 @@ export function HeadForm({
     <Card className="space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-lg font-semibold text-ink">
-          {bankOnly ? 'New bank account' : 'New account head'}
+          {bankOnly ? t.headForm.newBankAccount : t.headForm.newAccountHead}
         </h2>
         <button
           type="button"
           onClick={() => setOpen(false)}
           className="grid h-9 w-9 place-items-center rounded-full text-ink-muted transition hover:bg-muted"
-          aria-label="Close"
+          aria-label={t.common.close}
         >
           <X className="h-5 w-5" />
         </button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Account name" required className="sm:col-span-2">
+        <Field label={t.headForm.accountName} required className="sm:col-span-2">
           <input
             className={inputClass}
             value={name}
-            placeholder={bankOnly ? 'e.g. Islami Bank — Current A/C' : 'e.g. Marketing Expense'}
+            placeholder={bankOnly ? t.headForm.placeholderBank : t.headForm.placeholderHead}
             onChange={(e) => setName(e.target.value)}
           />
         </Field>
 
         {!bankOnly && (
           <>
-            <Field label="Type" required>
+            <Field label={t.headForm.type} required>
               <select
                 className={inputClass}
                 value={type}
                 onChange={(e) => setType(e.target.value as AccountType)}
               >
-                {TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
+                {TYPE_VALUES.map((v) => (
+                  <option key={v} value={v}>
+                    {t.headForm[TYPE_LABEL_KEY[v]] as string}
                   </option>
                 ))}
               </select>
             </Field>
-            <Field label="Subtype">
+            <Field label={t.headForm.subtype}>
               <select
                 className={inputClass}
                 value={subtype}
                 onChange={(e) => setSubtype(e.target.value as AccountSubtype)}
               >
-                {SUBTYPES.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
+                {SUBTYPE_VALUES.map((v) => (
+                  <option key={v} value={v}>
+                    {t.headForm[SUBTYPE_LABEL_KEY[v]] as string}
                   </option>
                 ))}
               </select>
@@ -173,26 +178,26 @@ export function HeadForm({
 
         {showBank && (
           <>
-            <Field label="Bank name">
+            <Field label={t.headForm.bankName}>
               <input
                 className={inputClass}
                 value={bankName}
-                placeholder="e.g. Islami Bank Bangladesh"
+                placeholder={t.headForm.bankNamePlaceholder}
                 onChange={(e) => setBankName(e.target.value)}
               />
             </Field>
-            <Field label="Account number">
+            <Field label={t.headForm.accountNumber}>
               <input
                 className={inputClass}
                 value={accountNo}
-                placeholder="0000 0000 0000"
+                placeholder={t.headForm.accountNumberPlaceholder}
                 onChange={(e) => setAccountNo(e.target.value)}
               />
             </Field>
           </>
         )}
 
-        <Field label="Branch">
+        <Field label={t.headForm.branch}>
           <select className={inputClass} value={branch} onChange={(e) => setBranch(e.target.value)}>
             {BRANCHES.map((b) => (
               <option key={b.value} value={b.value}>
@@ -202,20 +207,20 @@ export function HeadForm({
           </select>
         </Field>
 
-        <Field label="Opening balance (৳)" hint="Leave 0 if this is a new account.">
+        <Field label={t.headForm.openingBalance} hint={t.headForm.openingHint}>
           <input
             type="number"
             min="0"
             step="0.01"
             className={inputClass}
             value={openingBalance}
-            placeholder="0.00"
+            placeholder={t.headForm.openingBalancePlaceholder}
             onChange={(e) => setOpeningBalance(e.target.value)}
           />
         </Field>
 
         {Number(openingBalance) > 0 && (
-          <Field label="Opening side">
+          <Field label={t.headForm.openingSide}>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -227,7 +232,7 @@ export function HeadForm({
                     : 'border-border text-ink-muted hover:border-brand-600/40')
                 }
               >
-                Debit
+                {t.headForm.debit}
               </button>
               <button
                 type="button"
@@ -239,7 +244,7 @@ export function HeadForm({
                     : 'border-border text-ink-muted hover:border-brand-600/40')
                 }
               >
-                Credit
+                {t.headForm.credit}
               </button>
             </div>
           </Field>
@@ -248,11 +253,11 @@ export function HeadForm({
 
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-          Cancel
+          {t.headForm.cancel}
         </Button>
         <Button type="button" onClick={submit} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {bankOnly ? 'Add bank account' : 'Create head'}
+          {bankOnly ? t.headForm.addBankBtn : t.headForm.createHead}
         </Button>
       </div>
     </Card>

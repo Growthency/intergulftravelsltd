@@ -40,73 +40,77 @@ import {
 import { LogoMark } from '@/components/brand/Logo';
 import { ConfirmHost } from '@/components/admin/confirm';
 import { LangToggle } from '@/components/layout/LangToggle';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminshell';
+import { localizedPath, stripLocale, type Locale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
-type NavLink = { label: string; href: string; icon: LucideIcon };
-type NavGroup = { group: string; items: NavLink[]; adminOnly?: boolean };
+type AdminDict = ReturnType<typeof getDict>;
+type NavLink = { labelKey: keyof AdminDict['nav']; href: string; icon: LucideIcon };
+type NavGroup = { groupKey: keyof AdminDict['groups']; items: NavLink[]; adminOnly?: boolean };
 
 const NAV: NavGroup[] = [
   {
-    group: 'Overview',
+    groupKey: 'overview',
     items: [
-      { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-      { label: 'My Account', href: '/admin/account', icon: UserCog },
+      { labelKey: 'dashboard', href: '/admin', icon: LayoutDashboard },
+      { labelKey: 'myAccount', href: '/admin/account', icon: UserCog },
     ],
   },
   {
-    group: 'Accounting',
+    groupKey: 'accounting',
     items: [
-      { label: 'Accounts Home', href: '/admin/accounts', icon: Wallet },
-      { label: 'Daily Entry', href: '/admin/accounts/entry', icon: NotebookPen },
-      { label: 'Vouchers', href: '/admin/accounts/vouchers', icon: Receipt },
-      { label: 'Account Heads', href: '/admin/accounts/heads', icon: Landmark },
-      { label: 'Cash & Bank', href: '/admin/accounts/cash-bank', icon: Banknote },
-      { label: 'Customer Dues', href: '/admin/accounts/due', icon: HandCoins },
-      { label: 'Expenses', href: '/admin/accounts/expenses', icon: ScrollText },
-      { label: 'Loans', href: '/admin/accounts/loans', icon: ArrowLeftRight },
+      { labelKey: 'accountsHome', href: '/admin/accounts', icon: Wallet },
+      { labelKey: 'dailyEntry', href: '/admin/accounts/entry', icon: NotebookPen },
+      { labelKey: 'vouchers', href: '/admin/accounts/vouchers', icon: Receipt },
+      { labelKey: 'accountHeads', href: '/admin/accounts/heads', icon: Landmark },
+      { labelKey: 'cashBank', href: '/admin/accounts/cash-bank', icon: Banknote },
+      { labelKey: 'customerDues', href: '/admin/accounts/due', icon: HandCoins },
+      { labelKey: 'expenses', href: '/admin/accounts/expenses', icon: ScrollText },
+      { labelKey: 'loans', href: '/admin/accounts/loans', icon: ArrowLeftRight },
     ],
   },
   {
-    group: 'Hajj',
+    groupKey: 'hajj',
     items: [
-      { label: 'Hajj Pilgrims', href: '/admin/hajj', icon: Users },
-      { label: 'Hajj Packages', href: '/admin/hajj/packages', icon: Package },
+      { labelKey: 'hajjPilgrims', href: '/admin/hajj', icon: Users },
+      { labelKey: 'hajjPackages', href: '/admin/hajj/packages', icon: Package },
     ],
   },
   {
-    group: 'Umrah',
+    groupKey: 'umrah',
     items: [
-      { label: 'Umrah Passengers', href: '/admin/umrah', icon: Moon },
-      { label: 'Umrah Packages', href: '/admin/umrah/packages', icon: Package },
+      { labelKey: 'umrahPassengers', href: '/admin/umrah', icon: Moon },
+      { labelKey: 'umrahPackages', href: '/admin/umrah/packages', icon: Package },
     ],
   },
   {
-    group: 'Reports',
-    items: [{ label: 'Reports & Export', href: '/admin/reports', icon: BarChart3 }],
+    groupKey: 'reports',
+    items: [{ labelKey: 'reportsExport', href: '/admin/reports', icon: BarChart3 }],
   },
   {
-    group: 'Website',
+    groupKey: 'website',
     adminOnly: true,
     items: [
-      { label: 'Blog Posts', href: '/admin/posts', icon: FileText },
-      { label: 'Media Library', href: '/admin/media', icon: Images },
-      { label: 'Gallery', href: '/admin/gallery', icon: GalleryHorizontalEnd },
-      { label: 'Videos', href: '/admin/videos', icon: Video },
-      { label: 'Affiliations', href: '/admin/affiliations', icon: Handshake },
-      { label: 'Contact Requests', href: '/admin/contacts', icon: Inbox },
-      { label: 'Estimate Requests', href: '/admin/estimates', icon: Calculator },
+      { labelKey: 'blogPosts', href: '/admin/posts', icon: FileText },
+      { labelKey: 'mediaLibrary', href: '/admin/media', icon: Images },
+      { labelKey: 'gallery', href: '/admin/gallery', icon: GalleryHorizontalEnd },
+      { labelKey: 'videos', href: '/admin/videos', icon: Video },
+      { labelKey: 'affiliations', href: '/admin/affiliations', icon: Handshake },
+      { labelKey: 'contactRequests', href: '/admin/contacts', icon: Inbox },
+      { labelKey: 'estimateRequests', href: '/admin/estimates', icon: Calculator },
     ],
   },
   {
-    group: 'System',
+    groupKey: 'system',
     adminOnly: true,
     items: [
-      { label: 'Navigation', href: '/admin/menus', icon: MenuIcon },
-      { label: 'Footer', href: '/admin/footer', icon: PanelsTopLeft },
-      { label: 'Site Settings', href: '/admin/settings', icon: Settings },
-      { label: 'Vault', href: '/admin/secure-vault', icon: KeyRound },
-      { label: 'Staff & Roles', href: '/admin/users', icon: Users2 },
-      { label: 'Activity Log', href: '/admin/activity', icon: History },
+      { labelKey: 'navigation', href: '/admin/menus', icon: MenuIcon },
+      { labelKey: 'footer', href: '/admin/footer', icon: PanelsTopLeft },
+      { labelKey: 'siteSettings', href: '/admin/settings', icon: Settings },
+      { labelKey: 'vault', href: '/admin/secure-vault', icon: KeyRound },
+      { labelKey: 'staffRoles', href: '/admin/users', icon: Users2 },
+      { labelKey: 'activityLog', href: '/admin/activity', icon: History },
     ],
   },
 ];
@@ -124,32 +128,34 @@ export function AdminShell({
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pathname = usePathname();
+  const locale = useLocale();
+  const t = getDict(locale);
 
   return (
     <div className="min-h-screen bg-sand-soft text-ink">
       <ConfirmHost />
       {/* ---------- Desktop sidebar ---------- */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 flex-col bg-brand-900 text-white lg:flex">
-        <SidebarContent pathname={pathname} isAdmin={isAdmin} />
+        <SidebarContent pathname={pathname} isAdmin={isAdmin} locale={locale} />
       </aside>
 
       {/* ---------- Mobile drawer ---------- */}
       {drawerOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
-            aria-label="Close navigation"
+            aria-label={t.closeNavigation}
             className="absolute inset-0 bg-ink/60 backdrop-blur-sm"
             onClick={() => setDrawerOpen(false)}
           />
           <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[82%] flex-col bg-brand-900 text-white shadow-2xl">
             <button
-              aria-label="Close navigation"
+              aria-label={t.closeNavigation}
               onClick={() => setDrawerOpen(false)}
               className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white"
             >
               <X className="h-5 w-5" />
             </button>
-            <SidebarContent pathname={pathname} isAdmin={isAdmin} onNavigate={() => setDrawerOpen(false)} />
+            <SidebarContent pathname={pathname} isAdmin={isAdmin} locale={locale} onNavigate={() => setDrawerOpen(false)} />
           </aside>
         </div>
       )}
@@ -159,7 +165,7 @@ export function AdminShell({
         {/* Topbar */}
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-card/90 px-4 backdrop-blur sm:px-6">
           <button
-            aria-label="Open navigation"
+            aria-label={t.openNavigation}
             onClick={() => setDrawerOpen(true)}
             className="grid h-10 w-10 place-items-center rounded-xl border border-border text-ink-muted transition hover:bg-muted lg:hidden"
           >
@@ -167,30 +173,30 @@ export function AdminShell({
           </button>
 
           <div className="hidden text-sm font-medium text-ink-muted sm:block">
-            Administration console
+            {t.adminConsole}
           </div>
 
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             <LangToggle />
             <Link
-              href="/"
+              href={localizedPath(locale, '/')}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-2 text-sm font-medium text-ink-muted transition hover:border-brand-600/40 hover:text-brand-700"
             >
               <ExternalLink className="h-4 w-4" />
-              <span className="hidden sm:inline">View site</span>
+              <span className="hidden sm:inline">{t.viewSite}</span>
             </Link>
 
             <Link
-              href="/admin/account"
-              title="My account"
+              href={localizedPath(locale, '/admin/account')}
+              title={t.myAccountTitle}
               className="hidden items-center gap-2.5 border-l border-border pl-3 transition hover:opacity-80 sm:flex"
             >
               <Avatar name={user.name} email={user.email} avatarUrl={user.avatarUrl} />
               <div className="leading-tight">
                 <p className="max-w-[12rem] truncate text-sm font-semibold text-ink">
-                  {user.name || 'Administrator'}
+                  {user.name || t.administrator}
                 </p>
                 <p className="max-w-[12rem] truncate text-xs text-ink-muted">{user.email}</p>
               </div>
@@ -202,7 +208,7 @@ export function AdminShell({
                 className="inline-flex items-center gap-1.5 rounded-full bg-brand-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
               >
                 <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Sign out</span>
+                <span className="hidden sm:inline">{t.signOut}</span>
               </button>
             </form>
           </div>
@@ -218,23 +224,27 @@ export function AdminShell({
 function SidebarContent({
   pathname,
   isAdmin,
+  locale,
   onNavigate,
 }: {
   pathname: string;
   isAdmin: boolean;
+  locale: Locale;
   onNavigate?: () => void;
 }) {
+  const t = getDict(locale);
   const visibleGroups = NAV.filter((section) => !section.adminOnly || isAdmin);
   // Only the single best (longest) matching link is active, so e.g.
   // /admin/hajj/packages activates "Hajj Packages" but NOT "Hajj Pilgrims".
+  // Strip the /en locale prefix so matching stays against the unprefixed hrefs.
   const activeHref = bestMatchHref(
-    pathname,
+    stripLocale(pathname),
     visibleGroups.flatMap((g) => g.items.map((i) => i.href)),
   );
-  const groupOf = () => visibleGroups.find((g) => g.items.some((i) => i.href === activeHref))?.group;
+  const groupOf = () => visibleGroups.find((g) => g.items.some((i) => i.href === activeHref))?.groupKey;
   const [openGroups, setOpenGroups] = useState<string[]>(() => {
     const g = groupOf();
-    return g ? [g] : ['Overview'];
+    return g ? [g] : ['overview'];
   });
   useEffect(() => {
     const g = groupOf();
@@ -251,24 +261,24 @@ function SidebarContent({
         <div className="leading-none">
           <p className="font-display text-lg font-semibold tracking-tight">Inter Gulf</p>
           <p className="mt-0.5 text-[0.62rem] font-semibold uppercase tracking-[0.3em] text-gold-300">
-            Admin Panel
+            {t.adminPanel}
           </p>
         </div>
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5">
         {visibleGroups.map((section) => {
-          const isOpen = openGroups.includes(section.group);
+          const isOpen = openGroups.includes(section.groupKey);
           const hasActive = section.items.some((i) => i.href === activeHref);
           return (
-            <div key={section.group}>
+            <div key={section.groupKey}>
               <button
                 type="button"
-                onClick={() => toggle(section.group)}
+                onClick={() => toggle(section.groupKey)}
                 aria-expanded={isOpen}
                 className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-[0.65rem] font-semibold uppercase tracking-[0.22em] transition hover:bg-white/5"
               >
-                <span className={cn(hasActive ? 'text-gold-300' : 'text-white/45')}>{section.group}</span>
+                <span className={cn(hasActive ? 'text-gold-300' : 'text-white/45')}>{t.groups[section.groupKey]}</span>
                 <ChevronDown
                   className={cn('h-3.5 w-3.5 text-white/40 transition-transform', isOpen && 'rotate-180')}
                 />
@@ -281,7 +291,7 @@ function SidebarContent({
                     return (
                       <li key={item.href}>
                         <Link
-                          href={item.href}
+                          href={localizedPath(locale, item.href)}
                           onClick={onNavigate}
                           aria-current={active ? 'page' : undefined}
                           className={cn(
@@ -297,7 +307,7 @@ function SidebarContent({
                               active ? 'text-gold-300' : 'text-white/55 group-hover:text-white',
                             )}
                           />
-                          {item.label}
+                          {t.nav[item.labelKey]}
                         </Link>
                       </li>
                     );
@@ -311,9 +321,9 @@ function SidebarContent({
 
       <div className="border-t border-white/10 px-5 py-4">
         <p className="text-[0.7rem] leading-relaxed text-white/40">
-          Inter Gulf Travels Ltd · Hajj &amp; Umrah
+          {t.footerTagline}
           <br />
-          Government Licensed — since 2002
+          {t.footerLicense}
         </p>
       </div>
     </>

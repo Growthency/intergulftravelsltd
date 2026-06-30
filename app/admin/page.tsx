@@ -20,6 +20,9 @@ import { money } from '@/lib/management/format';
 import { branchLabel } from '@/lib/management/branches';
 import { formatDate } from '@/lib/utils';
 import { PageHeader, Card, StatCard, EmptyState, TableWrap, thClass, tdClass, Money, Badge } from '@/components/manage/ui';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminshell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Dashboard' };
@@ -176,103 +179,104 @@ async function loadDashboard(): Promise<DashData> {
 export default async function ManagementDashboard() {
   const d = await loadDashboard();
   const year = new Date().getFullYear();
+  const locale = getLocale();
+  const t = getDict(locale);
 
   const quickActions = [
-    { label: 'Daily Entry', href: '/admin/accounts/entry', icon: NotebookPen },
-    { label: 'New Hajj Pre-reg', href: '/admin/hajj', icon: Users },
-    { label: 'New Umrah Passenger', href: '/admin/umrah', icon: Moon },
-    { label: 'Reports', href: '/admin/reports', icon: BarChart3 },
+    { label: t.dash.qaDailyEntry, href: '/admin/accounts/entry', icon: NotebookPen },
+    { label: t.dash.qaNewHajj, href: '/admin/hajj', icon: Users },
+    { label: t.dash.qaNewUmrah, href: '/admin/umrah', icon: Moon },
+    { label: t.dash.qaReports, href: '/admin/reports', icon: BarChart3 },
   ];
 
   return (
     <>
       <PageHeader
-        title="Management Dashboard"
-        subtitle="A live financial and operational overview across Inter Gulf Travels, Mokbul Hajj Overseas and Inter Gulf Air."
+        title={t.dash.title}
+        subtitle={t.dash.subtitle}
         actions={
           <Link
-            href="/admin/accounts/entry"
+            href={localizedPath(locale, '/admin/accounts/entry')}
             className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-emerald transition hover:bg-brand-700"
           >
-            <NotebookPen className="h-4 w-4" /> New Entry
+            <NotebookPen className="h-4 w-4" /> {t.dash.newEntry}
           </Link>
         }
       />
 
       {!d.hasManagement && (
         <div className="mb-6 rounded-2xl border border-gold-500/30 bg-gold-50 px-5 py-4 text-sm text-gold-800">
-          The accounting tables are not set up yet. Figures will populate automatically once the
-          management database migration has been applied.
+          {t.dash.setupNotice}
         </div>
       )}
 
       {/* Money stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Cash in Hand" value={<Money value={d.cash} />} icon={Wallet} accent="emerald" />
-        <StatCard label="Bank Balance" value={<Money value={d.bank} />} icon={Banknote} accent="emerald" />
+        <StatCard label={t.dash.cashInHand} value={<Money value={d.cash} />} icon={Wallet} accent="emerald" />
+        <StatCard label={t.dash.bankBalance} value={<Money value={d.bank} />} icon={Banknote} accent="emerald" />
         <StatCard
-          label="Total Receivable"
+          label={t.dash.totalReceivable}
           value={<Money value={d.receivable} />}
           icon={HandCoins}
           accent="gold"
-          hint="Outstanding customer dues"
+          hint={t.dash.totalReceivableHint}
         />
         <StatCard
-          label="Today's Income"
+          label={t.dash.todaysIncome}
           value={<Money value={d.todayIncome} />}
           icon={TrendingUp}
           accent="emerald"
           hint={formatDate(today())}
         />
         <StatCard
-          label="Today's Expense"
+          label={t.dash.todaysExpense}
           value={<Money value={d.todayExpense} />}
           icon={TrendingDown}
           accent="red"
           hint={formatDate(today())}
         />
         <StatCard
-          label={`Hajj Pilgrims ${year}`}
+          label={t.dash.hajjPilgrimsYear(year)}
           value={d.hajjThisYear}
           icon={Users}
           accent="emerald"
-          hint="Registered this year"
+          hint={t.dash.registeredThisYear}
         />
       </div>
 
       {/* Operational stats */}
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Umrah Passengers" value={d.umrahThisYear} icon={Moon} accent="emerald" hint="Total on record" />
-        <Link href="/admin/contacts" className="block">
+        <StatCard label={t.dash.umrahPassengers} value={d.umrahThisYear} icon={Moon} accent="emerald" hint={t.dash.totalOnRecord} />
+        <Link href={localizedPath(locale, '/admin/contacts')} className="block">
           <StatCard
-            label="Unhandled Contacts"
+            label={t.dash.unhandledContacts}
             value={d.newContacts}
             icon={Inbox}
             accent="gold"
-            hint="Awaiting a reply"
+            hint={t.dash.awaitingReply}
           />
         </Link>
-        <Link href="/admin/estimates" className="block">
+        <Link href={localizedPath(locale, '/admin/estimates')} className="block">
           <StatCard
-            label="New Estimates"
+            label={t.dash.newEstimates}
             value={d.newEstimates}
             icon={Calculator}
             accent="gold"
-            hint="To be quoted"
+            hint={t.dash.toBeQuoted}
           />
         </Link>
       </div>
 
       {/* Quick actions */}
       <Card className="mt-6">
-        <p className="mb-3 text-sm font-semibold text-ink">Quick actions</p>
+        <p className="mb-3 text-sm font-semibold text-ink">{t.dash.quickActions}</p>
         <div className="flex flex-wrap gap-2.5">
           {quickActions.map((a) => {
             const Icon = a.icon;
             return (
               <Link
                 key={a.href}
-                href={a.href}
+                href={localizedPath(locale, a.href)}
                 className="inline-flex items-center gap-2 rounded-full border border-border bg-background/50 px-4 py-2 text-sm font-medium text-ink transition hover:border-brand-600/40 hover:bg-brand-50 hover:text-brand-700"
               >
                 <Icon className="h-4 w-4" />
@@ -288,23 +292,23 @@ export default async function ManagementDashboard() {
         {/* Recent transactions */}
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold text-ink">Recent transactions</h2>
-            <Link href="/admin/accounts/vouchers" className="text-sm font-semibold text-brand-700 hover:underline">
-              View all
+            <h2 className="font-display text-lg font-semibold text-ink">{t.dash.recentTransactions}</h2>
+            <Link href={localizedPath(locale, '/admin/accounts/vouchers')} className="text-sm font-semibold text-brand-700 hover:underline">
+              {t.dash.viewAll}
             </Link>
           </div>
           {d.recentTx.length === 0 ? (
             <EmptyState
-              title="No transactions yet"
-              hint="Posted vouchers and daily entries will appear here."
+              title={t.dash.noTransactions}
+              hint={t.dash.noTransactionsHint}
             />
           ) : (
             <TableWrap className="min-w-0">
               <thead>
                 <tr>
-                  <th className={thClass}>Voucher</th>
-                  <th className={thClass}>Particulars</th>
-                  <th className={`${thClass} text-right`}>Amount</th>
+                  <th className={thClass}>{t.dash.voucher}</th>
+                  <th className={thClass}>{t.dash.particulars}</th>
+                  <th className={`${thClass} text-right`}>{t.dash.amount}</th>
                 </tr>
               </thead>
               <tbody>
@@ -316,10 +320,10 @@ export default async function ManagementDashboard() {
                     </td>
                     <td className={`${tdClass} align-top`}>
                       <p className="text-ink">
-                        <span className="font-medium">Dr</span> {debitName}
+                        <span className="font-medium">{t.dash.dr}</span> {debitName}
                       </p>
                       <p className="text-ink-muted">
-                        <span className="font-medium">Cr</span> {creditName}
+                        <span className="font-medium">{t.dash.cr}</span> {creditName}
                       </p>
                     </td>
                     <td className={`${tdClass} text-right align-top tabular-nums`}>{money(tx.amount, false)}</td>
@@ -333,15 +337,15 @@ export default async function ManagementDashboard() {
         {/* Recent pilgrims */}
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold text-ink">Recent pilgrims</h2>
-            <Link href="/admin/hajj" className="text-sm font-semibold text-brand-700 hover:underline">
-              View all
+            <h2 className="font-display text-lg font-semibold text-ink">{t.dash.recentPilgrims}</h2>
+            <Link href={localizedPath(locale, '/admin/hajj')} className="text-sm font-semibold text-brand-700 hover:underline">
+              {t.dash.viewAll}
             </Link>
           </div>
           {d.recentPilgrims.length === 0 ? (
             <EmptyState
-              title="No pilgrims yet"
-              hint="New Hajj pre-registrations and registrations will appear here."
+              title={t.dash.noPilgrims}
+              hint={t.dash.noPilgrimsHint}
             />
           ) : (
             <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
@@ -356,7 +360,7 @@ export default async function ManagementDashboard() {
                       </p>
                     </div>
                     <Badge tone={p.reg_type === 'registered' ? 'emerald' : 'gold'}>
-                      {p.reg_type === 'registered' ? 'Registered' : 'Pre-reg'}
+                      {p.reg_type === 'registered' ? t.dash.registered : t.dash.preReg}
                     </Badge>
                   </li>
                 ))}

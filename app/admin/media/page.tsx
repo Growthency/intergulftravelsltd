@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/admin/ui';
 import { MediaLibrary, type MediaItem } from '@/components/admin/MediaLibrary';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/adminwebsite';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Media Library' };
@@ -51,13 +53,11 @@ async function loadMedia(): Promise<MediaItem[]> {
 
 export default async function MediaPage() {
   const items = await loadMedia();
+  const t = getDict(getLocale());
 
   return (
     <>
-      <PageHeader
-        title="Media Library"
-        description="Every uploaded asset, stored as optimized WebP in the public media bucket."
-      />
+      <PageHeader title={t.media.title} description={t.media.description} />
       <MediaLibrary items={items} />
     </>
   );

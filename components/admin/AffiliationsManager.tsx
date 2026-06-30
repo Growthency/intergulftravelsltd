@@ -21,23 +21,10 @@ import { confirmDialog } from '@/components/admin/confirm';
 import { ImageUploader } from '@/components/admin/ImageUploader';
 import { cn } from '@/lib/utils';
 import type { Affiliation } from '@/lib/affiliations';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminwebsite';
 
 type Category = 'flight' | 'hotel';
-
-const TABS: { key: Category; label: string; icon: React.ReactNode; help: string }[] = [
-  {
-    key: 'flight',
-    label: 'Flight Partners',
-    icon: <Plane className="h-4 w-4" />,
-    help: 'Airlines featured on the public Our Affiliations section.',
-  },
-  {
-    key: 'hotel',
-    label: 'Hotel Partners',
-    icon: <BedDouble className="h-4 w-4" />,
-    help: 'Makkah & Madinah hotels featured on the public site.',
-  },
-];
 
 type FormState = {
   id: string | null;
@@ -63,6 +50,21 @@ function emptyForm(category: Category, sort_order: number): FormState {
 
 export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
   const router = useRouter();
+  const t = getDict(useLocale()).affMgr;
+  const TABS: { key: Category; label: string; icon: React.ReactNode; help: string }[] = [
+    {
+      key: 'flight',
+      label: t.flightPartners,
+      icon: <Plane className="h-4 w-4" />,
+      help: t.flightHelp,
+    },
+    {
+      key: 'hotel',
+      label: t.hotelPartners,
+      icon: <BedDouble className="h-4 w-4" />,
+      help: t.hotelHelp,
+    },
+  ];
   const [tab, setTab] = useState<Category>('flight');
   const [items, setItems] = useState<Affiliation[]>(initial);
   const [form, setForm] = useState<FormState | null>(null);
@@ -104,7 +106,7 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
   async function save() {
     if (!form) return;
     if (form.name.trim().length < 1) {
-      toast.error('Please enter the partner name.');
+      toast.error(t.enterNameError);
       return;
     }
     setSaving(true);
@@ -126,14 +128,14 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not save this partner.');
+        toast.error(data?.error ?? t.couldNotSave);
         return;
       }
-      toast.success(isEdit ? 'Partner updated.' : 'Partner added.');
+      toast.success(isEdit ? t.partnerUpdated : t.partnerAdded);
       setForm(null);
       await refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setSaving(false);
     }
@@ -149,7 +151,7 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not update this partner.');
+        toast.error(data?.error ?? t.couldNotUpdate);
         return false;
       }
       // Optimistically reflect the change so reorder/toggle feels instant.
@@ -157,7 +159,7 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
       await refresh();
       return true;
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
       return false;
     } finally {
       setBusyId(null);
@@ -166,7 +168,7 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
 
   async function toggleActive(a: Affiliation) {
     const ok = await patch(a.id, { active: !a.active });
-    if (ok) toast.success(a.active ? 'Hidden from the site.' : 'Now visible on the site.');
+    if (ok) toast.success(a.active ? t.hiddenFromSite : t.nowVisible);
   }
 
   async function move(a: Affiliation, direction: -1 | 1) {
@@ -198,14 +200,14 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
       );
       await refresh();
     } catch {
-      toast.error('Could not reorder. Please try again.');
+      toast.error(t.couldNotReorder);
     } finally {
       setBusyId(null);
     }
   }
 
   async function remove(a: Affiliation) {
-    if (!(await confirmDialog({ message: `Remove "${a.name}" from your partners?`, confirmText: 'Delete', danger: true }))) return;
+    if (!(await confirmDialog({ message: t.confirmRemove(a.name), confirmText: t.confirmText, danger: true }))) return;
     setBusyId(a.id);
     try {
       const res = await fetch(`/api/admin/affiliations?id=${encodeURIComponent(a.id)}`, {
@@ -213,14 +215,14 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not delete this partner.');
+        toast.error(data?.error ?? t.couldNotDelete);
         return;
       }
       setItems((prev) => prev.filter((x) => x.id !== a.id));
-      toast.success('Partner removed.');
+      toast.success(t.partnerRemoved);
       await refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setBusyId(null);
     }
@@ -260,33 +262,37 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
         </div>
 
         <AdminButton variant="primary" onClick={openCreate}>
-          <Plus className="h-4 w-4" /> Add {tab === 'flight' ? 'airline' : 'hotel'}
+          <Plus className="h-4 w-4" /> {tab === 'flight' ? t.addAirline : t.addHotel}
         </AdminButton>
       </div>
 
-      <p className="text-sm text-ink-muted">{TABS.find((t) => t.key === tab)?.help}</p>
+      <p className="text-sm text-ink-muted">{TABS.find((x) => x.key === tab)?.help}</p>
 
       {/* Add / edit form */}
       {form && form.category === tab && (
         <Card className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-ink">
-              {form.id ? 'Edit partner' : `New ${tab === 'flight' ? 'airline' : 'hotel'} partner`}
+              {form.id
+                ? t.editPartner
+                : tab === 'flight'
+                  ? t.newAirlinePartner
+                  : t.newHotelPartner}
             </p>
             <button
               onClick={() => setForm(null)}
               className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition hover:bg-muted"
-              aria-label="Close"
+              aria-label={t.ariaClose}
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-            <Field label="Logo" hint="Optional — stored as WebP">
+            <Field label={t.logoLabel} hint={t.logoHint}>
               <ImageUploader
                 folder="media"
-                label="Partner logo"
+                label={t.partnerLogoLabel}
                 aspect="video"
                 value={form.logo_url}
                 onChange={(url) => setForm((f) => (f ? { ...f, logo_url: url } : f))}
@@ -294,16 +300,16 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
             </Field>
 
             <div className="space-y-3">
-              <Field label="Name">
+              <Field label={t.nameLabel}>
                 <input
                   className={inputClass}
                   value={form.name}
-                  placeholder={tab === 'flight' ? 'e.g. Saudia' : 'e.g. Hilton Suites Makkah'}
+                  placeholder={tab === 'flight' ? t.namePlaceholderAirline : t.namePlaceholderHotel}
                   onChange={(e) => setForm((f) => (f ? { ...f, name: e.target.value } : f))}
                 />
               </Field>
 
-              <Field label="Website" hint="Optional">
+              <Field label={t.websiteLabel} hint={t.websiteHint}>
                 <input
                   className={inputClass}
                   value={form.website_url}
@@ -314,7 +320,7 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
               </Field>
 
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Sort order" hint="Lower shows first">
+                <Field label={t.sortOrderLabel} hint={t.sortOrderHint}>
                   <input
                     type="number"
                     className={inputClass}
@@ -324,7 +330,7 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
                     }
                   />
                 </Field>
-                <Field label="Visibility">
+                <Field label={t.visibilityLabel}>
                   <button
                     type="button"
                     onClick={() => setForm((f) => (f ? { ...f, active: !f.active } : f))}
@@ -336,7 +342,7 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
                     )}
                   >
                     {form.active ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-                    {form.active ? 'Visible on site' : 'Hidden'}
+                    {form.active ? t.visibleOnSite : t.hidden}
                   </button>
                 </Field>
               </div>
@@ -352,7 +358,7 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
                 ) : (
                   <Plus className="h-4 w-4" />
                 )}
-                {form.id ? 'Save changes' : 'Add partner'}
+                {form.id ? t.saveChanges : t.addPartner}
               </AdminButton>
             </div>
           </div>
@@ -363,13 +369,11 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
       {byCategory.length === 0 ? (
         <EmptyState
           icon={tab === 'flight' ? <Plane className="h-6 w-6" /> : <BedDouble className="h-6 w-6" />}
-          title={`No ${tab === 'flight' ? 'airlines' : 'hotels'} yet`}
-          description={`Add your first ${
-            tab === 'flight' ? 'airline' : 'hotel'
-          } partner to feature it on the public site.`}
+          title={tab === 'flight' ? t.emptyTitleAirlines : t.emptyTitleHotels}
+          description={tab === 'flight' ? t.emptyDescAirline : t.emptyDescHotel}
           action={
             <AdminButton variant="primary" onClick={openCreate}>
-              <Plus className="h-4 w-4" /> Add {tab === 'flight' ? 'airline' : 'hotel'}
+              <Plus className="h-4 w-4" /> {tab === 'flight' ? t.addAirline : t.addHotel}
             </AdminButton>
           }
         />
@@ -393,7 +397,7 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
                     />
                   ) : (
                     <span className="font-display text-xs font-semibold text-ink-muted">
-                      No logo
+                      {t.noLogo}
                     </span>
                   )}
                 </div>
@@ -403,9 +407,9 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate font-semibold text-ink">{a.name}</p>
                     {a.active ? (
-                      <Badge tone="emerald">Visible</Badge>
+                      <Badge tone="emerald">{t.visible}</Badge>
                     ) : (
-                      <Badge tone="gray">Hidden</Badge>
+                      <Badge tone="gray">{t.hidden}</Badge>
                     )}
                     <span className="text-xs text-ink-muted">#{a.sort_order}</span>
                   </div>
@@ -428,7 +432,7 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
                     onClick={() => move(a, -1)}
                     disabled={busy || index === 0}
                     className="grid h-9 w-9 place-items-center rounded-lg text-ink-muted transition hover:bg-muted disabled:opacity-30"
-                    aria-label="Move up"
+                    aria-label={t.ariaMoveUp}
                   >
                     <ArrowUp className="h-4 w-4" />
                   </button>
@@ -436,7 +440,7 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
                     onClick={() => move(a, 1)}
                     disabled={busy || index === byCategory.length - 1}
                     className="grid h-9 w-9 place-items-center rounded-lg text-ink-muted transition hover:bg-muted disabled:opacity-30"
-                    aria-label="Move down"
+                    aria-label={t.ariaMoveDown}
                   >
                     <ArrowDown className="h-4 w-4" />
                   </button>
@@ -454,9 +458,9 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
                     {busy ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : a.active ? (
-                      'Hide'
+                      t.hide
                     ) : (
-                      'Show'
+                      t.show
                     )}
                   </button>
 
@@ -464,7 +468,7 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
                     onClick={() => openEdit(a)}
                     disabled={busy}
                     className="grid h-9 w-9 place-items-center rounded-lg text-ink-muted transition hover:bg-muted disabled:opacity-50"
-                    aria-label={`Edit ${a.name}`}
+                    aria-label={t.ariaEdit(a.name)}
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -472,7 +476,7 @@ export function AffiliationsManager({ initial }: { initial: Affiliation[] }) {
                     onClick={() => remove(a)}
                     disabled={busy}
                     className="grid h-9 w-9 place-items-center rounded-lg text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
-                    aria-label={`Delete ${a.name}`}
+                    aria-label={t.ariaDelete(a.name)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

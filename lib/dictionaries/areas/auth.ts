@@ -21,6 +21,9 @@ const dict = {
       heroLead: 'A reliable name for your',
       heroAccent: 'sacred journey.',
       allRightsReserved: 'All rights reserved.',
+      staffEyebrow: 'Admin Panel',
+      staffTitle: 'Inter Gulf Travels — Admin',
+      staffSubtitle: 'Sign in with your authorised staff credentials to continue.',
       trustPoints: {
         customer: [
           'Government-licensed since 2002 (Hajj License No. 071)',
@@ -55,6 +58,9 @@ const dict = {
       heroLead: 'আপনার পবিত্র যাত্রার জন্য',
       heroAccent: 'এক নির্ভরযোগ্য নাম।',
       allRightsReserved: 'সর্বস্বত্ব সংরক্ষিত।',
+      staffEyebrow: 'অ্যাডমিন প্যানেল',
+      staffTitle: 'ইন্টার গাল্ফ ট্রাভেলস — অ্যাডমিন',
+      staffSubtitle: 'চালিয়ে যেতে আপনার অনুমোদিত স্টাফ লগইন দিয়ে সাইন ইন করুন।',
       trustPoints: {
         customer: [
           'সরকার-অনুমোদিত, ২০০২ সাল থেকে (হজ লাইসেন্স নং ০৭১)',

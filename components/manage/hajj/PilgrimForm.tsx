@@ -9,6 +9,8 @@ import { Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
 import { BRANCHES } from '@/lib/management/branches';
 import type { HajjPilgrim, MgmtPackage } from '@/lib/management/types';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminhajj';
 
 type PkgOption = Pick<MgmtPackage, 'id' | 'name' | 'price' | 'year'>;
 
@@ -26,6 +28,7 @@ export function PilgrimForm({
   initial?: Partial<HajjPilgrim>;
 }) {
   const router = useRouter();
+  const t = getDict(useLocale());
   const isEdit = mode === 'edit';
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
@@ -45,13 +48,13 @@ export function PilgrimForm({
       const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok || !data?.url) {
-        toast.error(data?.error ?? 'Could not upload the photo.');
+        toast.error(data?.error ?? t.toastUploadFail);
         return;
       }
       setPhotoUrl(data.url);
-      toast.success('Photo uploaded.');
+      toast.success(t.toastPhotoUploaded);
     } catch {
-      toast.error('Network error while uploading.');
+      toast.error(t.toastUploadNetwork);
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
@@ -87,7 +90,7 @@ export function PilgrimForm({
     };
 
     if (!payload.name) {
-      toast.error('Pilgrim name is required.');
+      toast.error(t.toastNameRequired);
       return;
     }
 
@@ -100,19 +103,19 @@ export function PilgrimForm({
       });
       const data = await res.json();
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not save the pilgrim.');
+        toast.error(data?.error ?? t.toastSaveFail);
         return;
       }
       if (isEdit) {
-        toast.success('Pilgrim updated.');
+        toast.success(t.toastPilgrimUpdated);
         router.push(`/admin/hajj/${pilgrimId}`);
       } else {
-        toast.success(`Saved · ${data.tracking_no ?? ''}`.trim());
+        toast.success(`${t.toastSavedPrefix} · ${data.tracking_no ?? ''}`.trim());
         router.push(`/admin/hajj/${data.id}`);
       }
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.toastNetwork);
     } finally {
       setSaving(false);
     }
@@ -122,43 +125,43 @@ export function PilgrimForm({
     <form onSubmit={onSubmit} className="space-y-6">
       {/* Identity */}
       <section className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-        <h2 className="mb-4 font-display text-base font-semibold text-ink">Pilgrim details</h2>
+        <h2 className="mb-4 font-display text-base font-semibold text-ink">{t.pilgrimDetails}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Field label="Full name" required>
-            <input name="name" defaultValue={initial?.name ?? ''} className={inputClass} placeholder="As per passport" autoComplete="off" />
+          <Field label={t.fullName} required>
+            <input name="name" defaultValue={initial?.name ?? ''} className={inputClass} placeholder={t.asPerPassport} autoComplete="off" />
           </Field>
-          <Field label="Name (Bangla)">
-            <input name="name_bn" defaultValue={initial?.name_bn ?? ''} className={inputClass} placeholder="বাংলা নাম" autoComplete="off" />
+          <Field label={t.nameBangla}>
+            <input name="name_bn" defaultValue={initial?.name_bn ?? ''} className={inputClass} placeholder={t.nameBanglaPlaceholder} autoComplete="off" />
           </Field>
-          <Field label="Mobile number">
+          <Field label={t.mobileNumber}>
             <input name="phone" defaultValue={initial?.phone ?? ''} className={inputClass} placeholder="01XXXXXXXXX" inputMode="tel" />
           </Field>
-          <Field label="Father's name">
+          <Field label={t.fatherName}>
             <input name="father_name" defaultValue={initial?.father_name ?? ''} className={inputClass} autoComplete="off" />
           </Field>
-          <Field label="Mother's name">
+          <Field label={t.motherName}>
             <input name="mother_name" defaultValue={initial?.mother_name ?? ''} className={inputClass} autoComplete="off" />
           </Field>
-          <Field label="Date of birth">
+          <Field label={t.dateOfBirth}>
             <input name="dob" type="date" defaultValue={initial?.dob ?? ''} className={inputClass} />
           </Field>
-          <Field label="Gender">
+          <Field label={t.gender}>
             <select name="gender" className={inputClass} defaultValue={initial?.gender ?? ''}>
-              <option value="">Select…</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
+              <option value="">{t.selectEllipsis}</option>
+              <option value="male">{t.male}</option>
+              <option value="female">{t.female}</option>
             </select>
           </Field>
-          <Field label="NID number">
+          <Field label={t.nidNumber}>
             <input name="nid" defaultValue={initial?.nid ?? ''} className={inputClass} autoComplete="off" inputMode="numeric" />
           </Field>
-          <Field label="Passport number">
+          <Field label={t.passportNumber}>
             <input name="passport_no" defaultValue={initial?.passport_no ?? ''} className={inputClass} autoComplete="off" />
           </Field>
-          <Field label="District">
+          <Field label={t.district}>
             <input name="district" defaultValue={initial?.district ?? ''} className={inputClass} autoComplete="off" />
           </Field>
-          <Field label="Address" className="sm:col-span-2">
+          <Field label={t.address} className="sm:col-span-2">
             <input name="address" defaultValue={initial?.address ?? ''} className={inputClass} autoComplete="off" />
           </Field>
         </div>
@@ -166,23 +169,23 @@ export function PilgrimForm({
 
       {/* Registration */}
       <section className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-        <h2 className="mb-4 font-display text-base font-semibold text-ink">Registration</h2>
+        <h2 className="mb-4 font-display text-base font-semibold text-ink">{t.registration}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Field label="Hajj year" required>
+          <Field label={t.hajjYear} required>
             <input name="year" type="number" defaultValue={initial?.year ?? defaultYear} min={2000} max={2100} className={inputClass} />
           </Field>
-          <Field label="Registration type" required>
+          <Field label={t.registrationType} required>
             <select
               name="reg_type"
               className={inputClass}
               value={regType}
               onChange={(e) => setRegType(e.target.value as 'pre-registration' | 'registered')}
             >
-              <option value="pre-registration">Pre-registration</option>
-              <option value="registered">Registered</option>
+              <option value="pre-registration">{t.optPreRegistration}</option>
+              <option value="registered">{t.optRegistered}</option>
             </select>
           </Field>
-          <Field label="Branch / concern" required>
+          <Field label={t.branchConcern} required>
             <select name="branch" className={inputClass} defaultValue={initial?.branch ?? 'inter-gulf-travels'}>
               {BRANCHES.map((b) => (
                 <option key={b.value} value={b.value}>
@@ -191,25 +194,25 @@ export function PilgrimForm({
               ))}
             </select>
           </Field>
-          <Field label="Pre-registration no.">
+          <Field label={t.preRegistrationNo}>
             <input name="pre_reg_no" defaultValue={initial?.pre_reg_no ?? ''} className={inputClass} autoComplete="off" />
           </Field>
-          <Field label="Govt. serial no.">
+          <Field label={t.govtSerialNo}>
             <input name="govt_serial" defaultValue={initial?.govt_serial ?? ''} className={inputClass} autoComplete="off" />
           </Field>
           {isEdit ? (
-            <Field label="Package" hint="Change a package from the pilgrim profile so the charge is posted correctly.">
+            <Field label={t.packageLabel} hint={t.packageEditHint}>
               <input
                 className={`${inputClass} bg-muted/60`}
-                value={packages.find((p) => p.id === initial?.package_id)?.name ?? 'Manage from profile'}
+                value={packages.find((p) => p.id === initial?.package_id)?.name ?? t.manageFromProfile}
                 disabled
                 readOnly
               />
             </Field>
           ) : (
-            <Field label="Package" hint="Assigning a package charges its price as a due.">
+            <Field label={t.packageLabel} hint={t.packageAssignHint}>
               <select name="package_id" className={inputClass} defaultValue="">
-                <option value="">No package yet</option>
+                <option value="">{t.noPackageYet}</option>
                 {packages.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
@@ -220,29 +223,29 @@ export function PilgrimForm({
             </Field>
           )}
           {!isEdit && (
-            <Field label="Token money (৳)" hint="Recorded as a cash receipt.">
+            <Field label={t.tokenMoney} hint={t.tokenMoneyHint}>
               <input name="token_money" type="number" min={0} step="any" defaultValue={0} className={inputClass} />
             </Field>
           )}
-          <Field label="Note" className="sm:col-span-2 lg:col-span-3">
-            <textarea name="note" rows={2} defaultValue={initial?.note ?? ''} className={inputClass} placeholder="Optional remarks" />
+          <Field label={t.note} className="sm:col-span-2 lg:col-span-3">
+            <textarea name="note" rows={2} defaultValue={initial?.note ?? ''} className={inputClass} placeholder={t.optionalRemarks} />
           </Field>
         </div>
       </section>
 
       {/* Photo */}
       <section className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-        <h2 className="mb-4 font-display text-base font-semibold text-ink">Photo</h2>
+        <h2 className="mb-4 font-display text-base font-semibold text-ink">{t.photo}</h2>
         <div className="flex items-center gap-4">
           <div className="relative grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-xl border border-border bg-muted">
             {photoUrl ? (
               <>
-                <Image src={photoUrl} alt="Pilgrim photo" fill className="object-cover" sizes="96px" />
+                <Image src={photoUrl} alt={t.pilgrimPhotoAlt} fill className="object-cover" sizes="96px" />
                 <button
                   type="button"
                   onClick={() => setPhotoUrl(null)}
                   className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white"
-                  aria-label="Remove photo"
+                  aria-label={t.removePhoto}
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -267,9 +270,9 @@ export function PilgrimForm({
               disabled={uploading}
             >
               {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              {uploading ? 'Uploading…' : 'Upload photo'}
+              {uploading ? t.uploadingEllipsis : t.uploadPhoto}
             </Button>
-            <p className="mt-1 text-xs text-ink-muted">JPG or PNG — converted to WebP automatically.</p>
+            <p className="mt-1 text-xs text-ink-muted">{t.photoFormatHint}</p>
           </div>
         </div>
       </section>
@@ -277,10 +280,10 @@ export function PilgrimForm({
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={saving || uploading}>
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-          {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Save pilgrim'}
+          {saving ? t.savingEllipsis : isEdit ? t.saveChanges : t.savePilgrim}
         </Button>
         <Button type="button" variant="ghost" onClick={() => router.back()} disabled={saving}>
-          Cancel
+          {t.cancel}
         </Button>
       </div>
     </form>

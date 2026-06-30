@@ -1,4 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/adminsystem';
 import { PageHeader } from '@/components/admin/ui';
 import { MenuBuilder, type BuilderItem } from '@/components/admin/MenuBuilder';
 
@@ -23,13 +25,14 @@ async function loadHeaderItems(): Promise<BuilderItem[]> {
 }
 
 export default async function MenusPage() {
+  const t = getDict(getLocale());
   const items = await loadHeaderItems();
 
   return (
     <>
       <PageHeader
-        title="Menu Builder"
-        description="Build your header menu. Add pages or custom links, reorder, and nest one item under another. Empty menu = the automatic default nav."
+        title={t.menusTitle}
+        description={t.menusDesc}
       />
       <MenuBuilder initial={items} />
     </>

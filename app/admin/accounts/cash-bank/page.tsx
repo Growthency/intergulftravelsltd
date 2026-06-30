@@ -5,11 +5,16 @@ import { HeadForm } from '@/components/manage/accounts/HeadForm';
 import { loadActiveHeads } from '@/lib/management/accounts-data';
 import { naturalBalance } from '@/lib/management/types';
 import { branchShort } from '@/lib/management/branches';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Cash & Bank' };
 
 export default async function CashBankPage() {
+  const locale = getLocale();
+  const t = getDict(locale);
   const heads = await loadActiveHeads();
   const accounts = heads.filter((h) => h.subtype === 'cash' || h.subtype === 'bank');
 
@@ -23,43 +28,43 @@ export default async function CashBankPage() {
   return (
     <>
       <PageHeader
-        title="Cash & Bank"
-        subtitle="Your liquid accounts. Add bank accounts as you open them."
+        title={t.cashBank.title}
+        subtitle={t.cashBank.subtitle}
         actions={<HeadForm bankOnly />}
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Cash in Hand" value={<Money value={cashTotal} />} icon={Wallet} accent="emerald" />
-        <StatCard label="Total in Banks" value={<Money value={bankTotal} />} icon={Banknote} accent="gold" />
-        <StatCard label="Liquid Total" value={<Money value={cashTotal + bankTotal} />} accent="slate" />
+        <StatCard label={t.cashBank.cashInHand} value={<Money value={cashTotal} />} icon={Wallet} accent="emerald" />
+        <StatCard label={t.cashBank.totalInBanks} value={<Money value={bankTotal} />} icon={Banknote} accent="gold" />
+        <StatCard label={t.cashBank.liquidTotal} value={<Money value={cashTotal + bankTotal} />} accent="slate" />
       </div>
 
       {accounts.length === 0 ? (
         <EmptyState
-          title="No cash or bank accounts yet"
-          hint="Once the database is set up, the system Cash in Hand account appears here. Use “Add Bank Account” to register a bank."
+          title={t.cashBank.noAccountsTitle}
+          hint={t.cashBank.noAccountsHint}
         />
       ) : (
         <TableWrap>
           <thead>
             <tr>
-              <th className={thClass}>Account</th>
-              <th className={thClass}>Type</th>
-              <th className={thClass}>Bank / Number</th>
-              <th className={thClass}>Branch</th>
-              <th className={`${thClass} text-right`}>Balance</th>
+              <th className={thClass}>{t.cashBank.thAccount}</th>
+              <th className={thClass}>{t.cashBank.thType}</th>
+              <th className={thClass}>{t.cashBank.thBankNumber}</th>
+              <th className={thClass}>{t.cashBank.thBranch}</th>
+              <th className={`${thClass} text-right`}>{t.cashBank.thBalance}</th>
             </tr>
           </thead>
           <tbody>
             {accounts.map((h) => (
               <tr key={h.id}>
                 <td className={tdClass}>
-                  <Link href={`/admin/accounts/heads/${h.id}`} className="font-medium text-brand-700 hover:underline">
+                  <Link href={localizedPath(locale, `/admin/accounts/heads/${h.id}`)} className="font-medium text-brand-700 hover:underline">
                     {h.name}
                   </Link>
                 </td>
                 <td className={tdClass}>
-                  <Badge tone={h.subtype === 'cash' ? 'emerald' : 'gold'}>{h.subtype}</Badge>
+                  <Badge tone={h.subtype === 'cash' ? 'emerald' : 'gold'}>{h.subtype === 'cash' ? t.common.cash : t.common.bank}</Badge>
                 </td>
                 <td className={`${tdClass} text-ink-muted`}>
                   {h.subtype === 'bank' ? (

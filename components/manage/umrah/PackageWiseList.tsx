@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { inputClass, Money, EmptyState, TableWrap, thClass, tdClass } from '@/components/manage/ui';
 import { ExportBar } from '@/components/manage/ExportBar';
 import { money } from '@/lib/management/format';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminumrah';
+import { localizedPath } from '@/lib/i18n';
 
 export type PkgPassenger = {
   id: string;
@@ -25,6 +28,8 @@ export function PackageWiseList({
   packages: PkgOption[];
   passengers: PkgPassenger[];
 }) {
+  const locale = useLocale();
+  const t = getDict(locale);
   const [packageId, setPackageId] = useState(packages[0]?.id ?? '');
 
   const selected = packages.find((p) => p.id === packageId);
@@ -47,8 +52,8 @@ export function PackageWiseList({
   if (packages.length === 0) {
     return (
       <EmptyState
-        title="No packages to report on"
-        hint="Create an Umrah package first, then come back to see its assigned passengers."
+        title={t.noPackagesReport}
+        hint={t.noPackagesReportHint}
       />
     );
   }
@@ -69,8 +74,8 @@ export function PackageWiseList({
           <ExportBar
             filename={`umrah-${(selected?.name ?? 'package').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
             title={`Umrah Package — ${selected?.name ?? ''}`}
-            subtitle={`${rows.length} passenger(s) · Paid ${money(totalPaid)} · Due ${money(totalDue)}`}
-            headers={['Name', 'Passport', 'Phone', 'Paid', 'Due']}
+            subtitle={`${rows.length} ${rows.length === 1 ? t.pwPassengerSingular : t.pwPassengerPlural} · ${t.pwExportPaid} ${money(totalPaid)} · ${t.pwExportDue} ${money(totalDue)}`}
+            headers={[t.exName, t.exPassport, t.exPhone, t.pwExportPaid, t.pwExportDue]}
             rows={exportRows}
           />
         )}
@@ -78,26 +83,26 @@ export function PackageWiseList({
 
       {rows.length === 0 ? (
         <EmptyState
-          title="No passengers on this package"
-          hint="Assign passengers to this package from their profile to see them here."
+          title={t.noPassengersOnPackage}
+          hint={t.noPassengersOnPackageHint}
         />
       ) : (
         <>
           <TableWrap>
             <thead>
               <tr>
-                <th className={thClass}>Passenger</th>
-                <th className={thClass}>Passport</th>
-                <th className={thClass}>Phone</th>
-                <th className={`${thClass} text-right`}>Paid</th>
-                <th className={`${thClass} text-right`}>Due</th>
+                <th className={thClass}>{t.thPassenger}</th>
+                <th className={thClass}>{t.thPassport}</th>
+                <th className={thClass}>{t.thPhone}</th>
+                <th className={`${thClass} text-right`}>{t.thPaid}</th>
+                <th className={`${thClass} text-right`}>{t.thDue}</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className="transition hover:bg-muted/40">
                   <td className={tdClass}>
-                    <Link href={`/admin/umrah/${r.id}`} className="font-semibold text-ink hover:text-brand-700">
+                    <Link href={localizedPath(locale, `/admin/umrah/${r.id}`)} className="font-semibold text-ink hover:text-brand-700">
                       {r.name}
                     </Link>
                   </td>
@@ -110,7 +115,7 @@ export function PackageWiseList({
                 </tr>
               ))}
               <tr className="bg-muted/50 font-semibold">
-                <td className={tdClass} colSpan={3}>Total — {rows.length} passenger(s)</td>
+                <td className={tdClass} colSpan={3}>{t.totalLine} — {rows.length} {rows.length === 1 ? t.pwPassengerSingular : t.pwPassengerPlural}</td>
                 <td className={`${tdClass} text-right`}><Money value={totalPaid} /></td>
                 <td className={`${tdClass} text-right`}><Money value={totalDue} /></td>
               </tr>

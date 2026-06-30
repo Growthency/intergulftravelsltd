@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { formatDate, whatsappLink } from '@/lib/utils';
 import { Badge, EmptyState, StatusBadge } from '@/components/admin/ui';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminwebsite';
 
 export type EstimateRow = {
   id: string;
@@ -32,16 +34,23 @@ export type EstimateRow = {
 
 const STATUSES: EstimateRow['status'][] = ['new', 'contacted', 'quoted', 'closed'];
 
-const TABS = [
-  { key: 'all', label: 'All' },
-  { key: 'new', label: 'New' },
-  { key: 'contacted', label: 'Contacted' },
-  { key: 'quoted', label: 'Quoted' },
-  { key: 'closed', label: 'Closed' },
-];
-
 export function EstimatesTable({ rows }: { rows: EstimateRow[] }) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = getDict(locale).estimatesTable;
+  const TABS = [
+    { key: 'all', label: t.tabAll },
+    { key: 'new', label: t.tabNew },
+    { key: 'contacted', label: t.tabContacted },
+    { key: 'quoted', label: t.tabQuoted },
+    { key: 'closed', label: t.tabClosed },
+  ];
+  const statusLabels: Record<EstimateRow['status'], string> = {
+    new: t.optNew,
+    contacted: t.optContacted,
+    quoted: t.optQuoted,
+    closed: t.optClosed,
+  };
   const [tab, setTab] = useState('all');
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -73,13 +82,13 @@ export function EstimatesTable({ rows }: { rows: EstimateRow[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not update the status.');
+        toast.error(data?.error ?? t.couldNotUpdate);
         return;
       }
-      toast.success('Status updated.');
+      toast.success(t.statusUpdated);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setBusyId(null);
     }
@@ -115,7 +124,7 @@ export function EstimatesTable({ rows }: { rows: EstimateRow[] }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name, email or service…"
+            placeholder={t.searchPlaceholder}
             className="w-full rounded-full border border-border bg-card py-2.5 pl-9 pr-4 text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-600/15"
           />
         </div>
@@ -124,12 +133,8 @@ export function EstimatesTable({ rows }: { rows: EstimateRow[] }) {
       {filtered.length === 0 ? (
         <EmptyState
           icon={<Calculator className="h-6 w-6" />}
-          title={rows.length === 0 ? 'No estimate requests yet' : 'Nothing to show here'}
-          description={
-            rows.length === 0
-              ? 'Quote requests from the website estimate form will appear here.'
-              : 'Try a different status tab or clear your search.'
-          }
+          title={rows.length === 0 ? t.emptyTitleNone : t.emptyTitleFiltered}
+          description={rows.length === 0 ? t.emptyDescNone : t.emptyDescFiltered}
         />
       ) : (
         <div className="space-y-3">
@@ -153,7 +158,7 @@ export function EstimatesTable({ rows }: { rows: EstimateRow[] }) {
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold text-ink">{row.name}</span>
-                        <StatusBadge status={row.status} />
+                        <StatusBadge status={row.status} locale={locale} />
                       </div>
                       <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-muted">
                         <span className="font-medium text-ink">{row.service}</span>
@@ -180,7 +185,7 @@ export function EstimatesTable({ rows }: { rows: EstimateRow[] }) {
                     <a
                       href={`mailto:${row.email}`}
                       className="grid h-9 w-9 place-items-center rounded-lg border border-border text-ink-muted transition hover:border-brand-600/40 hover:text-brand-700"
-                      aria-label="Email"
+                      aria-label={t.ariaEmail}
                     >
                       <Mail className="h-4 w-4" />
                     </a>
@@ -189,7 +194,7 @@ export function EstimatesTable({ rows }: { rows: EstimateRow[] }) {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="grid h-9 w-9 place-items-center rounded-lg border border-border text-ink-muted transition hover:border-brand-600/40 hover:text-brand-700"
-                      aria-label="Phone / WhatsApp"
+                      aria-label={t.ariaPhone}
                     >
                       <Phone className="h-4 w-4" />
                     </a>
@@ -202,7 +207,7 @@ export function EstimatesTable({ rows }: { rows: EstimateRow[] }) {
                       >
                         {STATUSES.map((s) => (
                           <option key={s} value={s} className="capitalize">
-                            {s}
+                            {statusLabels[s]}
                           </option>
                         ))}
                       </select>
@@ -216,21 +221,21 @@ export function EstimatesTable({ rows }: { rows: EstimateRow[] }) {
                 {isOpen && (
                   <div className="space-y-3 border-t border-border bg-muted/30 p-4">
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <Detail label="Email">
+                      <Detail label={t.detailEmail}>
                         <a href={`mailto:${row.email}`} className="text-brand-700 hover:underline">
                           {row.email}
                         </a>
                       </Detail>
-                      <Detail label="Phone">{row.phone}</Detail>
-                      <Detail label="Service">{row.service}</Detail>
-                      <Detail label="Package">{row.package || '—'}</Detail>
-                      <Detail label="Preferred travel">{row.travel_date || '—'}</Detail>
-                      <Detail label="Travellers">{row.pax ?? '—'}</Detail>
+                      <Detail label={t.detailPhone}>{row.phone}</Detail>
+                      <Detail label={t.detailService}>{row.service}</Detail>
+                      <Detail label={t.detailPackage}>{row.package || '—'}</Detail>
+                      <Detail label={t.detailPreferredTravel}>{row.travel_date || '—'}</Detail>
+                      <Detail label={t.detailTravellers}>{row.pax ?? '—'}</Detail>
                     </div>
                     <div>
-                      <Badge tone="gray">Notes</Badge>
+                      <Badge tone="gray">{t.notesBadge}</Badge>
                       <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-ink">
-                        {row.message || 'No additional notes provided.'}
+                        {row.message || t.noNotes}
                       </p>
                     </div>
                   </div>

@@ -1,4 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/adminsystem';
 import { contact as defaultContact, social as defaultSocial } from '@/lib/site';
 import { PageHeader } from '@/components/admin/ui';
 import {
@@ -59,13 +61,14 @@ async function loadSettings() {
 }
 
 export default async function SettingsPage() {
+  const t = getDict(getLocale());
   const { contact, social, theme } = await loadSettings();
 
   return (
     <>
       <PageHeader
-        title="Site Settings"
-        description="Update the contact information, social links and theme colours used across the public site."
+        title={t.settingsTitle}
+        description={t.settingsDesc}
       />
       <SettingsForm contact={contact} social={social} theme={theme} />
     </>

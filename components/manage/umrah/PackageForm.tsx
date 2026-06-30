@@ -8,6 +8,8 @@ import { Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
 import { BRANCHES } from '@/lib/management/branches';
 import type { MgmtPackage } from '@/lib/management/types';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminumrah';
 
 type EditTarget = Pick<
   MgmtPackage,
@@ -25,6 +27,7 @@ const empty = {
 };
 
 export function PackageForm({ editing, assignedCount = 0 }: { editing?: EditTarget; assignedCount?: number }) {
+  const t = getDict(useLocale());
   const router = useRouter();
   const [open, setOpen] = useState(!!editing);
   const [saving, setSaving] = useState(false);
@@ -49,7 +52,7 @@ export function PackageForm({ editing, assignedCount = 0 }: { editing?: EditTarg
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) {
-      toast.error('Package name is required.');
+      toast.error(t.toastPkgNameRequired);
       return;
     }
     setSaving(true);
@@ -71,17 +74,17 @@ export function PackageForm({ editing, assignedCount = 0 }: { editing?: EditTarg
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not save the package.');
+        toast.error(data?.error ?? t.toastPkgSaveFail);
         return;
       }
-      toast.success(editing ? 'Package updated.' : 'Package created.');
+      toast.success(editing ? t.toastPkgUpdated : t.toastPkgCreated);
       if (!editing) {
         setForm(empty);
         setOpen(false);
       }
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.toastNetwork);
     } finally {
       setSaving(false);
     }
@@ -89,19 +92,19 @@ export function PackageForm({ editing, assignedCount = 0 }: { editing?: EditTarg
 
   async function remove() {
     if (!editing) return;
-    if (!confirm(`Delete the package "${editing.name}"? This cannot be undone.`)) return;
+    if (!confirm(t.confirmDeletePackage.replace('{name}', editing.name))) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/admin/umrah/packages?id=${editing.id}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not delete the package.');
+        toast.error(data?.error ?? t.toastPkgDeleteFail);
         return;
       }
-      toast.success('Package deleted.');
+      toast.success(t.toastPkgDeleted);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.toastNetwork);
     } finally {
       setDeleting(false);
     }
@@ -111,7 +114,7 @@ export function PackageForm({ editing, assignedCount = 0 }: { editing?: EditTarg
     // Inline edit panel (always expanded).
     return (
       <form onSubmit={submit} className="space-y-4">
-        <Fields form={form} set={set} setActive={(v) => setForm((f) => ({ ...f, active: v }))} />
+        <Fields t={t} form={form} set={set} setActive={(v) => setForm((f) => ({ ...f, active: v }))} />
         <div className="flex items-center justify-between gap-3">
           <Button
             type="button"
@@ -122,11 +125,11 @@ export function PackageForm({ editing, assignedCount = 0 }: { editing?: EditTarg
             className="!border-rose-200 !text-rose-600 hover:!bg-rose-50"
           >
             {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-            {assignedCount > 0 ? `${assignedCount} assigned` : 'Delete'}
+            {assignedCount > 0 ? t.assignedSuffix.replace('{count}', String(assignedCount)) : t.deleteLabel}
           </Button>
           <Button type="submit" size="sm" disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4" />}
-            {saving ? 'Saving…' : 'Save changes'}
+            {saving ? t.savingEllipsis : t.saveChangesPkg}
           </Button>
         </div>
       </form>
@@ -137,18 +140,18 @@ export function PackageForm({ editing, assignedCount = 0 }: { editing?: EditTarg
     <div>
       {!open ? (
         <Button type="button" onClick={() => setOpen(true)}>
-          <Plus className="h-4 w-4" /> New package
+          <Plus className="h-4 w-4" /> {t.newPackage}
         </Button>
       ) : (
         <form onSubmit={submit} className="space-y-4">
-          <Fields form={form} set={set} setActive={(v) => setForm((f) => ({ ...f, active: v }))} />
+          <Fields t={t} form={form} set={set} setActive={(v) => setForm((f) => ({ ...f, active: v }))} />
           <div className="flex items-center justify-end gap-3">
             <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)} disabled={saving}>
-              Cancel
+              {t.cancel}
             </Button>
             <Button type="submit" size="sm" disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              {saving ? 'Saving…' : 'Create package'}
+              {saving ? t.savingEllipsis : t.createPackage}
             </Button>
           </div>
         </form>
@@ -158,36 +161,38 @@ export function PackageForm({ editing, assignedCount = 0 }: { editing?: EditTarg
 }
 
 function Fields({
+  t,
   form,
   set,
   setActive,
 }: {
+  t: ReturnType<typeof getDict>;
   form: typeof empty;
   set: (key: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   setActive: (v: boolean) => void;
 }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <Field label="Package name" required className="sm:col-span-2">
-        <input className={inputClass} value={form.name} onChange={set('name')} placeholder="e.g. Umrah Economy 14 Days" />
+      <Field label={t.packageName} required className="sm:col-span-2">
+        <input className={inputClass} value={form.name} onChange={set('name')} placeholder={t.packageNamePlaceholder} />
       </Field>
-      <Field label="Price (৳)" required>
+      <Field label={t.priceTaka} required>
         <input type="number" min={0} step="0.01" className={inputClass} value={form.price} onChange={set('price')} placeholder="0" />
       </Field>
-      <Field label="Year">
+      <Field label={t.year}>
         <input type="number" className={inputClass} value={form.year} onChange={set('year')} placeholder="2026" />
       </Field>
-      <Field label="Seats / capacity">
-        <input type="number" min={0} className={inputClass} value={form.seats} onChange={set('seats')} placeholder="Optional" />
+      <Field label={t.seatsCapacity}>
+        <input type="number" min={0} className={inputClass} value={form.seats} onChange={set('seats')} placeholder={t.seatsOptional} />
       </Field>
-      <Field label="Branch / Concern" required>
+      <Field label={t.branchConcern} required>
         <select className={inputClass} value={form.branch} onChange={set('branch')}>
           {BRANCHES.map((b) => (
             <option key={b.value} value={b.value}>{b.label}</option>
           ))}
         </select>
       </Field>
-      <Field label="Description" className="sm:col-span-2" hint="Duration, hotel, inclusions, etc.">
+      <Field label={t.descriptionLabel} className="sm:col-span-2" hint={t.descriptionHint}>
         <textarea className={inputClass} rows={2} value={form.description} onChange={set('description')} />
       </Field>
       <label className="flex items-center gap-2 sm:col-span-2">
@@ -197,7 +202,7 @@ function Fields({
           onChange={(e) => setActive(e.target.checked)}
           className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-600/30"
         />
-        <span className="text-sm font-medium text-ink">Active (available for new bookings)</span>
+        <span className="text-sm font-medium text-ink">{t.activeLabel}</span>
       </label>
     </div>
   );

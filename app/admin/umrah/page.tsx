@@ -17,6 +17,9 @@ import { PassengerFilters } from '@/components/manage/umrah/PassengerFilters';
 import { loadPassengers, loadUmrahPackages, isExpiringSoon, monthsUntil, type PassengerRow } from '@/lib/management/umrah';
 import { money } from '@/lib/management/format';
 import { branchShort } from '@/lib/management/branches';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminumrah';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Umrah Passengers' };
@@ -48,8 +51,13 @@ export default async function UmrahPassengersPage({
 }: {
   searchParams: Record<string, string | undefined>;
 }) {
+  const locale = getLocale();
+  const t = getDict(locale);
   const [all, packages] = await Promise.all([loadPassengers(), loadUmrahPackages()]);
   const rows = applyFilters(all, searchParams);
+
+  const statusLabel = (s: string) =>
+    s === 'cancelled' ? t.statusCancelled : s === 'completed' ? t.statusCompleted : t.statusActive;
 
   // Stats are computed across the full (unfiltered) set.
   const total = all.length;
@@ -63,7 +71,7 @@ export default async function UmrahPassengersPage({
     r.passport_no ?? '',
     fmtDate(r.passport_expiry),
     r.phone ?? '',
-    r.package_name ?? 'Unassigned',
+    r.package_name ?? t.unassigned,
     money(r.paid, false),
     money(r.due, false),
   ]);
@@ -71,39 +79,39 @@ export default async function UmrahPassengersPage({
   return (
     <>
       <PageHeader
-        title="Umrah Passengers"
-        subtitle="Passport records, package bookings, payments and dues for every Umrah passenger."
+        title={t.passengersTitle}
+        subtitle={t.passengersSubtitle}
         actions={
           <>
             <ExportBar
               filename="umrah-passengers"
-              title="Umrah Passengers"
-              subtitle={`${rows.length} record(s)`}
-              headers={['Name', 'Passport', 'Expiry', 'Phone', 'Package', 'Paid', 'Due']}
+              title={t.passengersTitle}
+              subtitle={`${rows.length} ${rows.length === 1 ? t.recordSingular : t.recordPlural}`}
+              headers={[t.exName, t.exPassport, t.exExpiry, t.exPhone, t.exPackage, t.exPaid, t.exDue]}
               rows={exportRows}
               orientation="l"
             />
-            <Button href="/admin/umrah/new">
-              <Plus className="h-4 w-4" /> New Passenger
+            <Button href={localizedPath(locale, '/admin/umrah/new')}>
+              <Plus className="h-4 w-4" /> {t.newPassenger}
             </Button>
           </>
         }
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total passengers" value={total} icon={Users} />
+        <StatCard label={t.statTotalPassengers} value={total} icon={Users} />
         <StatCard
-          label="Assigned"
+          label={t.statAssigned}
           value={assigned}
-          hint={`${unassigned} unassigned`}
+          hint={t.statUnassignedHint.replace('{count}', String(unassigned))}
           icon={UserCheck}
           accent="gold"
         />
-        <StatCard label="Total due" value={<Money value={totalDue} />} icon={HandCoins} accent="red" />
+        <StatCard label={t.statTotalDue} value={<Money value={totalDue} />} icon={HandCoins} accent="red" />
         <StatCard
-          label="Passports expiring"
+          label={t.statPassportsExpiring}
           value={expiringSoon}
-          hint="within 6 months"
+          hint={t.statWithinSixMonths}
           icon={CalendarClock}
           accent="slate"
         />
@@ -113,16 +121,12 @@ export default async function UmrahPassengersPage({
 
       {rows.length === 0 ? (
         <EmptyState
-          title={total === 0 ? 'No passengers yet' : 'No passengers match these filters'}
-          hint={
-            total === 0
-              ? 'Add your first Umrah passenger to start tracking passports, packages and payments.'
-              : 'Try clearing or changing the filters above.'
-          }
+          title={total === 0 ? t.emptyNoPassengers : t.emptyNoMatch}
+          hint={total === 0 ? t.emptyNoPassengersHint : t.emptyNoMatchHint}
           action={
             total === 0 ? (
-              <Button href="/admin/umrah/new">
-                <Plus className="h-4 w-4" /> New Passenger
+              <Button href={localizedPath(locale, '/admin/umrah/new')}>
+                <Plus className="h-4 w-4" /> {t.newPassenger}
               </Button>
             ) : undefined
           }
@@ -131,15 +135,15 @@ export default async function UmrahPassengersPage({
         <TableWrap>
           <thead>
             <tr>
-              <th className={thClass}>Passenger</th>
-              <th className={thClass}>Passport</th>
-              <th className={thClass}>Expiry</th>
-              <th className={thClass}>Phone</th>
-              <th className={thClass}>Package</th>
-              <th className={`${thClass} text-right`}>Paid</th>
-              <th className={`${thClass} text-right`}>Due</th>
-              <th className={thClass}>Branch</th>
-              <th className={`${thClass} text-right`}>Manage</th>
+              <th className={thClass}>{t.thPassenger}</th>
+              <th className={thClass}>{t.thPassport}</th>
+              <th className={thClass}>{t.thExpiry}</th>
+              <th className={thClass}>{t.thPhone}</th>
+              <th className={thClass}>{t.thPackage}</th>
+              <th className={`${thClass} text-right`}>{t.thPaid}</th>
+              <th className={`${thClass} text-right`}>{t.thDue}</th>
+              <th className={thClass}>{t.thBranch}</th>
+              <th className={`${thClass} text-right`}>{t.thManage}</th>
             </tr>
           </thead>
           <tbody>
@@ -150,13 +154,13 @@ export default async function UmrahPassengersPage({
               return (
                 <tr key={r.id} className="transition hover:bg-muted/40">
                   <td className={tdClass}>
-                    <Link href={`/admin/umrah/${r.id}`} className="font-semibold text-ink hover:text-brand-700">
+                    <Link href={localizedPath(locale, `/admin/umrah/${r.id}`)} className="font-semibold text-ink hover:text-brand-700">
                       {r.name}
                     </Link>
                     {r.name_bn && <p className="text-xs text-ink-muted">{r.name_bn}</p>}
                     {r.status !== 'active' && (
                       <span className="mt-1 inline-block">
-                        <Badge tone={r.status === 'cancelled' ? 'red' : 'emerald'}>{r.status}</Badge>
+                        <Badge tone={r.status === 'cancelled' ? 'red' : 'emerald'}>{statusLabel(r.status)}</Badge>
                       </span>
                     )}
                   </td>
@@ -165,9 +169,9 @@ export default async function UmrahPassengersPage({
                     {r.passport_expiry ? (
                       <span className={expired ? 'font-semibold text-red-600' : expiring ? 'font-semibold text-amber-600' : ''}>
                         {fmtDate(r.passport_expiry)}
-                        {expired && <span className="ml-1 text-xs">(expired)</span>}
+                        {expired && <span className="ml-1 text-xs">({t.expired})</span>}
                         {!expired && expiring && months !== null && (
-                          <span className="ml-1 text-xs">({months}m)</span>
+                          <span className="ml-1 text-xs">({months}{t.monthsSuffix})</span>
                         )}
                       </span>
                     ) : (
@@ -179,7 +183,7 @@ export default async function UmrahPassengersPage({
                     {r.package_name ? (
                       r.package_name
                     ) : (
-                      <span className="text-ink-muted">Unassigned</span>
+                      <span className="text-ink-muted">{t.unassigned}</span>
                     )}
                   </td>
                   <td className={`${tdClass} text-right`}>
@@ -193,10 +197,10 @@ export default async function UmrahPassengersPage({
                   </td>
                   <td className={`${tdClass} whitespace-nowrap text-right`}>
                     <RecordRowActions
-                      editHref={`/admin/umrah/${r.id}/edit`}
+                      editHref={localizedPath(locale, `/admin/umrah/${r.id}/edit`)}
                       deleteEndpoint={`/api/admin/umrah/${r.id}`}
                       name={r.name}
-                      confirmMessage={`Delete ${r.name}? This permanently removes the passenger, their payments and all ledger entries. This cannot be undone.`}
+                      confirmMessage={t.confirmDelete.replace('{name}', r.name)}
                     />
                   </td>
                 </tr>
@@ -208,7 +212,7 @@ export default async function UmrahPassengersPage({
 
       {total === 0 && (
         <p className="mt-6 flex items-center justify-center gap-2 text-xs text-ink-muted">
-          <Plane className="h-3.5 w-3.5" /> Umrah management — Inter Gulf Travels Ltd.
+          <Plane className="h-3.5 w-3.5" /> {t.footerNote}
         </p>
       )}
     </>

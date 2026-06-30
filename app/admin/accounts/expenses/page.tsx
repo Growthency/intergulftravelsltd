@@ -6,6 +6,8 @@ import type { HeadOption } from '@/components/manage/accounts/VoucherForm';
 import { loadActiveHeads, loadTransactions, headMap, headName } from '@/lib/management/accounts-data';
 import { branchShort } from '@/lib/management/branches';
 import { money } from '@/lib/management/format';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Expenses' };
@@ -15,6 +17,7 @@ function toOption(h: { id: string; name: string; type: string; subtype: string; 
 }
 
 export default async function ExpensesPage() {
+  const tt = getDict(getLocale());
   const heads = await loadActiveHeads();
   const map = headMap(heads);
 
@@ -50,16 +53,16 @@ export default async function ExpensesPage() {
   return (
     <>
       <PageHeader
-        title="Expenses"
-        subtitle="Every expense voucher, summarised by head."
+        title={tt.expenses.title}
+        subtitle={tt.expenses.subtitle}
         actions={
           expenseTxns.length > 0 ? (
             <ExportBar
               filename="expenses"
-              title="Expense Register"
-              subtitle={`Total spent: ${money(total)}`}
+              title={tt.expenses.exportTitle}
+              subtitle={`${tt.expenses.totalSpent}: ${money(total)}`}
               orientation="l"
-              headers={['Date', 'Voucher', 'Expense head', 'Paid from', 'Amount', 'Branch', 'Narration']}
+              headers={[tt.expenses.exHDate, tt.expenses.exHVoucher, tt.expenses.exHExpenseHead, tt.expenses.exHPaidFrom, tt.expenses.exHAmount, tt.expenses.exHBranch, tt.expenses.exHNarration]}
               rows={exportRows}
             />
           ) : undefined
@@ -67,9 +70,9 @@ export default async function ExpensesPage() {
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Total Expenses" value={<Money value={total} />} icon={ScrollText} accent="red" />
-        <StatCard label="Expense Vouchers" value={expenseTxns.length} accent="slate" />
-        <StatCard label="Expense Heads" value={expenseHeads.length} accent="slate" />
+        <StatCard label={tt.expenses.totalExpenses} value={<Money value={total} />} icon={ScrollText} accent="red" />
+        <StatCard label={tt.expenses.expenseVouchers} value={expenseTxns.length} accent="slate" />
+        <StatCard label={tt.expenses.expenseHeads} value={expenseHeads.length} accent="slate" />
       </div>
 
       <div className="mb-6">
@@ -78,7 +81,7 @@ export default async function ExpensesPage() {
 
       {summary.length > 0 && (
         <Card className="mb-6">
-          <h2 className="mb-3 font-display text-base font-semibold text-ink">By expense head</h2>
+          <h2 className="mb-3 font-display text-base font-semibold text-ink">{tt.expenses.byExpenseHead}</h2>
           <div className="grid gap-2 sm:grid-cols-2">
             {summary.map((s) => (
               <div key={s.name} className="flex items-center justify-between rounded-xl bg-muted/40 px-3 py-2 text-sm">
@@ -92,20 +95,20 @@ export default async function ExpensesPage() {
 
       {expenseTxns.length === 0 ? (
         <EmptyState
-          title="No expenses recorded"
-          hint="Use “Add Expense” above to post your first expense voucher."
+          title={tt.expenses.noExpensesTitle}
+          hint={tt.expenses.noExpensesHint}
         />
       ) : (
         <TableWrap>
           <thead>
             <tr>
-              <th className={thClass}>Date</th>
-              <th className={thClass}>Voucher</th>
-              <th className={thClass}>Expense head</th>
-              <th className={thClass}>Paid from</th>
-              <th className={`${thClass} text-right`}>Amount</th>
-              <th className={thClass}>Branch</th>
-              <th className={thClass}>Narration</th>
+              <th className={thClass}>{tt.expenses.thDate}</th>
+              <th className={thClass}>{tt.expenses.thVoucher}</th>
+              <th className={thClass}>{tt.expenses.thExpenseHead}</th>
+              <th className={thClass}>{tt.expenses.thPaidFrom}</th>
+              <th className={`${thClass} text-right`}>{tt.expenses.thAmount}</th>
+              <th className={thClass}>{tt.expenses.thBranch}</th>
+              <th className={thClass}>{tt.expenses.thNarration}</th>
             </tr>
           </thead>
           <tbody>

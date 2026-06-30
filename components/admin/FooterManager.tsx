@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Loader2, X, PanelsTopLeft } from 'lucide-react';
 import { Card, Field, inputClass, AdminButton, EmptyState } from '@/components/admin/ui';
 import { confirmDialog } from '@/components/admin/confirm';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminsystem';
 
 export type FooterLink = {
   id: string;
@@ -33,6 +35,7 @@ function titleCase(key: string) {
 }
 
 export function FooterManager({ links }: { links: FooterLink[] }) {
+  const t = getDict(useLocale());
   const router = useRouter();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
@@ -75,7 +78,7 @@ export function FooterManager({ links }: { links: FooterLink[] }) {
       draft.href.trim().length < 1 ||
       draft.column_key.trim().length < 1
     ) {
-      toast.error('Label, link and column are all required.');
+      toast.error(t.footerAllRequired);
       return;
     }
     setSaving(true);
@@ -94,21 +97,21 @@ export function FooterManager({ links }: { links: FooterLink[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not save the link.');
+        toast.error(data?.error ?? t.couldNotSaveLink);
         return;
       }
-      toast.success(draft.id ? 'Footer link updated.' : 'Footer link added.');
+      toast.success(draft.id ? t.footerLinkUpdated : t.footerLinkAdded);
       setDraft(null);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setSaving(false);
     }
   }
 
   async function remove(link: FooterLink) {
-    if (!(await confirmDialog({ message: `Delete "${link.label}"?`, confirmText: 'Delete', danger: true }))) return;
+    if (!(await confirmDialog({ message: t.confirmDeleteItem(link.label), confirmText: t.delete, danger: true }))) return;
     setDeletingId(link.id);
     try {
       const res = await fetch(`/api/admin/footer?id=${encodeURIComponent(link.id)}`, {
@@ -116,13 +119,13 @@ export function FooterManager({ links }: { links: FooterLink[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not delete the link.');
+        toast.error(data?.error ?? t.couldNotDeleteLink);
         return;
       }
-      toast.success('Footer link deleted.');
+      toast.success(t.footerLinkDeleted);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setDeletingId(null);
     }
@@ -132,7 +135,7 @@ export function FooterManager({ links }: { links: FooterLink[] }) {
     <div className="space-y-5">
       <div className="flex justify-end">
         <AdminButton variant="primary" onClick={() => openNew()}>
-          <Plus className="h-4 w-4" /> Add footer link
+          <Plus className="h-4 w-4" /> {t.addFooterLink}
         </AdminButton>
       </div>
 
@@ -140,39 +143,39 @@ export function FooterManager({ links }: { links: FooterLink[] }) {
         <Card className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-ink">
-              {draft.id ? 'Edit footer link' : 'New footer link'}
+              {draft.id ? t.editFooterLink : t.newFooterLink}
             </p>
             <button
               onClick={() => setDraft(null)}
               className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition hover:bg-muted"
-              aria-label="Close"
+              aria-label={t.close}
             >
               <X className="h-4 w-4" />
             </button>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Label">
+            <Field label={t.label}>
               <input
                 className={inputClass}
                 value={draft.label}
-                placeholder="e.g. Hajj Packages"
+                placeholder={t.menuLabelPlaceholder}
                 onChange={(e) => setDraft({ ...draft, label: e.target.value })}
               />
             </Field>
-            <Field label="Link" hint="Path or full URL">
+            <Field label={t.link} hint={t.pathOrFullUrl}>
               <input
                 className={inputClass}
                 value={draft.href}
-                placeholder="/hajj/packages"
+                placeholder={t.menuHrefPlaceholder}
                 onChange={(e) => setDraft({ ...draft, href: e.target.value })}
               />
             </Field>
-            <Field label="Column" hint="Groups links together">
+            <Field label={t.column} hint={t.columnHint}>
               <input
                 className={inputClass}
                 list="footer-columns"
                 value={draft.column_key}
-                placeholder="helpSupport"
+                placeholder={t.columnPlaceholder}
                 onChange={(e) => setDraft({ ...draft, column_key: e.target.value })}
               />
               <datalist id="footer-columns">
@@ -181,7 +184,7 @@ export function FooterManager({ links }: { links: FooterLink[] }) {
                 ))}
               </datalist>
             </Field>
-            <Field label="Sort" hint="Lower first">
+            <Field label={t.sort} hint={t.lowerFirst}>
               <input
                 type="number"
                 className={inputClass}
@@ -192,11 +195,11 @@ export function FooterManager({ links }: { links: FooterLink[] }) {
           </div>
           <div className="flex justify-end gap-2">
             <AdminButton variant="ghost" onClick={() => setDraft(null)}>
-              Cancel
+              {t.cancel}
             </AdminButton>
             <AdminButton variant="primary" onClick={save} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {draft.id ? 'Save changes' : 'Add link'}
+              {draft.id ? t.saveChanges : t.addLink}
             </AdminButton>
           </div>
         </Card>
@@ -205,11 +208,11 @@ export function FooterManager({ links }: { links: FooterLink[] }) {
       {links.length === 0 ? (
         <EmptyState
           icon={<PanelsTopLeft className="h-6 w-6" />}
-          title="No footer links yet"
-          description="Add links and group them into columns to build the site footer."
+          title={t.noFooterTitle}
+          description={t.noFooterDesc}
           action={
             <AdminButton variant="primary" onClick={() => openNew()}>
-              <Plus className="h-4 w-4" /> Add footer link
+              <Plus className="h-4 w-4" /> {t.addFooterLink}
             </AdminButton>
           }
         />
@@ -226,7 +229,7 @@ export function FooterManager({ links }: { links: FooterLink[] }) {
                   onClick={() => openNew(column)}
                   className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Add
+                  <Plus className="h-3.5 w-3.5" /> {t.add}
                 </button>
               </div>
               <ul className="divide-y divide-border">
@@ -243,7 +246,7 @@ export function FooterManager({ links }: { links: FooterLink[] }) {
                       <button
                         onClick={() => openEdit(link)}
                         className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition hover:bg-brand-50 hover:text-brand-700"
-                        aria-label="Edit"
+                        aria-label={t.edit}
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
@@ -251,7 +254,7 @@ export function FooterManager({ links }: { links: FooterLink[] }) {
                         onClick={() => remove(link)}
                         disabled={deletingId === link.id}
                         className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
-                        aria-label="Delete"
+                        aria-label={t.delete}
                       >
                         {deletingId === link.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

@@ -24,6 +24,9 @@ import { naturalBalance, type AccountHead, type UmrahPassenger, type Payment } f
 import { loadUmrahPackages, loadBankAccounts, monthsUntil, isExpiringSoon } from '@/lib/management/umrah';
 import { money } from '@/lib/management/format';
 import { branchLabel } from '@/lib/management/branches';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminumrah';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Passenger Profile' };
@@ -95,7 +98,24 @@ export default async function PassengerProfilePage({ params }: { params: { id: s
   const [{ passenger, head, packageName, packagePrice, payments, alreadyCharged }, packages, bankAccounts] =
     await Promise.all([loadProfile(params.id), loadUmrahPackages(), loadBankAccounts()]);
 
+  const locale = getLocale();
+  const t = getDict(locale);
+
   if (!passenger) notFound();
+
+  const statusLabel = (s: string) =>
+    s === 'cancelled' ? t.statusCancelled : s === 'completed' ? t.statusCompleted : t.statusActive;
+  const typeLabel = (ty: string) =>
+    ty === 'refund'
+      ? t.typeRefund
+      : ty === 'advance'
+        ? t.typeAdvance
+        : ty === 'token'
+          ? t.typeToken
+          : ty === 'full'
+            ? t.typeFull
+            : t.typeInstallment;
+  const methodLabel = (m: string) => (m === 'bank' ? t.methodBankDisplay : t.methodCashDisplay);
 
   const due = head ? Math.max(0, naturalBalance(head)) : 0;
   const paid = payments.reduce((s, p) => s + (p.type === 'refund' ? -Number(p.amount) : Number(p.amount)), 0);
@@ -104,36 +124,36 @@ export default async function PassengerProfilePage({ params }: { params: { id: s
   const expired = months !== null && months < 0;
 
   const printInfo: [string, string][] = [
-    ['Name (English)', passenger.name],
-    ['Name (Bangla)', passenger.name_bn ?? '—'],
-    ['Passport No.', passenger.passport_no ?? '—'],
-    ['Passport Issue', fmtDate(passenger.passport_issue)],
-    ['Passport Expiry', fmtDate(passenger.passport_expiry)],
-    ['Date of Birth', fmtDate(passenger.dob)],
-    ['Phone', passenger.phone ?? '—'],
-    ['Address', passenger.address ?? '—'],
-    ['Branch', branchLabel(passenger.branch)],
-    ['Package', packageName ?? 'Unassigned'],
-    ['Package Price', packagePrice != null ? money(packagePrice) : '—'],
-    ['Total Paid', money(paid)],
-    ['Balance Due', money(due)],
-    ['Status', passenger.status],
+    [t.printNameEnglish, passenger.name],
+    [t.printNameBangla, passenger.name_bn ?? '—'],
+    [t.printPassportNo, passenger.passport_no ?? '—'],
+    [t.printPassportIssue, fmtDate(passenger.passport_issue)],
+    [t.printPassportExpiry, fmtDate(passenger.passport_expiry)],
+    [t.printDob, fmtDate(passenger.dob)],
+    [t.printPhone, passenger.phone ?? '—'],
+    [t.printAddress, passenger.address ?? '—'],
+    [t.printBranch, branchLabel(passenger.branch)],
+    [t.printPackage, packageName ?? t.unassigned],
+    [t.printPackagePrice, packagePrice != null ? money(packagePrice) : '—'],
+    [t.printTotalPaid, money(paid)],
+    [t.printBalanceDue, money(due)],
+    [t.printStatus, statusLabel(passenger.status)],
   ];
   const printPayments = payments.map((p) => ({
     date: fmtDate(p.date),
     voucher: p.voucher_no ?? '—',
-    type: p.type,
-    method: p.method,
+    type: typeLabel(p.type),
+    method: methodLabel(p.method),
     amount: money(p.amount, false),
   }));
 
   return (
     <>
       <Link
-        href="/admin/umrah"
+        href={localizedPath(locale, '/admin/umrah')}
         className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-ink-muted transition hover:text-brand-700"
       >
-        <ChevronLeft className="h-4 w-4" /> Back to passengers
+        <ChevronLeft className="h-4 w-4" /> {t.backToPassengers}
       </Link>
 
       <PageHeader
@@ -142,14 +162,14 @@ export default async function PassengerProfilePage({ params }: { params: { id: s
         actions={
           <div className="flex items-center gap-2">
             <Link
-              href={`/admin/umrah/${passenger.id}/edit`}
+              href={localizedPath(locale, `/admin/umrah/${passenger.id}/edit`)}
               className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3.5 py-2 text-sm font-semibold text-ink shadow-soft transition hover:border-brand-600/40 hover:text-brand-700"
             >
-              <Pencil className="h-4 w-4" /> Edit
+              <Pencil className="h-4 w-4" /> {t.edit}
             </Link>
             <PrintProfile
               name={passenger.name}
-              subtitle={`${branchLabel(passenger.branch)} · ${packageName ?? 'Unassigned'}`}
+              subtitle={`${branchLabel(passenger.branch)} · ${packageName ?? t.unassigned}`}
               info={printInfo}
               payments={printPayments}
             />
@@ -159,12 +179,12 @@ export default async function PassengerProfilePage({ params }: { params: { id: s
 
       {expired && (
         <div className="mb-5 flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-          <AlertTriangle className="h-4 w-4" /> This passenger&apos;s passport has expired.
+          <AlertTriangle className="h-4 w-4" /> {t.passportExpiredAlert}
         </div>
       )}
       {!expired && expiring && passenger.status === 'active' && (
         <div className="mb-5 flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">
-          <AlertTriangle className="h-4 w-4" /> Passport expires in {months} month(s) — renew before travel.
+          <AlertTriangle className="h-4 w-4" /> {t.passportExpiringAlert.replace('{months}', String(months))}
         </div>
       )}
 
@@ -183,28 +203,28 @@ export default async function PassengerProfilePage({ params }: { params: { id: s
                 />
               ) : (
                 <div className="grid h-40 w-32 shrink-0 place-items-center rounded-2xl border border-dashed border-border bg-muted text-xs text-ink-muted">
-                  No photo
+                  {t.noPhoto}
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <h2 className="font-display text-lg font-semibold text-ink">Passport &amp; contact</h2>
+                <h2 className="font-display text-lg font-semibold text-ink">{t.passportContact}</h2>
                 <dl className="mt-3 grid gap-x-6 gap-y-3 sm:grid-cols-2">
-                  <Info icon={CreditCard} label="Passport no." value={passenger.passport_no ?? '—'} mono />
+                  <Info icon={CreditCard} label={t.infoPassportNo} value={passenger.passport_no ?? '—'} mono />
                   <Info
                     icon={CalendarCheck}
-                    label="Issue date"
+                    label={t.infoIssueDate}
                     value={fmtDate(passenger.passport_issue)}
                   />
                   <Info
                     icon={CalendarClock}
-                    label="Expiry date"
+                    label={t.infoExpiryDate}
                     value={fmtDate(passenger.passport_expiry)}
                     danger={expired}
                     warn={!expired && expiring}
                   />
-                  <Info icon={Cake} label="Date of birth" value={fmtDate(passenger.dob)} />
-                  <Info icon={Phone} label="Phone" value={passenger.phone ?? '—'} mono />
-                  <Info icon={MapPin} label="Address" value={passenger.address ?? '—'} />
+                  <Info icon={Cake} label={t.infoDob} value={fmtDate(passenger.dob)} />
+                  <Info icon={Phone} label={t.infoPhone} value={passenger.phone ?? '—'} mono />
+                  <Info icon={MapPin} label={t.infoAddress} value={passenger.address ?? '—'} />
                 </dl>
                 {passenger.note && (
                   <p className="mt-4 rounded-xl bg-muted/60 px-3 py-2 text-sm text-ink-muted">{passenger.note}</p>
@@ -216,26 +236,26 @@ export default async function PassengerProfilePage({ params }: { params: { id: s
           {/* Payment history */}
           <Card className="!p-0">
             <div className="flex items-center justify-between gap-3 p-5">
-              <h2 className="font-display text-lg font-semibold text-ink">Payment history</h2>
-              <Badge tone="emerald">{payments.length} entr{payments.length === 1 ? 'y' : 'ies'}</Badge>
+              <h2 className="font-display text-lg font-semibold text-ink">{t.paymentHistory}</h2>
+              <Badge tone="emerald">{payments.length} {payments.length === 1 ? t.entrySingular : t.entryPlural}</Badge>
             </div>
             {payments.length === 0 ? (
               <div className="px-5 pb-6">
                 <EmptyState
-                  title="No payments yet"
-                  hint="Record token money, advances or installments using the form on the right."
+                  title={t.noPaymentsTitle}
+                  hint={t.noPaymentsHint}
                 />
               </div>
             ) : (
               <TableWrap className="!rounded-t-none !border-0 !border-t !shadow-none">
                 <thead>
                   <tr>
-                    <th className={thClass}>Date</th>
-                    <th className={thClass}>Voucher</th>
-                    <th className={thClass}>Type</th>
-                    <th className={thClass}>Method</th>
-                    <th className={`${thClass} text-right`}>Amount</th>
-                    <th className={thClass}>Narration</th>
+                    <th className={thClass}>{t.thDate}</th>
+                    <th className={thClass}>{t.thVoucher}</th>
+                    <th className={thClass}>{t.thType}</th>
+                    <th className={thClass}>{t.thMethod}</th>
+                    <th className={`${thClass} text-right`}>{t.thAmount}</th>
+                    <th className={thClass}>{t.thNarration}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -244,9 +264,9 @@ export default async function PassengerProfilePage({ params }: { params: { id: s
                       <td className={tdClass}>{fmtDate(p.date)}</td>
                       <td className={`${tdClass} tabular-nums`}>{p.voucher_no ?? '—'}</td>
                       <td className={tdClass}>
-                        <Badge tone={p.type === 'refund' ? 'red' : 'gold'}>{p.type}</Badge>
+                        <Badge tone={p.type === 'refund' ? 'red' : 'gold'}>{typeLabel(p.type)}</Badge>
                       </td>
-                      <td className={`${tdClass} capitalize`}>{p.method}</td>
+                      <td className={tdClass}>{methodLabel(p.method)}</td>
                       <td className={`${tdClass} text-right`}>
                         <Money value={p.type === 'refund' ? -Number(p.amount) : Number(p.amount)} />
                       </td>
@@ -263,29 +283,29 @@ export default async function PassengerProfilePage({ params }: { params: { id: s
         <div className="space-y-6">
           {/* Account summary */}
           <Card className="space-y-4">
-            <h2 className="font-display text-lg font-semibold text-ink">Account summary</h2>
+            <h2 className="font-display text-lg font-semibold text-ink">{t.accountSummary}</h2>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-brand-50 p-4">
                 <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-brand-700">
-                  <Wallet className="h-3.5 w-3.5" /> Paid
+                  <Wallet className="h-3.5 w-3.5" /> {t.paid}
                 </p>
                 <p className="mt-1 font-display text-lg font-semibold text-ink">{money(paid)}</p>
               </div>
               <div className={`rounded-2xl p-4 ${due > 0 ? 'bg-red-50' : 'bg-muted'}`}>
                 <p className={`flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide ${due > 0 ? 'text-red-600' : 'text-ink-muted'}`}>
-                  <HandCoins className="h-3.5 w-3.5" /> Due
+                  <HandCoins className="h-3.5 w-3.5" /> {t.due}
                 </p>
                 <p className={`mt-1 font-display text-lg font-semibold ${due > 0 ? 'text-red-600' : 'text-ink'}`}>{money(due)}</p>
               </div>
             </div>
             {packagePrice != null && (
               <p className="text-xs text-ink-muted">
-                Package price: <span className="font-medium text-ink">{money(packagePrice)}</span>
-                {head?.code && <> · Ledger: <span className="font-medium text-ink">{head.code}</span></>}
+                {t.packagePriceLine} <span className="font-medium text-ink">{money(packagePrice)}</span>
+                {head?.code && <> · {t.ledgerLine} <span className="font-medium text-ink">{head.code}</span></>}
               </p>
             )}
             <div className="border-t border-border pt-3">
-              <p className="mb-1.5 text-sm font-medium text-ink">Status</p>
+              <p className="mb-1.5 text-sm font-medium text-ink">{t.statusHeading}</p>
               <StatusControl passengerId={passenger.id} status={passenger.status} />
             </div>
           </Card>
@@ -293,13 +313,13 @@ export default async function PassengerProfilePage({ params }: { params: { id: s
           {/* Assign package */}
           <Card className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="font-display text-lg font-semibold text-ink">Package</h2>
-              {packageName ? <Badge tone="emerald">Assigned</Badge> : <Badge>Unassigned</Badge>}
+              <h2 className="font-display text-lg font-semibold text-ink">{t.packageHeading}</h2>
+              {packageName ? <Badge tone="emerald">{t.badgeAssigned}</Badge> : <Badge>{t.badgeUnassigned}</Badge>}
             </div>
-            {packageName && <p className="text-sm text-ink-muted">Current: <span className="font-medium text-ink">{packageName}</span></p>}
+            {packageName && <p className="text-sm text-ink-muted">{t.currentLine} <span className="font-medium text-ink">{packageName}</span></p>}
             {packages.filter((p) => p.active || p.id === passenger.package_id).length === 0 ? (
               <p className="text-sm text-ink-muted">
-                No packages yet. <Link href="/admin/umrah/packages" className="font-medium text-brand-700">Create one</Link>.
+                {t.noPackagesProfile} <Link href={localizedPath(locale, '/admin/umrah/packages')} className="font-medium text-brand-700">{t.createOne}</Link>.
               </p>
             ) : (
               <AssignPackage
@@ -316,7 +336,7 @@ export default async function PassengerProfilePage({ params }: { params: { id: s
           {/* Record payment */}
           <Card className="space-y-4">
             <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
-              <Receipt className="h-4 w-4 text-brand-600" /> Record payment
+              <Receipt className="h-4 w-4 text-brand-600" /> {t.recordPaymentHeading}
             </h2>
             <RecordPayment passengerId={passenger.id} bankAccounts={bankAccounts} due={due} />
           </Card>

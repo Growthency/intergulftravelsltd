@@ -5,6 +5,8 @@ import { isAdminEmail } from '@/lib/admin';
 import { AdminShell } from '@/components/admin/AdminShell';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { AuthForm } from '@/components/auth/AuthForm';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/auth';
 import { signOut } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -26,11 +28,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   // Not signed in → show the staff login right here at /admin (no separate URL).
   if (!user) {
+    const s = getDict(getLocale()).shell;
     return (
       <AuthShell
-        eyebrow="Admin Panel"
-        title="Inter Gulf Travels — Admin"
-        subtitle="Sign in with your authorised staff credentials to continue."
+        eyebrow={s.staffEyebrow}
+        title={s.staffTitle}
+        subtitle={s.staffSubtitle}
         variant="staff"
       >
         <AuthForm portal />

@@ -18,6 +18,8 @@ import {
 import { Card, Field, inputClass, AdminButton, EmptyState, Badge } from '@/components/admin/ui';
 import { confirmDialog } from '@/components/admin/confirm';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminwebsite';
 
 export type AdminVideo = {
   id: string;
@@ -63,6 +65,7 @@ const emptyForm: FormState = {
 
 export function VideosManager({ initial }: { initial: AdminVideo[] }) {
   const router = useRouter();
+  const t = getDict(useLocale()).videosMgr;
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -101,11 +104,11 @@ export function VideosManager({ initial }: { initial: AdminVideo[] }) {
 
   async function save() {
     if (form.title.trim().length < 1) {
-      toast.error('Please add a title.');
+      toast.error(t.addTitleError);
       return;
     }
     if (!previewId) {
-      toast.error('Please paste a valid YouTube link.');
+      toast.error(t.validLinkError);
       return;
     }
     setSaving(true);
@@ -125,14 +128,14 @@ export function VideosManager({ initial }: { initial: AdminVideo[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not save the video.');
+        toast.error(data?.error ?? t.couldNotSave);
         return;
       }
-      toast.success(editingId ? 'Video updated.' : 'Video added.');
+      toast.success(editingId ? t.videoUpdated : t.videoAdded);
       closeForm();
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setSaving(false);
     }
@@ -148,20 +151,20 @@ export function VideosManager({ initial }: { initial: AdminVideo[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not update the video.');
+        toast.error(data?.error ?? t.couldNotUpdate);
         return;
       }
-      toast.success(video.active ? 'Video hidden from the site.' : 'Video is now live.');
+      toast.success(video.active ? t.videoHidden : t.videoLive);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setBusyId(null);
     }
   }
 
   async function remove(video: AdminVideo) {
-    if (!(await confirmDialog({ message: `Delete "${video.title}"? This cannot be undone.`, confirmText: 'Delete', danger: true }))) return;
+    if (!(await confirmDialog({ message: t.confirmDelete(video.title), confirmText: t.confirmText, danger: true }))) return;
     setBusyId(video.id);
     try {
       const res = await fetch(`/api/admin/videos?id=${encodeURIComponent(video.id)}`, {
@@ -169,13 +172,13 @@ export function VideosManager({ initial }: { initial: AdminVideo[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not delete the video.');
+        toast.error(data?.error ?? t.couldNotDelete);
         return;
       }
-      toast.success('Video deleted.');
+      toast.success(t.videoDeleted);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setBusyId(null);
     }
@@ -186,18 +189,18 @@ export function VideosManager({ initial }: { initial: AdminVideo[] }) {
       <div className="flex justify-end">
         <AdminButton variant="primary" onClick={open ? closeForm : startCreate}>
           {open ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-          {open ? 'Close' : 'Add video'}
+          {open ? t.close : t.addVideo}
         </AdminButton>
       </div>
 
       {open && (
         <Card className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-ink">{editingId ? 'Edit video' : 'New video'}</p>
+            <p className="text-sm font-semibold text-ink">{editingId ? t.editVideo : t.newVideo}</p>
             <button
               onClick={closeForm}
               className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition hover:bg-muted"
-              aria-label="Close"
+              aria-label={t.ariaClose}
             >
               <X className="h-4 w-4" />
             </button>
@@ -211,7 +214,7 @@ export function VideosManager({ initial }: { initial: AdminVideo[] }) {
                   <Image
                     key={previewId}
                     src={thumbOf(previewId)}
-                    alt="Video thumbnail preview"
+                    alt={t.thumbPreviewAlt}
                     fill
                     sizes="(min-width: 1024px) 30vw, 100vw"
                     className="object-cover"
@@ -220,45 +223,45 @@ export function VideosManager({ initial }: { initial: AdminVideo[] }) {
                   <div className="grid h-full w-full place-items-center text-center text-sm text-ink-muted">
                     <span className="flex flex-col items-center gap-2 px-4">
                       <VideoIcon className="h-7 w-7 opacity-60" />
-                      Paste a YouTube link to preview the thumbnail
+                      {t.pasteToPreview}
                     </span>
                   </div>
                 )}
               </div>
               {previewId && (
                 <p className="mt-2 truncate text-xs text-ink-muted">
-                  Detected video id: <span className="font-mono text-ink">{previewId}</span>
+                  {t.detectedId} <span className="font-mono text-ink">{previewId}</span>
                 </p>
               )}
             </div>
 
             <div className="space-y-3">
-              <Field label="Title">
+              <Field label={t.titleLabel}>
                 <input
                   className={inputClass}
                   value={form.title}
-                  placeholder="e.g. How to perform Tawaf — step by step"
+                  placeholder={t.titlePlaceholder}
                   onChange={(e) => set('title', e.target.value)}
                 />
               </Field>
-              <Field label="YouTube link" hint="watch, youtu.be, shorts or live URLs all work">
+              <Field label={t.youtubeLabel} hint={t.youtubeHint}>
                 <input
                   className={inputClass}
                   value={form.youtube_url}
-                  placeholder="https://www.youtube.com/watch?v=..."
+                  placeholder={t.youtubePlaceholder}
                   onChange={(e) => set('youtube_url', e.target.value)}
                 />
               </Field>
-              <Field label="Description" hint="Optional — shown beneath the player">
+              <Field label={t.descriptionLabel} hint={t.descriptionHint}>
                 <textarea
                   className={cn(inputClass, 'min-h-[88px] resize-y')}
                   value={form.description}
-                  placeholder="A short summary of what this video covers."
+                  placeholder={t.descriptionPlaceholder}
                   onChange={(e) => set('description', e.target.value)}
                 />
               </Field>
               <div className="grid grid-cols-2 items-end gap-3">
-                <Field label="Sort order" hint="Lower shows first">
+                <Field label={t.sortOrderLabel} hint={t.sortOrderHint}>
                   <input
                     type="number"
                     className={inputClass}
@@ -267,7 +270,7 @@ export function VideosManager({ initial }: { initial: AdminVideo[] }) {
                   />
                 </Field>
                 <label className="flex h-[46px] cursor-pointer items-center justify-between gap-3 rounded-xl border border-border bg-background/60 px-3.5">
-                  <span className="text-sm font-semibold text-ink">Visible on site</span>
+                  <span className="text-sm font-semibold text-ink">{t.visibleOnSite}</span>
                   <button
                     type="button"
                     role="switch"
@@ -293,7 +296,7 @@ export function VideosManager({ initial }: { initial: AdminVideo[] }) {
                 ) : (
                   <Plus className="h-4 w-4" />
                 )}
-                {editingId ? 'Save changes' : 'Add video'}
+                {editingId ? t.saveChanges : t.addVideo}
               </AdminButton>
             </div>
           </div>
@@ -303,11 +306,11 @@ export function VideosManager({ initial }: { initial: AdminVideo[] }) {
       {initial.length === 0 ? (
         <EmptyState
           icon={<VideoIcon className="h-6 w-6" />}
-          title="No videos yet"
-          description="Add your first YouTube video to start building the public Videos page."
+          title={t.emptyTitle}
+          description={t.emptyDesc}
           action={
             <AdminButton variant="primary" onClick={startCreate}>
-              <Plus className="h-4 w-4" /> Add video
+              <Plus className="h-4 w-4" /> {t.addVideo}
             </AdminButton>
           }
         />
@@ -338,7 +341,7 @@ export function VideosManager({ initial }: { initial: AdminVideo[] }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate font-semibold text-ink">{video.title}</p>
                     <Badge tone={video.active ? 'emerald' : 'gray'}>
-                      {video.active ? 'Live' : 'Hidden'}
+                      {video.active ? t.live : t.hidden}
                     </Badge>
                     <Badge tone="gold">#{video.sort_order}</Badge>
                   </div>
@@ -351,7 +354,7 @@ export function VideosManager({ initial }: { initial: AdminVideo[] }) {
                     rel="noopener noreferrer"
                     className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-brand-800"
                   >
-                    <ExternalLink className="h-3.5 w-3.5" /> Open on YouTube
+                    <ExternalLink className="h-3.5 w-3.5" /> {t.openOnYouTube}
                   </a>
                 </div>
 
@@ -369,13 +372,13 @@ export function VideosManager({ initial }: { initial: AdminVideo[] }) {
                     ) : (
                       <Eye className="h-4 w-4" />
                     )}
-                    {video.active ? 'Hide' : 'Show'}
+                    {video.active ? t.hide : t.show}
                   </AdminButton>
                   <AdminButton variant="outline" size="sm" onClick={() => startEdit(video)} disabled={busy}>
-                    <Pencil className="h-4 w-4" /> Edit
+                    <Pencil className="h-4 w-4" /> {t.edit}
                   </AdminButton>
                   <AdminButton variant="danger" size="sm" onClick={() => remove(video)} disabled={busy}>
-                    <Trash2 className="h-4 w-4" /> Delete
+                    <Trash2 className="h-4 w-4" /> {t.delete}
                   </AdminButton>
                 </div>
               </Card>

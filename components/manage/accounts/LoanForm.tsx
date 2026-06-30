@@ -8,11 +8,14 @@ import { Card, Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
 import { BRANCHES } from '@/lib/management/branches';
 import type { HeadOption } from './VoucherForm';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
 export function LoanForm({ bankHeads }: { bankHeads: HeadOption[] }) {
   const router = useRouter();
+  const t = getDict(useLocale());
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -41,10 +44,10 @@ export function LoanForm({ bankHeads }: { bankHeads: HeadOption[] }) {
   }
 
   async function submit() {
-    if (!partyName.trim()) return toast.error("Enter the lender / borrower's name.");
+    if (!partyName.trim()) return toast.error(t.loanForm.errParty);
     const value = Number(principal);
-    if (!value || value <= 0) return toast.error('Enter a principal greater than zero.');
-    if (method === 'bank' && !bankId) return toast.error('Select the bank account.');
+    if (!value || value <= 0) return toast.error(t.loanForm.errPrincipal);
+    if (method === 'bank' && !bankId) return toast.error(t.loanForm.errBankAccount);
 
     setSaving(true);
     try {
@@ -66,15 +69,15 @@ export function LoanForm({ bankHeads }: { bankHeads: HeadOption[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not record this loan.');
+        toast.error(data?.error ?? t.loanForm.errRecord);
         return;
       }
-      toast.success(`Loan recorded — voucher ${data.voucher_no}.`);
+      toast.success(t.loanForm.recorded(String(data.voucher_no)));
       reset();
       setOpen(false);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.common.networkError);
     } finally {
       setSaving(false);
     }
@@ -83,7 +86,7 @@ export function LoanForm({ bankHeads }: { bankHeads: HeadOption[] }) {
   if (!open) {
     return (
       <Button type="button" onClick={() => setOpen(true)}>
-        <Plus className="h-4 w-4" /> Add Loan
+        <Plus className="h-4 w-4" /> {t.loanForm.addLoan}
       </Button>
     );
   }
@@ -91,19 +94,19 @@ export function LoanForm({ bankHeads }: { bankHeads: HeadOption[] }) {
   return (
     <Card className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-lg font-semibold text-ink">Record a loan</h2>
+        <h2 className="font-display text-lg font-semibold text-ink">{t.loanForm.recordLoan}</h2>
         <button
           type="button"
           onClick={() => setOpen(false)}
           className="grid h-9 w-9 place-items-center rounded-full text-ink-muted transition hover:bg-muted"
-          aria-label="Close"
+          aria-label={t.common.close}
         >
           <X className="h-5 w-5" />
         </button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Loan type" required>
+        <Field label={t.loanForm.loanType} required>
           <div className="flex gap-2">
             <button
               type="button"
@@ -115,7 +118,7 @@ export function LoanForm({ bankHeads }: { bankHeads: HeadOption[] }) {
                   : 'border-border text-ink-muted hover:border-brand-600/40')
               }
             >
-              Given (we lent)
+              {t.loanForm.givenWeLent}
             </button>
             <button
               type="button"
@@ -127,48 +130,48 @@ export function LoanForm({ bankHeads }: { bankHeads: HeadOption[] }) {
                   : 'border-border text-ink-muted hover:border-brand-600/40')
               }
             >
-              Taken (we borrowed)
+              {t.loanForm.takenWeBorrowed}
             </button>
           </div>
         </Field>
 
-        <Field label="Principal (৳)" required>
+        <Field label={t.loanForm.principal} required>
           <input
             type="number"
             min="0"
             step="0.01"
             className={inputClass}
             value={principal}
-            placeholder="0.00"
+            placeholder={t.loanForm.principalPlaceholder}
             onChange={(e) => setPrincipal(e.target.value)}
           />
         </Field>
 
-        <Field label={type === 'given' ? 'Borrower name' : 'Lender name'} required>
+        <Field label={type === 'given' ? t.loanForm.borrowerName : t.loanForm.lenderName} required>
           <input
             className={inputClass}
             value={partyName}
-            placeholder="Full name"
+            placeholder={t.loanForm.fullName}
             onChange={(e) => setPartyName(e.target.value)}
           />
         </Field>
-        <Field label="Phone">
+        <Field label={t.loanForm.phone}>
           <input
             className={inputClass}
             value={partyPhone}
-            placeholder="01XXX XXXXXX"
+            placeholder={t.loanForm.phonePlaceholder}
             onChange={(e) => setPartyPhone(e.target.value)}
           />
         </Field>
 
-        <Field label="Date" required>
+        <Field label={t.loanForm.date} required>
           <input type="date" className={inputClass} value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
-        <Field label="Due date">
+        <Field label={t.loanForm.dueDate}>
           <input type="date" className={inputClass} value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         </Field>
 
-        <Field label={type === 'given' ? 'Paid from' : 'Received in'}>
+        <Field label={type === 'given' ? t.loanForm.paidFrom : t.loanForm.receivedIn}>
           <div className="flex gap-2">
             {(['cash', 'bank'] as const).map((m) => (
               <button
@@ -182,15 +185,15 @@ export function LoanForm({ bankHeads }: { bankHeads: HeadOption[] }) {
                     : 'border-border text-ink-muted hover:border-brand-600/40')
                 }
               >
-                {m}
+                {m === 'cash' ? t.loanForm.cash : t.loanForm.bank}
               </button>
             ))}
           </div>
         </Field>
         {method === 'bank' && (
-          <Field label="Bank account" required>
+          <Field label={t.loanForm.bankAccount} required>
             <select className={inputClass} value={bankId} onChange={(e) => setBankId(e.target.value)}>
-              <option value="">Select bank account…</option>
+              <option value="">{t.loanForm.selectBankAccount}</option>
               {bankHeads.map((h) => (
                 <option key={h.id} value={h.id}>
                   {h.name}
@@ -200,7 +203,7 @@ export function LoanForm({ bankHeads }: { bankHeads: HeadOption[] }) {
           </Field>
         )}
 
-        <Field label="Branch">
+        <Field label={t.loanForm.branch}>
           <select className={inputClass} value={branch} onChange={(e) => setBranch(e.target.value)}>
             {BRANCHES.map((b) => (
               <option key={b.value} value={b.value}>
@@ -210,11 +213,11 @@ export function LoanForm({ bankHeads }: { bankHeads: HeadOption[] }) {
           </select>
         </Field>
 
-        <Field label="Narration" className="sm:col-span-2">
+        <Field label={t.loanForm.narration} className="sm:col-span-2">
           <input
             className={inputClass}
             value={narration}
-            placeholder="Terms, purpose, reference…"
+            placeholder={t.loanForm.narrationPlaceholder}
             onChange={(e) => setNarration(e.target.value)}
           />
         </Field>
@@ -222,11 +225,11 @@ export function LoanForm({ bankHeads }: { bankHeads: HeadOption[] }) {
 
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-          Cancel
+          {t.loanForm.cancel}
         </Button>
         <Button type="button" onClick={submit} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Record loan
+          {t.loanForm.recordLoanBtn}
         </Button>
       </div>
     </Card>

@@ -8,6 +8,8 @@ import { Card, Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
 import { BRANCHES } from '@/lib/management/branches';
 import { money } from '@/lib/management/format';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
 
 export type HeadOption = {
   id: string;
@@ -19,17 +21,32 @@ export type HeadOption = {
 
 type Mode = 'income' | 'expense' | 'transfer' | 'journal';
 
-const MODES: { value: Mode; label: string; icon: typeof BookOpen; hint: string }[] = [
-  { value: 'income', label: 'Income', icon: ArrowDownToLine, hint: 'Money received — debit Cash/Bank, credit an income head.' },
-  { value: 'expense', label: 'Expense', icon: ArrowUpFromLine, hint: 'Money paid out — debit an expense head, credit Cash/Bank.' },
-  { value: 'transfer', label: 'Cash ⇄ Bank', icon: ArrowLeftRight, hint: 'Move funds between cash and a bank account (contra).' },
-  { value: 'journal', label: 'Journal', icon: BookOpen, hint: 'Free-form adjustment — pick any debit and credit head.' },
+const MODES: { value: Mode; icon: typeof BookOpen }[] = [
+  { value: 'income', icon: ArrowDownToLine },
+  { value: 'expense', icon: ArrowUpFromLine },
+  { value: 'transfer', icon: ArrowLeftRight },
+  { value: 'journal', icon: BookOpen },
 ];
+
+const MODE_LABEL_KEY: Record<Mode, keyof ReturnType<typeof getDict>['voucherForm']> = {
+  income: 'modeIncome',
+  expense: 'modeExpense',
+  transfer: 'modeTransfer',
+  journal: 'modeJournal',
+};
+
+const MODE_HINT_KEY: Record<Mode, keyof ReturnType<typeof getDict>['voucherForm']> = {
+  income: 'hintIncome',
+  expense: 'hintExpense',
+  transfer: 'hintTransfer',
+  journal: 'hintJournal',
+};
 
 const today = () => new Date().toISOString().slice(0, 10);
 
 export function VoucherForm({ heads }: { heads: HeadOption[] }) {
   const router = useRouter();
+  const t = getDict(useLocale());
   const [mode, setMode] = useState<Mode>('income');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(today());
@@ -67,30 +84,30 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
   async function submit() {
     const value = Number(amount);
     if (!value || value <= 0) {
-      toast.error('Enter an amount greater than zero.');
+      toast.error(t.voucherForm.errAmount);
       return;
     }
 
     const body: Record<string, unknown> = { mode, amount: value, date, branch, method, narration };
 
     if (mode === 'income') {
-      if (!incomeId) return toast.error('Select an income head.');
-      if (method === 'bank' && !bankId) return toast.error('Select the bank account.');
+      if (!incomeId) return toast.error(t.voucherForm.errIncomeHead);
+      if (method === 'bank' && !bankId) return toast.error(t.voucherForm.errBankAccount);
       body.income_account_id = incomeId;
       if (method === 'bank') body.bank_account_id = bankId;
     } else if (mode === 'expense') {
-      if (!expenseId) return toast.error('Select an expense head.');
-      if (method === 'bank' && !bankId) return toast.error('Select the bank account.');
+      if (!expenseId) return toast.error(t.voucherForm.errExpenseHead);
+      if (method === 'bank' && !bankId) return toast.error(t.voucherForm.errBankAccount);
       body.expense_account_id = expenseId;
       if (method === 'bank') body.bank_account_id = bankId;
     } else if (mode === 'transfer') {
-      if (!fromId || !toId) return toast.error('Choose both the source and destination accounts.');
-      if (fromId === toId) return toast.error('The source and destination must differ.');
+      if (!fromId || !toId) return toast.error(t.voucherForm.errTransferAccounts);
+      if (fromId === toId) return toast.error(t.voucherForm.errTransferDiffer);
       body.from_account_id = fromId;
       body.to_account_id = toId;
     } else {
-      if (!debitId || !creditId) return toast.error('Choose both a debit and a credit account.');
-      if (debitId === creditId) return toast.error('The debit and credit accounts must differ.');
+      if (!debitId || !creditId) return toast.error(t.voucherForm.errJournalAccounts);
+      if (debitId === creditId) return toast.error(t.voucherForm.errJournalDiffer);
       body.debit_account_id = debitId;
       body.credit_account_id = creditId;
     }
@@ -104,20 +121,19 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not post this voucher.');
+        toast.error(data?.error ?? t.voucherForm.errCouldNotPost);
         return;
       }
-      toast.success(`Voucher ${data.voucher_no} posted.`);
+      toast.success(t.voucherForm.voucherPosted(String(data.voucher_no)));
       reset();
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.common.networkError);
     } finally {
       setSubmitting(false);
     }
   }
 
-  const active = MODES.find((m) => m.value === mode)!;
   const noHeads = heads.length === 0;
 
   return (
@@ -140,24 +156,24 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
               }
             >
               <Icon className="h-5 w-5" />
-              {m.label}
+              {t.voucherForm[MODE_LABEL_KEY[m.value]] as string}
             </button>
           );
         })}
       </div>
 
-      <p className="text-sm text-ink-muted">{active.hint}</p>
+      <p className="text-sm text-ink-muted">{t.voucherForm[MODE_HINT_KEY[mode]] as string}</p>
 
       {noHeads ? (
         <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-ink-muted">
-          No account heads are available yet. Create the chart of accounts first, then post vouchers here.
+          {t.voucherForm.noHeads}
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Date" required>
+          <Field label={t.voucherForm.date} required>
             <input type="date" className={inputClass} value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
-          <Field label="Amount (৳)" required>
+          <Field label={t.voucherForm.amount} required>
             <input
               type="number"
               min="0"
@@ -165,7 +181,7 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
               inputMode="decimal"
               className={inputClass}
               value={amount}
-              placeholder="0.00"
+              placeholder={t.voucherForm.amountPlaceholder}
               onChange={(e) => setAmount(e.target.value)}
             />
           </Field>
@@ -173,9 +189,9 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
           {/* Income mode */}
           {mode === 'income' && (
             <>
-              <Field label="Income head" required>
+              <Field label={t.voucherForm.incomeHead} required>
                 <select className={inputClass} value={incomeId} onChange={(e) => setIncomeId(e.target.value)}>
-                  <option value="">Select income head…</option>
+                  <option value="">{t.voucherForm.selectIncomeHead}</option>
                   {incomeHeads.map((h) => (
                     <option key={h.id} value={h.id}>
                       {h.name}
@@ -183,16 +199,16 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
                   ))}
                 </select>
               </Field>
-              <MethodPair method={method} setMethod={setMethod} bankId={bankId} setBankId={setBankId} bankHeads={bankHeads} />
+              <MethodPair method={method} setMethod={setMethod} bankId={bankId} setBankId={setBankId} bankHeads={bankHeads} t={t} />
             </>
           )}
 
           {/* Expense mode */}
           {mode === 'expense' && (
             <>
-              <Field label="Expense head" required>
+              <Field label={t.voucherForm.expenseHead} required>
                 <select className={inputClass} value={expenseId} onChange={(e) => setExpenseId(e.target.value)}>
-                  <option value="">Select expense head…</option>
+                  <option value="">{t.voucherForm.selectExpenseHead}</option>
                   {expenseHeads.map((h) => (
                     <option key={h.id} value={h.id}>
                       {h.name}
@@ -200,16 +216,16 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
                   ))}
                 </select>
               </Field>
-              <MethodPair method={method} setMethod={setMethod} bankId={bankId} setBankId={setBankId} bankHeads={bankHeads} payOut />
+              <MethodPair method={method} setMethod={setMethod} bankId={bankId} setBankId={setBankId} bankHeads={bankHeads} t={t} payOut />
             </>
           )}
 
           {/* Transfer (contra) mode */}
           {mode === 'transfer' && (
             <>
-              <Field label="From account" required>
+              <Field label={t.voucherForm.fromAccount} required>
                 <select className={inputClass} value={fromId} onChange={(e) => setFromId(e.target.value)}>
-                  <option value="">Select source…</option>
+                  <option value="">{t.voucherForm.selectSource}</option>
                   {cashBankHeads.map((h) => (
                     <option key={h.id} value={h.id}>
                       {h.name}
@@ -217,9 +233,9 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
                   ))}
                 </select>
               </Field>
-              <Field label="To account" required>
+              <Field label={t.voucherForm.toAccount} required>
                 <select className={inputClass} value={toId} onChange={(e) => setToId(e.target.value)}>
-                  <option value="">Select destination…</option>
+                  <option value="">{t.voucherForm.selectDestination}</option>
                   {cashBankHeads.map((h) => (
                     <option key={h.id} value={h.id}>
                       {h.name}
@@ -233,9 +249,9 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
           {/* Journal mode */}
           {mode === 'journal' && (
             <>
-              <Field label="Debit account" required>
+              <Field label={t.voucherForm.debitAccount} required>
                 <select className={inputClass} value={debitId} onChange={(e) => setDebitId(e.target.value)}>
-                  <option value="">Select debit head…</option>
+                  <option value="">{t.voucherForm.selectDebitHead}</option>
                   {heads.map((h) => (
                     <option key={h.id} value={h.id}>
                       {h.name}
@@ -243,9 +259,9 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
                   ))}
                 </select>
               </Field>
-              <Field label="Credit account" required>
+              <Field label={t.voucherForm.creditAccount} required>
                 <select className={inputClass} value={creditId} onChange={(e) => setCreditId(e.target.value)}>
-                  <option value="">Select credit head…</option>
+                  <option value="">{t.voucherForm.selectCreditHead}</option>
                   {heads.map((h) => (
                     <option key={h.id} value={h.id}>
                       {h.name}
@@ -256,7 +272,7 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
             </>
           )}
 
-          <Field label="Branch">
+          <Field label={t.voucherForm.branch}>
             <select className={inputClass} value={branch} onChange={(e) => setBranch(e.target.value)}>
               {BRANCHES.map((b) => (
                 <option key={b.value} value={b.value}>
@@ -266,11 +282,11 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
             </select>
           </Field>
 
-          <Field label="Narration" className="sm:col-span-2">
+          <Field label={t.voucherForm.narration} className="sm:col-span-2">
             <input
               className={inputClass}
               value={narration}
-              placeholder="What is this entry for?"
+              placeholder={t.voucherForm.narrationPlaceholder}
               onChange={(e) => setNarration(e.target.value)}
             />
           </Field>
@@ -281,16 +297,16 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
         <p className="text-sm text-ink-muted">
           {amount && Number(amount) > 0 ? (
             <>
-              Posting <span className="font-semibold text-ink">{money(Number(amount))}</span> as a{' '}
-              <span className="font-semibold text-ink">{active.label.toLowerCase()}</span> voucher.
+              {t.voucherForm.postingPrefix} <span className="font-semibold text-ink">{money(Number(amount))}</span> {t.voucherForm.postingAsA}{' '}
+              <span className="font-semibold text-ink">{(t.voucherForm[MODE_LABEL_KEY[mode]] as string).toLowerCase()}</span> {t.voucherForm.postingVoucherSuffix}
             </>
           ) : (
-            'Enter the details, then post the voucher.'
+            t.voucherForm.enterDetails
           )}
         </p>
         <Button type="button" onClick={submit} disabled={submitting || noHeads}>
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Post voucher
+          {t.voucherForm.postVoucher}
         </Button>
       </div>
     </Card>
@@ -303,6 +319,7 @@ function MethodPair({
   bankId,
   setBankId,
   bankHeads,
+  t,
   payOut,
 }: {
   method: 'cash' | 'bank';
@@ -310,11 +327,12 @@ function MethodPair({
   bankId: string;
   setBankId: (id: string) => void;
   bankHeads: HeadOption[];
+  t: ReturnType<typeof getDict>;
   payOut?: boolean;
 }) {
   return (
     <>
-      <Field label={payOut ? 'Paid from' : 'Received in'}>
+      <Field label={payOut ? t.voucherForm.paidFrom : t.voucherForm.receivedIn}>
         <div className="flex gap-2">
           {(['cash', 'bank'] as const).map((m) => (
             <button
@@ -328,15 +346,15 @@ function MethodPair({
                   : 'border-border text-ink-muted hover:border-brand-600/40')
               }
             >
-              {m}
+              {m === 'cash' ? t.voucherForm.cash : t.voucherForm.bank}
             </button>
           ))}
         </div>
       </Field>
       {method === 'bank' && (
-        <Field label="Bank account" required>
+        <Field label={t.voucherForm.bankAccount} required>
           <select className={inputClass} value={bankId} onChange={(e) => setBankId(e.target.value)}>
-            <option value="">Select bank account…</option>
+            <option value="">{t.voucherForm.selectBankAccount}</option>
             {bankHeads.map((h) => (
               <option key={h.id} value={h.id}>
                 {h.name}
@@ -345,7 +363,7 @@ function MethodPair({
           </select>
           {bankHeads.length === 0 && (
             <span className="mt-1 block text-xs text-amber-600">
-              No bank accounts yet — add one under Cash &amp; Bank.
+              {t.voucherForm.noBankYet}
             </span>
           )}
         </Field>

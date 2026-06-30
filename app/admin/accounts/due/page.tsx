@@ -6,11 +6,16 @@ import { loadActiveHeads } from '@/lib/management/accounts-data';
 import { naturalBalance } from '@/lib/management/types';
 import { branchShort } from '@/lib/management/branches';
 import { money } from '@/lib/management/format';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Customer Dues' };
 
 export default async function DuePage() {
+  const locale = getLocale();
+  const t = getDict(locale);
   const heads = await loadActiveHeads();
 
   const dues = heads
@@ -31,15 +36,15 @@ export default async function DuePage() {
   return (
     <>
       <PageHeader
-        title="Customer Dues"
-        subtitle="Outstanding balances owed by pilgrims and passengers."
+        title={t.due.title}
+        subtitle={t.due.subtitle}
         actions={
           dues.length > 0 ? (
             <ExportBar
               filename="customer-dues"
-              title="Customer Dues"
-              subtitle={`Total receivable: ${money(totalDue)}`}
-              headers={['Customer', 'Phone', 'Branch', 'Due']}
+              title={t.due.exportTitle}
+              subtitle={`${t.due.totalReceivableLabel}: ${money(totalDue)}`}
+              headers={[t.due.exHCustomer, t.due.exHPhone, t.due.exHBranch, t.due.exHDue]}
               rows={exportRows}
             />
           ) : undefined
@@ -47,30 +52,30 @@ export default async function DuePage() {
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
-        <StatCard label="Total Receivable" value={<Money value={totalDue} />} icon={HandCoins} accent="red" />
-        <StatCard label="Customers with Dues" value={dues.length} accent="slate" />
+        <StatCard label={t.due.totalReceivable} value={<Money value={totalDue} />} icon={HandCoins} accent="red" />
+        <StatCard label={t.due.customersWithDues} value={dues.length} accent="slate" />
       </div>
 
       {dues.length === 0 ? (
         <EmptyState
-          title="No outstanding dues"
-          hint="Every customer is settled, or no customer charges have been posted yet."
+          title={t.due.noDuesTitle}
+          hint={t.due.noDuesHint}
         />
       ) : (
         <TableWrap>
           <thead>
             <tr>
-              <th className={thClass}>Customer</th>
-              <th className={thClass}>Phone</th>
-              <th className={thClass}>Branch</th>
-              <th className={`${thClass} text-right`}>Due</th>
+              <th className={thClass}>{t.due.thCustomer}</th>
+              <th className={thClass}>{t.due.thPhone}</th>
+              <th className={thClass}>{t.due.thBranch}</th>
+              <th className={`${thClass} text-right`}>{t.due.thDue}</th>
             </tr>
           </thead>
           <tbody>
             {dues.map((r) => (
               <tr key={r.head.id}>
                 <td className={tdClass}>
-                  <Link href={`/admin/accounts/heads/${r.head.id}`} className="font-medium text-brand-700 hover:underline">
+                  <Link href={localizedPath(locale, `/admin/accounts/heads/${r.head.id}`)} className="font-medium text-brand-700 hover:underline">
                     {r.head.name}
                   </Link>
                 </td>
@@ -81,7 +86,7 @@ export default async function DuePage() {
             ))}
             <tr className="bg-muted/60">
               <td className={`${tdClass} font-semibold`} colSpan={3}>
-                Total receivable
+                {t.due.totalReceivableLabel}
               </td>
               <td className={`${tdClass} text-right font-bold tabular-nums`}>{money(totalDue)}</td>
             </tr>

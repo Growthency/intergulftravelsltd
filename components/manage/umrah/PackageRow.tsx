@@ -8,6 +8,9 @@ import { PackageForm } from '@/components/manage/umrah/PackageForm';
 import { PackageDelete } from '@/components/manage/PackageDelete';
 import { branchShort } from '@/lib/management/branches';
 import type { MgmtPackage } from '@/lib/management/types';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminumrah';
+import { localizedPath } from '@/lib/i18n';
 
 export function PackageRow({
   pkg,
@@ -18,6 +21,8 @@ export function PackageRow({
   assignedCount: number;
   totalDue: number;
 }) {
+  const locale = useLocale();
+  const t = getDict(locale);
   const [editing, setEditing] = useState(false);
 
   return (
@@ -26,7 +31,7 @@ export function PackageRow({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-display text-base font-semibold text-ink">{pkg.name}</h3>
-            {!pkg.active && <Badge tone="red">Inactive</Badge>}
+            {!pkg.active && <Badge tone="red">{t.inactive}</Badge>}
             <Badge>{branchShort(pkg.branch)}</Badge>
             {pkg.year && <Badge tone="gold">{pkg.year}</Badge>}
           </div>
@@ -34,20 +39,20 @@ export function PackageRow({
           <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
             <span className="font-semibold text-ink"><Money value={pkg.price} /></span>
             <span className="inline-flex items-center gap-1 text-ink-muted">
-              <Users className="h-3.5 w-3.5" /> {assignedCount} assigned
-              {pkg.seats ? ` / ${pkg.seats} seats` : ''}
+              <Users className="h-3.5 w-3.5" /> {assignedCount} {t.rowAssigned}
+              {pkg.seats ? ` / ${pkg.seats} ${t.seatsWord}` : ''}
             </span>
             {totalDue > 0 && (
-              <span className="text-red-600">Due <Money value={totalDue} className="text-red-600" /></span>
+              <span className="text-red-600">{t.dueWord} <Money value={totalDue} className="text-red-600" /></span>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href={`/admin/umrah?package=${pkg.id}`}
+            href={localizedPath(locale, `/admin/umrah?package=${pkg.id}`)}
             className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-ink-muted transition hover:border-brand-600/40 hover:text-brand-700"
           >
-            <Users className="h-3.5 w-3.5" /> Passengers
+            <Users className="h-3.5 w-3.5" /> {t.passengers}
           </Link>
           <button
             type="button"
@@ -55,7 +60,7 @@ export function PackageRow({
             className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-ink-muted transition hover:border-brand-600/40 hover:text-brand-700"
           >
             {editing ? <X className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
-            {editing ? 'Close' : 'Edit'}
+            {editing ? t.close : t.editRow}
           </button>
           <PackageDelete id={pkg.id} name={pkg.name} endpoint="/api/admin/umrah/packages" />
         </div>

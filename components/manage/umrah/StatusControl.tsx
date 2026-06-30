@@ -5,14 +5,16 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { inputClass } from '@/components/manage/ui';
-
-const STATUSES = [
-  { value: 'active', label: 'Active' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
-];
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminumrah';
 
 export function StatusControl({ passengerId, status }: { passengerId: string; status: string }) {
+  const t = getDict(useLocale());
+  const STATUSES = [
+    { value: 'active', label: t.scActive },
+    { value: 'completed', label: t.scCompleted },
+    { value: 'cancelled', label: t.scCancelled },
+  ];
   const router = useRouter();
   const [value, setValue] = useState(status);
   const [saving, setSaving] = useState(false);
@@ -29,14 +31,14 @@ export function StatusControl({ passengerId, status }: { passengerId: string; st
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not change status.');
+        toast.error(data?.error ?? t.toastStatusFail);
         setValue(prev);
         return;
       }
-      toast.success('Status updated.');
+      toast.success(t.toastStatusUpdated);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.toastNetwork);
       setValue(prev);
     } finally {
       setSaving(false);

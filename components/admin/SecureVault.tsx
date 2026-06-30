@@ -22,6 +22,8 @@ import {
 import { Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
 import { confirmDialog } from '@/components/admin/confirm';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminsystem';
 
 export type VaultCredential = {
   id: string;
@@ -51,16 +53,17 @@ function visitUrl(url?: string | null): string | null {
   return url.startsWith('http') ? url : `https://${url}`;
 }
 
-async function copy(text: string, label: string) {
+async function copy(text: string, successMsg: string, errorMsg: string) {
   try {
     await navigator.clipboard.writeText(text);
-    toast.success(`${label} copied.`);
+    toast.success(successMsg);
   } catch {
-    toast.error('Could not copy.');
+    toast.error(errorMsg);
   }
 }
 
 export function SecureVault({ initial }: { initial: VaultCredential[] }) {
+  const t = getDict(useLocale());
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<VaultCredential | null>(null);
@@ -80,9 +83,9 @@ export function SecureVault({ initial }: { initial: VaultCredential[] }) {
       <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 font-display text-2xl font-bold text-ink">
-            Vault <Lock className="h-5 w-5 text-gold-500" />
+            {t.vaultTitle} <Lock className="h-5 w-5 text-gold-500" />
           </h1>
-          <p className="mt-1 text-sm text-ink-muted">Encrypted credential store (AES-256-GCM at rest).</p>
+          <p className="mt-1 text-sm text-ink-muted">{t.vaultSubtitle}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -90,7 +93,7 @@ export function SecureVault({ initial }: { initial: VaultCredential[] }) {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search credentials…"
+              placeholder={t.searchCredentials}
               className="w-56 rounded-full border border-border bg-card py-2.5 pl-9 pr-4 text-sm text-ink outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/15"
             />
           </div>
@@ -99,7 +102,7 @@ export function SecureVault({ initial }: { initial: VaultCredential[] }) {
             onClick={() => setAdding(true)}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-brand-700 to-gold-600 px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:opacity-95"
           >
-            <Plus className="h-4 w-4" /> Add New
+            <Plus className="h-4 w-4" /> {t.addNew}
           </button>
         </div>
       </div>
@@ -111,10 +114,10 @@ export function SecureVault({ initial }: { initial: VaultCredential[] }) {
             <Lock className="h-6 w-6" />
           </span>
           <p className="mt-3 font-semibold text-ink">
-            {query ? 'No matching credentials' : 'No credentials yet'}
+            {query ? t.noMatchingCreds : t.noCredsYet}
           </p>
           <p className="mt-1 text-sm text-ink-muted">
-            {query ? 'Try a different search.' : 'Add your first credential to keep it safely encrypted.'}
+            {query ? t.tryDifferentSearch : t.addFirstCred}
           </p>
           {!query && (
             <button
@@ -122,7 +125,7 @@ export function SecureVault({ initial }: { initial: VaultCredential[] }) {
               onClick={() => setAdding(true)}
               className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-brand-700 to-gold-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:opacity-95"
             >
-              <Plus className="h-4 w-4" /> Add New
+              <Plus className="h-4 w-4" /> {t.addNew}
             </button>
           )}
         </div>
@@ -166,6 +169,7 @@ function CredentialCard({
   onEdit: () => void;
   onDeleted: () => void;
 }) {
+  const t = getDict(useLocale());
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const favicon = faviconOf(cred);
@@ -174,8 +178,8 @@ function CredentialCard({
   async function remove() {
     if (
       !(await confirmDialog({
-        message: `Delete the credential “${cred.name}”? This cannot be undone.`,
-        confirmText: 'Delete',
+        message: t.confirmDeleteCred(cred.name),
+        confirmText: t.delete,
         danger: true,
       }))
     ) {
@@ -186,13 +190,13 @@ function CredentialCard({
       const res = await fetch(`/api/admin/secure-vault?id=${encodeURIComponent(cred.id)}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not delete.');
+        toast.error(data?.error ?? t.couldNotDelete);
         return;
       }
-      toast.success('Credential deleted.');
+      toast.success(t.credentialDeleted);
       onDeleted();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setBusy(false);
     }
@@ -221,10 +225,10 @@ function CredentialCard({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs font-medium text-gold-600 hover:text-gold-700"
                 >
-                  Visit <ExternalLink className="h-3 w-3" />
+                  {t.visit} <ExternalLink className="h-3 w-3" />
                 </a>
               ) : (
-                <span className="text-xs text-ink-muted">No URL</span>
+                <span className="text-xs text-ink-muted">{t.noUrl}</span>
               )}
             </div>
           </div>
@@ -233,7 +237,7 @@ function CredentialCard({
               type="button"
               onClick={onEdit}
               className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition hover:bg-muted hover:text-brand-700"
-              aria-label="Edit"
+              aria-label={t.edit}
             >
               <Pencil className="h-4 w-4" />
             </button>
@@ -242,7 +246,7 @@ function CredentialCard({
               onClick={remove}
               disabled={busy}
               className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition hover:bg-muted hover:text-red-600 disabled:opacity-50"
-              aria-label="Delete"
+              aria-label={t.delete}
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
             </button>
@@ -256,9 +260,9 @@ function CredentialCard({
           {cred.username && (
             <button
               type="button"
-              onClick={() => copy(cred.username ?? '', 'Username')}
+              onClick={() => copy(cred.username ?? '', t.usernameCopied, t.couldNotCopy)}
               className="grid h-7 w-7 place-items-center rounded-md text-ink-muted transition hover:bg-card hover:text-brand-700"
-              aria-label="Copy username"
+              aria-label={t.copyUsername}
             >
               <Copy className="h-3.5 w-3.5" />
             </button>
@@ -277,15 +281,15 @@ function CredentialCard({
                 type="button"
                 onClick={() => setShow((v) => !v)}
                 className="grid h-7 w-7 place-items-center rounded-md text-ink-muted transition hover:bg-card hover:text-brand-700"
-                aria-label={show ? 'Hide password' : 'Show password'}
+                aria-label={show ? t.hidePassword : t.showPassword}
               >
                 {show ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
               <button
                 type="button"
-                onClick={() => copy(cred.password, 'Password')}
+                onClick={() => copy(cred.password, t.passwordCopied, t.couldNotCopy)}
                 className="grid h-7 w-7 place-items-center rounded-md text-ink-muted transition hover:bg-card hover:text-brand-700"
-                aria-label="Copy password"
+                aria-label={t.copyPassword}
               >
                 <Copy className="h-3.5 w-3.5" />
               </button>
@@ -308,6 +312,7 @@ function CredentialModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = getDict(useLocale());
   const isEdit = Boolean(credential);
   const [saving, setSaving] = useState(false);
 
@@ -324,7 +329,7 @@ function CredentialModal({
       notes: String(fd.get('notes') ?? '').trim(),
     };
     if (!payload.name) {
-      toast.error('A name is required.');
+      toast.error(t.nameRequired);
       return;
     }
     if (isEdit && credential) payload.id = credential.id;
@@ -338,13 +343,13 @@ function CredentialModal({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not save the credential.');
+        toast.error(data?.error ?? t.couldNotSaveCredential);
         return;
       }
-      toast.success(isEdit ? 'Credential updated.' : 'Credential saved.');
+      toast.success(isEdit ? t.credentialUpdated : t.credentialSaved);
       onSaved();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setSaving(false);
     }
@@ -355,45 +360,45 @@ function CredentialModal({
       <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-5 shadow-soft">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 font-display text-base font-semibold text-ink">
-            <Lock className="h-4 w-4 text-gold-500" /> {isEdit ? 'Edit credential' : 'Add credential'}
+            <Lock className="h-4 w-4 text-gold-500" /> {isEdit ? t.editCredential : t.addCredential}
           </h2>
           <button
             type="button"
             onClick={onClose}
             className="grid h-8 w-8 place-items-center rounded-full text-ink-muted hover:bg-muted"
-            aria-label="Close"
+            aria-label={t.close}
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
-          <Field label="Name" required className="sm:col-span-2">
-            <input name="name" defaultValue={credential?.name ?? ''} className={inputClass} placeholder="e.g. Github" />
+          <Field label={t.name} required className="sm:col-span-2">
+            <input name="name" defaultValue={credential?.name ?? ''} className={inputClass} placeholder={t.namePlaceholder} />
           </Field>
-          <Field label="Website URL" className="sm:col-span-2">
-            <input name="url" defaultValue={credential?.url ?? ''} className={inputClass} placeholder="https://github.com" />
+          <Field label={t.websiteUrl} className="sm:col-span-2">
+            <input name="url" defaultValue={credential?.url ?? ''} className={inputClass} placeholder={t.websiteUrlPlaceholder} />
           </Field>
-          <Field label="Username / Email">
-            <input name="username" defaultValue={credential?.username ?? ''} className={inputClass} placeholder="you@example.com" autoComplete="off" />
+          <Field label={t.usernameEmail}>
+            <input name="username" defaultValue={credential?.username ?? ''} className={inputClass} placeholder={t.usernameEmailPlaceholder} autoComplete="off" />
           </Field>
-          <Field label="Password" hint={isEdit ? 'Leave blank to keep the current one.' : undefined}>
+          <Field label={t.password} hint={isEdit ? t.passwordKeepHint : undefined}>
             <input name="password" defaultValue={credential?.password ?? ''} className={inputClass} placeholder="••••••••" autoComplete="off" />
           </Field>
-          <Field label="Icon URL" hint="Optional — defaults to the site favicon." className="sm:col-span-2">
+          <Field label={t.iconUrl} hint={t.iconUrlHint} className="sm:col-span-2">
             <input name="icon_url" defaultValue={credential?.icon_url ?? ''} className={inputClass} placeholder="https://…/logo.png" />
           </Field>
-          <Field label="Notes" className="sm:col-span-2">
-            <textarea name="notes" rows={2} defaultValue={credential?.notes ?? ''} className={inputClass} placeholder="Optional notes" />
+          <Field label={t.notes} className="sm:col-span-2">
+            <textarea name="notes" rows={2} defaultValue={credential?.notes ?? ''} className={inputClass} placeholder={t.notesPlaceholder} />
           </Field>
 
           <div className="mt-1 flex items-center gap-3 sm:col-span-2">
             <Button type="submit" disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isEdit ? 'Save changes' : 'Save credential'}
+              {isEdit ? t.saveChanges : t.saveCredential}
             </Button>
             <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>
-              Cancel
+              {t.cancel}
             </Button>
           </div>
         </form>

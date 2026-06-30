@@ -4,10 +4,13 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Search, X } from 'lucide-react';
 import { inputClass } from '@/components/manage/ui';
 import { BRANCHES } from '@/lib/management/branches';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminumrah';
 
 type PackageOpt = { id: string; name: string };
 
 export function PassengerFilters({ packages }: { packages: PackageOpt[] }) {
+  const t = getDict(useLocale());
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -27,45 +30,45 @@ export function PassengerFilters({ packages }: { packages: PackageOpt[] }) {
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
         <input
           className={`${inputClass} pl-9`}
-          placeholder="Search name, passport, phone…"
+          placeholder={t.searchPlaceholder}
           defaultValue={params.get('q') ?? ''}
           onChange={(e) => update('q', e.target.value)}
         />
       </div>
 
       <select className={inputClass} value={params.get('package') ?? ''} onChange={(e) => update('package', e.target.value)}>
-        <option value="">All packages</option>
-        <option value="unassigned">Unassigned</option>
+        <option value="">{t.allPackages}</option>
+        <option value="unassigned">{t.filterUnassigned}</option>
         {packages.map((p) => (
           <option key={p.id} value={p.id}>{p.name}</option>
         ))}
       </select>
 
       <select className={inputClass} value={params.get('branch') ?? ''} onChange={(e) => update('branch', e.target.value)}>
-        <option value="">All branches</option>
+        <option value="">{t.allBranches}</option>
         {BRANCHES.map((b) => (
           <option key={b.value} value={b.value}>{b.short}</option>
         ))}
       </select>
 
       <select className={inputClass} value={params.get('status') ?? ''} onChange={(e) => update('status', e.target.value)}>
-        <option value="">All statuses</option>
-        <option value="active">Active</option>
-        <option value="completed">Completed</option>
-        <option value="cancelled">Cancelled</option>
+        <option value="">{t.allStatuses}</option>
+        <option value="active">{t.optActive}</option>
+        <option value="completed">{t.optCompleted}</option>
+        <option value="cancelled">{t.optCancelled}</option>
       </select>
 
       <div className="flex items-center gap-2">
         <select className={inputClass} value={params.get('expiring') ?? ''} onChange={(e) => update('expiring', e.target.value)}>
-          <option value="">Any passport</option>
-          <option value="1">Expiring in &lt; 6 months</option>
+          <option value="">{t.anyPassport}</option>
+          <option value="1">{t.expiringSixMonths}</option>
         </select>
         {hasFilters && (
           <button
             type="button"
             onClick={() => router.replace(pathname)}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border text-ink-muted transition hover:bg-muted"
-            aria-label="Clear filters"
+            aria-label={t.clearFilters}
           >
             <X className="h-4 w-4" />
           </button>

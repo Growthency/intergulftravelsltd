@@ -11,6 +11,8 @@ import { loadActiveHeads } from '@/lib/management/accounts-data';
 import type { Loan } from '@/lib/management/types';
 import { branchShort } from '@/lib/management/branches';
 import { money } from '@/lib/management/format';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Loans' };
@@ -36,6 +38,7 @@ const STATUS_TONE: Record<string, 'emerald' | 'gold' | 'red' | 'slate'> = {
 };
 
 export default async function LoansPage() {
+  const t = getDict(getLocale());
   const [loans, heads] = await Promise.all([loadLoans(), loadActiveHeads()]);
   const bankHeads: HeadOption[] = heads
     .filter((h) => h.subtype === 'bank')
@@ -59,15 +62,15 @@ export default async function LoansPage() {
   return (
     <>
       <PageHeader
-        title="Loans"
-        subtitle="Money lent out and borrowed, with their cash/bank vouchers."
+        title={t.loans.title}
+        subtitle={t.loans.subtitle}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {loans.length > 0 && (
               <ExportBar
                 filename="loans"
-                title="Loan Register"
-                headers={['Date', 'Party', 'Phone', 'Type', 'Principal', 'Due date', 'Status', 'Branch']}
+                title={t.loans.exportTitle}
+                headers={[t.loans.exHDate, t.loans.exHParty, t.loans.exHPhone, t.loans.exHType, t.loans.exHPrincipal, t.loans.exHDueDate, t.loans.exHStatus, t.loans.exHBranch]}
                 rows={exportRows}
                 orientation="l"
               />
@@ -78,27 +81,27 @@ export default async function LoansPage() {
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Receivable (loans given)" value={<Money value={givenTotal} />} icon={ArrowUpRight} accent="emerald" />
-        <StatCard label="Payable (loans taken)" value={<Money value={takenTotal} />} icon={ArrowDownLeft} accent="red" />
-        <StatCard label="Active Loans" value={open.length} icon={ArrowLeftRight} accent="slate" />
+        <StatCard label={t.loans.receivable} value={<Money value={givenTotal} />} icon={ArrowUpRight} accent="emerald" />
+        <StatCard label={t.loans.payable} value={<Money value={takenTotal} />} icon={ArrowDownLeft} accent="red" />
+        <StatCard label={t.loans.activeLoans} value={open.length} icon={ArrowLeftRight} accent="slate" />
       </div>
 
       {loans.length === 0 ? (
         <EmptyState
-          title="No loans recorded"
-          hint="Use “Add Loan” to record money you have lent out or borrowed. The matching cash/bank voucher is posted automatically."
+          title={t.loans.noLoansTitle}
+          hint={t.loans.noLoansHint}
         />
       ) : (
         <TableWrap>
           <thead>
             <tr>
-              <th className={thClass}>Date</th>
-              <th className={thClass}>Party</th>
-              <th className={thClass}>Type</th>
-              <th className={`${thClass} text-right`}>Principal</th>
-              <th className={thClass}>Due date</th>
-              <th className={thClass}>Branch</th>
-              <th className={thClass}>Status</th>
+              <th className={thClass}>{t.loans.thDate}</th>
+              <th className={thClass}>{t.loans.thParty}</th>
+              <th className={thClass}>{t.loans.thType}</th>
+              <th className={`${thClass} text-right`}>{t.loans.thPrincipal}</th>
+              <th className={thClass}>{t.loans.thDueDate}</th>
+              <th className={thClass}>{t.loans.thBranch}</th>
+              <th className={thClass}>{t.loans.thStatus}</th>
             </tr>
           </thead>
           <tbody>
@@ -111,7 +114,7 @@ export default async function LoansPage() {
                 </td>
                 <td className={tdClass}>
                   <Badge tone={l.type === 'given' ? 'emerald' : 'red'}>
-                    {l.type === 'given' ? 'Given' : 'Taken'}
+                    {l.type === 'given' ? t.loans.given : t.loans.taken}
                   </Badge>
                 </td>
                 <td className={`${tdClass} text-right font-semibold tabular-nums`}>{money(l.principal)}</td>
@@ -119,7 +122,7 @@ export default async function LoansPage() {
                 <td className={`${tdClass} whitespace-nowrap`}>{branchShort(l.branch)}</td>
                 <td className={tdClass}>
                   <div className="flex items-center gap-2">
-                    <Badge tone={STATUS_TONE[l.status] ?? 'slate'}>{l.status}</Badge>
+                    <Badge tone={STATUS_TONE[l.status] ?? 'slate'}>{t.statusLabels[l.status as keyof typeof t.statusLabels] ?? l.status}</Badge>
                     <LoanStatusControl id={l.id} status={l.status} />
                     <LoanEdit loan={l} />
                   </div>

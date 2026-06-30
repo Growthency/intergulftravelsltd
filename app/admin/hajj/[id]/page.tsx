@@ -23,9 +23,14 @@ import { naturalBalance } from '@/lib/management/types';
 import { money } from '@/lib/management/format';
 import { branchLabel } from '@/lib/management/branches';
 import type { AccountHead, HajjPilgrim, MgmtPackage, Payment } from '@/lib/management/types';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminhajj';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Pilgrim Profile' };
+export function generateMetadata() {
+  return { title: getDict(getLocale()).metaProfile };
+}
 
 async function loadPilgrim(id: string): Promise<HajjPilgrim | null> {
   try {
@@ -64,6 +69,8 @@ async function loadPayments(pilgrimId: string): Promise<Payment[]> {
 const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('en-GB') : '—');
 
 export default async function PilgrimProfilePage({ params }: { params: { id: string } }) {
+  const locale = getLocale();
+  const t = getDict(locale);
   const pilgrim = await loadPilgrim(params.id);
   if (!pilgrim) notFound();
 
@@ -86,21 +93,21 @@ export default async function PilgrimProfilePage({ params }: { params: { id: str
     .map((p) => ({ id: p.id, name: p.name, price: p.price, year: p.year }));
 
   const info: [string, string | number | null | undefined][] = [
-    ['Tracking no.', pilgrim.tracking_no],
-    ['Hajj year', pilgrim.year],
-    ['Name (Bangla)', pilgrim.name_bn],
-    ['Father', pilgrim.father_name],
-    ['Mother', pilgrim.mother_name],
-    ['Date of birth', fmtDate(pilgrim.dob)],
-    ['Gender', pilgrim.gender],
-    ['NID', pilgrim.nid],
-    ['Passport', pilgrim.passport_no],
-    ['Phone', pilgrim.phone],
-    ['District', pilgrim.district],
-    ['Address', pilgrim.address],
-    ['Pre-reg no.', pilgrim.pre_reg_no],
-    ['Govt. serial', pilgrim.govt_serial],
-    ['Branch', branchLabel(pilgrim.branch)],
+    [t.infoTrackingNo, pilgrim.tracking_no],
+    [t.infoHajjYear, pilgrim.year],
+    [t.infoNameBangla, pilgrim.name_bn],
+    [t.infoFather, pilgrim.father_name],
+    [t.infoMother, pilgrim.mother_name],
+    [t.infoDob, fmtDate(pilgrim.dob)],
+    [t.infoGender, pilgrim.gender],
+    [t.infoNid, pilgrim.nid],
+    [t.infoPassport, pilgrim.passport_no],
+    [t.infoPhone, pilgrim.phone],
+    [t.infoDistrict, pilgrim.district],
+    [t.infoAddress, pilgrim.address],
+    [t.infoPreRegNo, pilgrim.pre_reg_no],
+    [t.infoGovtSerial, pilgrim.govt_serial],
+    [t.infoBranch, branchLabel(pilgrim.branch)],
   ];
 
   const paymentRows = payments.map((p) => [
@@ -115,32 +122,32 @@ export default async function PilgrimProfilePage({ params }: { params: { id: str
   return (
     <>
       <Link
-        href="/admin/hajj"
+        href={localizedPath(locale, '/admin/hajj')}
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted hover:text-brand-700"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to pilgrims
+        <ArrowLeft className="h-4 w-4" /> {t.backToPilgrims}
       </Link>
 
       <PageHeader
         title={pilgrim.name}
-        subtitle={`${pilgrim.tracking_no ?? 'No tracking no.'} · ${
-          pilgrim.reg_type === 'registered' ? 'Registered' : 'Pre-registration'
+        subtitle={`${pilgrim.tracking_no ?? t.noTrackingNo} · ${
+          pilgrim.reg_type === 'registered' ? t.badgeRegistered : t.badgePreRegistration
         } · ${pilgrim.year}`}
         actions={
           <div className="flex items-center gap-2">
             <Link
-              href={`/admin/hajj/${pilgrim.id}/edit`}
+              href={localizedPath(locale, `/admin/hajj/${pilgrim.id}/edit`)}
               className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3.5 py-2 text-sm font-semibold text-ink shadow-soft transition hover:border-brand-600/40 hover:text-brand-700"
             >
-              <Pencil className="h-4 w-4" /> Edit
+              <Pencil className="h-4 w-4" /> {t.edit}
             </Link>
             <ExportBar
               filename={`hajj-${pilgrim.tracking_no ?? pilgrim.id}-receipt`}
-              title={`Payment History — ${pilgrim.name}`}
-              subtitle={`Tracking ${pilgrim.tracking_no ?? '—'} · Charged ${money(charged)} · Paid ${money(
+              title={`${t.paymentHistoryFor} — ${pilgrim.name}`}
+              subtitle={`${t.infoTrackingNo} ${pilgrim.tracking_no ?? '—'} · ${t.charged} ${money(charged)} · ${t.paid} ${money(
                 paid,
-              )} · Due ${money(due)}`}
-              headers={['Date', 'Voucher', 'Type', 'Method', 'Amount', 'Narration']}
+              )} · ${t.dueShort} ${money(due)}`}
+              headers={[t.exDate, t.exVoucher, t.exType, t.exMethod, t.exAmount, t.exNarration]}
               rows={paymentRows}
             />
           </div>
@@ -149,9 +156,9 @@ export default async function PilgrimProfilePage({ params }: { params: { id: str
 
       {/* Account summary */}
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Package charged" value={<Money value={charged} />} accent="slate" />
-        <StatCard label="Total paid" value={<Money value={paid} />} accent="emerald" />
-        <StatCard label="Due balance" value={<Money value={due} />} accent={due > 0 ? 'red' : 'emerald'} />
+        <StatCard label={t.packageCharged} value={<Money value={charged} />} accent="slate" />
+        <StatCard label={t.totalPaid} value={<Money value={paid} />} accent="emerald" />
+        <StatCard label={t.dueBalance} value={<Money value={due} />} accent={due > 0 ? 'red' : 'emerald'} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -170,13 +177,13 @@ export default async function PilgrimProfilePage({ params }: { params: { id: str
                 <p className="font-display text-lg font-semibold text-ink">{pilgrim.name}</p>
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {pilgrim.reg_type === 'registered' ? (
-                    <Badge tone="emerald">Registered</Badge>
+                    <Badge tone="emerald">{t.badgeRegistered}</Badge>
                   ) : (
-                    <Badge tone="slate">Pre-registration</Badge>
+                    <Badge tone="slate">{t.badgePreRegistration}</Badge>
                   )}
-                  {pilgrim.status === 'active' && <Badge tone="blue">Active</Badge>}
-                  {pilgrim.status === 'completed' && <Badge tone="emerald">Completed</Badge>}
-                  {pilgrim.status === 'cancelled' && <Badge tone="red">Cancelled</Badge>}
+                  {pilgrim.status === 'active' && <Badge tone="blue">{t.badgeActive}</Badge>}
+                  {pilgrim.status === 'completed' && <Badge tone="emerald">{t.badgeCompleted}</Badge>}
+                  {pilgrim.status === 'cancelled' && <Badge tone="red">{t.badgeCancelled}</Badge>}
                 </div>
               </div>
             </div>
@@ -195,7 +202,7 @@ export default async function PilgrimProfilePage({ params }: { params: { id: str
           </Card>
 
           <Card>
-            <h2 className="mb-3 font-display text-base font-semibold text-ink">Status</h2>
+            <h2 className="mb-3 font-display text-base font-semibold text-ink">{t.statusHeading}</h2>
             <StatusControl pilgrimId={pilgrim.id} current={pilgrim.status} />
           </Card>
         </div>
@@ -203,13 +210,13 @@ export default async function PilgrimProfilePage({ params }: { params: { id: str
         {/* Right: package + payments */}
         <div className="space-y-6 lg:col-span-2">
           <Card>
-            <h2 className="mb-1 font-display text-base font-semibold text-ink">Package</h2>
+            <h2 className="mb-1 font-display text-base font-semibold text-ink">{t.packageHeading}</h2>
             <p className="mb-4 text-sm text-ink-muted">
               {assignedPkg
-                ? `Assigned: ${assignedPkg.name}${assignedPkg.year ? ` · ${assignedPkg.year}` : ''} · ${money(
+                ? `${t.assignedLine}: ${assignedPkg.name}${assignedPkg.year ? ` · ${assignedPkg.year}` : ''} · ${money(
                     assignedPkg.price,
                   )}`
-                : 'No package assigned yet. Assigning a package registers the pilgrim and charges its price as a due.'}
+                : t.noPackageAssigned}
             </p>
             <AssignPackage
               pilgrimId={pilgrim.id}
@@ -219,24 +226,24 @@ export default async function PilgrimProfilePage({ params }: { params: { id: str
           </Card>
 
           <Card>
-            <h2 className="mb-4 font-display text-base font-semibold text-ink">Record a payment</h2>
+            <h2 className="mb-4 font-display text-base font-semibold text-ink">{t.recordPaymentHeading}</h2>
             <RecordPayment pilgrimId={pilgrim.id} bankAccounts={banks} />
           </Card>
 
           <div>
-            <h2 className="mb-3 font-display text-base font-semibold text-ink">Payment history</h2>
+            <h2 className="mb-3 font-display text-base font-semibold text-ink">{t.paymentHistoryHeading}</h2>
             {payments.length === 0 ? (
-              <EmptyState title="No payments yet" hint="Recorded payments and installments will appear here." />
+              <EmptyState title={t.noPaymentsYet} hint={t.noPaymentsHint} />
             ) : (
               <TableWrap>
                 <thead>
                   <tr>
-                    <th className={thClass}>Date</th>
-                    <th className={thClass}>Voucher</th>
-                    <th className={thClass}>Type</th>
-                    <th className={thClass}>Method</th>
-                    <th className={`${thClass} text-right`}>Amount</th>
-                    <th className={thClass}>Narration</th>
+                    <th className={thClass}>{t.exDate}</th>
+                    <th className={thClass}>{t.exVoucher}</th>
+                    <th className={thClass}>{t.exType}</th>
+                    <th className={thClass}>{t.exMethod}</th>
+                    <th className={`${thClass} text-right`}>{t.exAmount}</th>
+                    <th className={thClass}>{t.exNarration}</th>
                   </tr>
                 </thead>
                 <tbody>

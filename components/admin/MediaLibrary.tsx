@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { Copy, Check, ImageOff, ExternalLink } from 'lucide-react';
 import { ImageUploader } from '@/components/admin/ImageUploader';
 import { Card, EmptyState } from '@/components/admin/ui';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminwebsite';
 
 export type MediaItem = {
   name: string;
@@ -28,44 +30,43 @@ function formatBytes(bytes: number | null) {
 
 export function MediaLibrary({ items }: { items: MediaItem[] }) {
   const router = useRouter();
+  const t = getDict(useLocale()).mediaLib;
   const [copied, setCopied] = useState<string | null>(null);
 
   async function copy(url: string) {
     try {
       await navigator.clipboard.writeText(url);
       setCopied(url);
-      toast.success('URL copied to clipboard.');
+      toast.success(t.urlCopied);
       setTimeout(() => setCopied((c) => (c === url ? null : c)), 1500);
     } catch {
-      toast.error('Could not copy the URL.');
+      toast.error(t.copyFailed);
     }
   }
 
   return (
     <div className="space-y-6">
       <Card className="space-y-3">
-        <p className="text-sm font-semibold text-ink">Upload a new asset</p>
+        <p className="text-sm font-semibold text-ink">{t.uploadTitle}</p>
         <ImageUploader
           folder="media"
-          label="Media asset"
+          label={t.mediaAssetLabel}
           value={null}
           onChange={(url) => {
             if (url) {
-              toast.success('Uploaded. Refreshing the library…');
+              toast.success(t.uploadedRefreshing);
               router.refresh();
             }
           }}
         />
-        <p className="text-xs text-ink-muted">
-          Files are optimised to WebP automatically and stored in the public media bucket.
-        </p>
+        <p className="text-xs text-ink-muted">{t.uploadHint}</p>
       </Card>
 
       {items.length === 0 ? (
         <EmptyState
           icon={<ImageOff className="h-6 w-6" />}
-          title="The media library is empty"
-          description="Upload an image above. It will be converted to WebP and listed here for reuse across the site."
+          title={t.emptyTitle}
+          description={t.emptyDesc}
         />
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -102,11 +103,11 @@ export function MediaLibrary({ items }: { items: MediaItem[] }) {
                   >
                     {copied === item.url ? (
                       <>
-                        <Check className="h-3 w-3 text-brand-600" /> Copied
+                        <Check className="h-3 w-3 text-brand-600" /> {t.copied}
                       </>
                     ) : (
                       <>
-                        <Copy className="h-3 w-3" /> Copy URL
+                        <Copy className="h-3 w-3" /> {t.copyUrl}
                       </>
                     )}
                   </button>

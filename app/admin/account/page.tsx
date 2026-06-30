@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import { getStaffScope } from '@/lib/management/scope';
 import { PageHeader } from '@/components/manage/ui';
 import { AccountSettings } from '@/components/admin/AccountSettings';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/adminshell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'My Account' };
@@ -26,10 +28,11 @@ export default async function AccountPage() {
 
   // Branch-scoped accounts keep their email fixed (it's their branch key).
   const scope = await getStaffScope();
+  const t = getDict(getLocale()).account;
 
   return (
     <>
-      <PageHeader title="My Account" subtitle="Update your name, photo, sign-in email and password." />
+      <PageHeader title={t.title} subtitle={t.subtitle} />
       <AccountSettings
         initial={{ email: user?.email ?? '', full_name: fullName, avatar_url: avatarUrl }}
         canEditEmail={!scope.branch}

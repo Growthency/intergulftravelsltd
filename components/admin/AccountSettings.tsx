@@ -7,11 +7,14 @@ import { toast } from 'sonner';
 import { Loader2, Upload, X, User, Mail, KeyRound } from 'lucide-react';
 import { Card, Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminshell';
 
 type Initial = { email: string; full_name: string; avatar_url: string | null };
 
 export function AccountSettings({ initial, canEditEmail = true }: { initial: Initial; canEditEmail?: boolean }) {
   const router = useRouter();
+  const t = getDict(useLocale()).account;
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -27,13 +30,13 @@ export function AccountSettings({ initial, canEditEmail = true }: { initial: Ini
       const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.url) {
-        toast.error(data?.error ?? 'Could not upload the photo.');
+        toast.error(data?.error ?? t.couldNotUpload);
         return;
       }
       setAvatarUrl(data.url);
-      toast.success('Photo uploaded.');
+      toast.success(t.photoUploaded);
     } catch {
-      toast.error('Network error while uploading.');
+      toast.error(t.uploadNetworkError);
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
@@ -47,7 +50,7 @@ export function AccountSettings({ initial, canEditEmail = true }: { initial: Ini
     const password = String(fd.get('password') ?? '');
     const confirm = String(fd.get('confirm') ?? '');
     if (password && password !== confirm) {
-      toast.error('The two passwords do not match.');
+      toast.error(t.passwordsMismatch);
       return;
     }
 
@@ -71,13 +74,13 @@ export function AccountSettings({ initial, canEditEmail = true }: { initial: Ini
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not save your account.');
+        toast.error(data?.error ?? t.couldNotSave);
         return;
       }
-      toast.success(data.emailChanged ? 'Saved. Use your new email next time you sign in.' : 'Account updated.');
+      toast.success(data.emailChanged ? t.savedNewEmail : t.accountUpdated);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setSaving(false);
     }
@@ -88,18 +91,18 @@ export function AccountSettings({ initial, canEditEmail = true }: { initial: Ini
       {/* Profile */}
       <Card className="space-y-5">
         <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
-          <User className="h-4 w-4 text-brand-600" /> Profile
+          <User className="h-4 w-4 text-brand-600" /> {t.profile}
         </h2>
         <div className="flex items-center gap-4">
           <div className="relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full border border-border bg-muted">
             {avatarUrl ? (
               <>
-                <Image src={avatarUrl} alt="Profile photo" fill className="object-cover" sizes="80px" />
+                <Image src={avatarUrl} alt={t.profilePhotoAlt} fill className="object-cover" sizes="80px" />
                 <button
                   type="button"
                   onClick={() => setAvatarUrl(null)}
                   className="absolute right-0.5 top-0.5 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white"
-                  aria-label="Remove photo"
+                  aria-label={t.removePhoto}
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -118,24 +121,24 @@ export function AccountSettings({ initial, canEditEmail = true }: { initial: Ini
             />
             <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
               {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              {uploading ? 'Uploading…' : 'Upload photo'}
+              {uploading ? t.uploading : t.uploadPhoto}
             </Button>
-            <p className="mt-1 text-xs text-ink-muted">JPG or PNG — converted to WebP automatically.</p>
+            <p className="mt-1 text-xs text-ink-muted">{t.photoHint}</p>
           </div>
         </div>
-        <Field label="Full name">
-          <input name="full_name" defaultValue={initial.full_name} className={inputClass} placeholder="Your name" autoComplete="name" />
+        <Field label={t.fullName}>
+          <input name="full_name" defaultValue={initial.full_name} className={inputClass} placeholder={t.yourName} autoComplete="name" />
         </Field>
       </Card>
 
       {/* Sign-in */}
       <Card className="space-y-5">
         <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
-          <Mail className="h-4 w-4 text-brand-600" /> Sign-in email
+          <Mail className="h-4 w-4 text-brand-600" /> {t.signInEmail}
         </h2>
         <Field
-          label="Email address"
-          hint={canEditEmail ? undefined : 'Your branch sign-in email is fixed. Ask the administrator to change it.'}
+          label={t.emailAddress}
+          hint={canEditEmail ? undefined : t.emailFixedHint}
         >
           <input
             name="email"
@@ -149,13 +152,13 @@ export function AccountSettings({ initial, canEditEmail = true }: { initial: Ini
         </Field>
 
         <h2 className="flex items-center gap-2 border-t border-border pt-5 font-display text-lg font-semibold text-ink">
-          <KeyRound className="h-4 w-4 text-brand-600" /> Change password
+          <KeyRound className="h-4 w-4 text-brand-600" /> {t.changePassword}
         </h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="New password" hint="Leave blank to keep your current password.">
+          <Field label={t.newPassword} hint={t.newPasswordHint}>
             <input name="password" type="password" className={inputClass} autoComplete="new-password" placeholder="••••••••" />
           </Field>
-          <Field label="Confirm new password">
+          <Field label={t.confirmNewPassword}>
             <input name="confirm" type="password" className={inputClass} autoComplete="new-password" placeholder="••••••••" />
           </Field>
         </div>
@@ -164,7 +167,7 @@ export function AccountSettings({ initial, canEditEmail = true }: { initial: Ini
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={saving || uploading}>
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-          {saving ? 'Saving…' : 'Save changes'}
+          {saving ? t.saving : t.saveChanges}
         </Button>
       </div>
     </form>

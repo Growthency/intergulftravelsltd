@@ -10,6 +10,10 @@ import {
 } from 'lucide-react';
 import { mgmtDb } from '@/lib/management/server';
 import { getStaffScope } from '@/lib/management/scope';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminreports';
+import type { AccountType } from '@/lib/management/types';
 import type { AccountHead, Transaction } from '@/lib/management/types';
 import { money } from '@/lib/management/format';
 import { branchLabel } from '@/lib/management/branches';
@@ -23,7 +27,6 @@ import {
   buildIncomeExpense,
   buildBalanceSheet,
   buildDueReport,
-  TYPE_LABEL,
 } from '@/lib/management/reports';
 
 export const dynamic = 'force-dynamic';
@@ -31,49 +34,63 @@ export const metadata = { title: 'Reports & Export' };
 
 type ReportKey = 'trial-balance' | 'day-book' | 'income-expense' | 'balance-sheet' | 'due-aging';
 
+type Dict = ReturnType<typeof getDict>;
+
 const REPORTS: {
   key: ReportKey;
-  title: string;
-  desc: string;
+  titleKey: keyof Dict;
+  descKey: keyof Dict;
   icon: typeof Scale;
   mode: 'date' | 'range' | 'asof' | 'none';
 }[] = [
   {
     key: 'trial-balance',
-    title: 'Trial Balance',
-    desc: 'Every active head with its debit / credit balance. Totals must agree.',
+    titleKey: 'trialBalanceTitle',
+    descKey: 'trialBalanceDesc',
     icon: Scale,
     mode: 'none',
   },
   {
     key: 'day-book',
-    title: 'Day Book',
-    desc: 'All vouchers posted on a chosen day, with particulars and amounts.',
+    titleKey: 'dayBookTitle',
+    descKey: 'dayBookDesc',
     icon: BookOpen,
     mode: 'date',
   },
   {
     key: 'income-expense',
-    title: 'Income & Expense',
-    desc: 'Profit & loss for a date range — income heads against expense heads.',
+    titleKey: 'incomeExpenseTitle',
+    descKey: 'incomeExpenseDesc',
     icon: TrendingUp,
     mode: 'range',
   },
   {
     key: 'balance-sheet',
-    title: 'Balance Sheet',
-    desc: 'Assets against liabilities and equity as of a date.',
+    titleKey: 'balanceSheetTitle',
+    descKey: 'balanceSheetDesc',
     icon: Landmark,
     mode: 'asof',
   },
   {
     key: 'due-aging',
-    title: 'Due / Aging',
-    desc: 'Customers carrying an outstanding balance, largest due first.',
+    titleKey: 'dueAgingTitle',
+    descKey: 'dueAgingDesc',
     icon: HandCoins,
     mode: 'none',
   },
 ];
+
+/** Account type → translated label (replaces TYPE_LABEL for display). */
+function typeLabel(t: Dict, type: AccountType): string {
+  const map: Record<AccountType, keyof Dict> = {
+    asset: 'typeAsset',
+    liability: 'typeLiability',
+    income: 'typeIncome',
+    expense: 'typeExpense',
+    equity: 'typeEquity',
+  };
+  return t[map[type]];
+}
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -124,6 +141,8 @@ export default async function ReportsPage({
 }: {
   searchParams: { report?: string; date?: string; from?: string; to?: string; branch?: string };
 }) {
+  const locale = getLocale();
+  const t = getDict(locale);
   const reportKey = searchParams.report as ReportKey | undefined;
   const active = REPORTS.find((r) => r.key === reportKey);
 
@@ -131,24 +150,21 @@ export default async function ReportsPage({
   if (!active) {
     return (
       <>
-        <PageHeader
-          title="Reports & Export"
-          subtitle="Accounting statements for Inter Gulf Travels. Open a report, set the dates, then export to Excel, PDF or print."
-        />
+        <PageHeader title={t.hubTitle} subtitle={t.hubSubtitle} />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {REPORTS.map((r) => {
             const Icon = r.icon;
             return (
               <Link
                 key={r.key}
-                href={`/admin/reports?report=${r.key}`}
+                href={localizedPath(locale, `/admin/reports?report=${r.key}`)}
                 className="group rounded-2xl border border-border bg-card p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-600/40 hover:shadow-emerald"
               >
                 <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-700">
                   <Icon className="h-5 w-5" />
                 </span>
-                <p className="mt-4 font-display text-lg font-semibold text-ink">{r.title}</p>
-                <p className="mt-1 text-sm text-ink-muted">{r.desc}</p>
+                <p className="mt-4 font-display text-lg font-semibold text-ink">{t[r.titleKey]}</p>
+                <p className="mt-1 text-sm text-ink-muted">{t[r.descKey]}</p>
               </Link>
             );
           })}
@@ -164,19 +180,19 @@ export default async function ReportsPage({
   const from = searchParams.from || `${today().slice(0, 4)}-01-01`;
   const to = searchParams.to || today();
 
-  const branchTag = branch ? branchLabel(branch) : 'All branches';
+  const branchTag = branch ? branchLabel(branch) : t.allBranches;
 
   return (
     <>
       <div className="mb-4">
         <Link
-          href="/admin/reports"
+          href={localizedPath(locale, '/admin/reports')}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted transition hover:text-brand-700"
         >
-          <ArrowLeft className="h-4 w-4" /> All reports
+          <ArrowLeft className="h-4 w-4" /> {t.allReports}
         </Link>
       </div>
-      <PageHeader title={active.title} subtitle={active.desc} />
+      <PageHeader title={t[active.titleKey]} subtitle={t[active.descKey]} />
 
       <Card className="mb-5">
         <ReportFilters
@@ -190,57 +206,60 @@ export default async function ReportsPage({
       </Card>
 
       {active.key === 'trial-balance' && (
-        <TrialBalanceView branch={branch} branchTag={branchTag} />
+        <TrialBalanceView branch={branch} branchTag={branchTag} t={t} />
       )}
       {active.key === 'day-book' && (
-        <DayBookView branch={branch} branchTag={branchTag} date={date} />
+        <DayBookView branch={branch} branchTag={branchTag} date={date} t={t} />
       )}
       {active.key === 'income-expense' && (
-        <IncomeExpenseView branch={branch} branchTag={branchTag} from={from} to={to} />
+        <IncomeExpenseView branch={branch} branchTag={branchTag} from={from} to={to} t={t} />
       )}
       {active.key === 'balance-sheet' && (
-        <BalanceSheetView branch={branch} branchTag={branchTag} asOf={date} />
+        <BalanceSheetView branch={branch} branchTag={branchTag} asOf={date} t={t} />
       )}
-      {active.key === 'due-aging' && <DueView branch={branch} branchTag={branchTag} />}
+      {active.key === 'due-aging' && <DueView branch={branch} branchTag={branchTag} t={t} />}
     </>
   );
 }
 
 /* =============================== Trial Balance ============================ */
 
-async function TrialBalanceView({ branch, branchTag }: { branch: string; branchTag: string }) {
+async function TrialBalanceView({
+  branch,
+  branchTag,
+  t,
+}: {
+  branch: string;
+  branchTag: string;
+  t: Dict;
+}) {
   const heads = await fetchHeads(branch);
   const report = buildTrialBalance(heads);
 
   if (report.rows.length === 0) {
-    return (
-      <EmptyState
-        title="No balances to show"
-        hint="Once account heads carry opening balances or posted vouchers, the trial balance will appear here."
-      />
-    );
+    return <EmptyState title={t.tbEmptyTitle} hint={t.tbEmptyHint} />;
   }
 
-  const headers = ['Code', 'Account head', 'Type', 'Debit (৳)', 'Credit (৳)'];
+  const headers = [t.thCode, t.thAccountHead, t.thType, `${t.thDebit} (৳)`, `${t.thCredit} (৳)`];
   const rows = report.rows.map((r) => [
     r.code ?? '',
     r.name,
-    TYPE_LABEL[r.type],
+    typeLabel(t, r.type),
     r.debit ? money(r.debit, false) : '',
     r.credit ? money(r.credit, false) : '',
   ]);
-  rows.push(['', 'TOTAL', '', money(report.totalDebit, false), money(report.totalCredit, false)]);
+  rows.push(['', t.total, '', money(report.totalDebit, false), money(report.totalCredit, false)]);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Badge tone={report.balanced ? 'emerald' : 'red'}>
-          {report.balanced ? 'Balanced' : 'Out of balance'}
+          {report.balanced ? t.balanced : t.outOfBalance}
         </Badge>
         <ExportBar
           filename={`trial-balance-${today()}`}
-          title="Trial Balance"
-          subtitle={`${branchTag} · as of ${formatDate(today())}`}
+          title={t.tbExportTitle}
+          subtitle={`${branchTag} · ${t.asOf} ${formatDate(today())}`}
           headers={headers}
           rows={rows}
         />
@@ -248,11 +267,11 @@ async function TrialBalanceView({ branch, branchTag }: { branch: string; branchT
       <TableWrap>
         <thead>
           <tr>
-            <th className={thClass}>Code</th>
-            <th className={thClass}>Account Head</th>
-            <th className={thClass}>Type</th>
-            <th className={`${thClass} text-right`}>Debit</th>
-            <th className={`${thClass} text-right`}>Credit</th>
+            <th className={thClass}>{t.thCode}</th>
+            <th className={thClass}>{t.thAccountHead}</th>
+            <th className={thClass}>{t.thType}</th>
+            <th className={`${thClass} text-right`}>{t.thDebit}</th>
+            <th className={`${thClass} text-right`}>{t.thCredit}</th>
           </tr>
         </thead>
         <tbody>
@@ -261,7 +280,7 @@ async function TrialBalanceView({ branch, branchTag }: { branch: string; branchT
               <td className={`${tdClass} font-mono text-xs text-ink-muted`}>{r.code ?? '—'}</td>
               <td className={`${tdClass} font-medium`}>{r.name}</td>
               <td className={tdClass}>
-                <Badge>{TYPE_LABEL[r.type]}</Badge>
+                <Badge>{typeLabel(t, r.type)}</Badge>
               </td>
               <td className={`${tdClass} text-right tabular-nums`}>
                 {r.debit ? money(r.debit, false) : '—'}
@@ -273,7 +292,7 @@ async function TrialBalanceView({ branch, branchTag }: { branch: string; branchT
           ))}
           <tr className="bg-muted/50 font-semibold">
             <td className={tdClass} colSpan={3}>
-              Total
+              {t.total}
             </td>
             <td className={`${tdClass} text-right tabular-nums`}>{money(report.totalDebit, false)}</td>
             <td className={`${tdClass} text-right tabular-nums`}>{money(report.totalCredit, false)}</td>
@@ -290,10 +309,12 @@ async function DayBookView({
   branch,
   branchTag,
   date,
+  t,
 }: {
   branch: string;
   branchTag: string;
   date: string;
+  t: Dict;
 }) {
   const [heads, transactions] = await Promise.all([
     fetchHeads(branch),
@@ -304,13 +325,15 @@ async function DayBookView({
   if (report.rows.length === 0) {
     return (
       <EmptyState
-        title="No vouchers on this day"
-        hint={`No transactions were posted on ${formatDate(date)} for ${branchTag.toLowerCase()}.`}
+        title={t.dbEmptyTitle}
+        hint={t.dbEmptyHint
+          .replace('{date}', formatDate(date))
+          .replace('{branch}', branchTag.toLowerCase())}
       />
     );
   }
 
-  const headers = ['Voucher', 'Dr — Account', 'Cr — Account', 'Narration', 'Amount (৳)'];
+  const headers = [t.thVoucher, t.thDrAccount, t.thCrAccount, t.thNarration, `${t.thAmount} (৳)`];
   const rows = report.rows.map((r) => [
     r.voucher_no ?? '',
     r.debitName,
@@ -318,17 +341,18 @@ async function DayBookView({
     r.narration ?? '',
     money(r.amount, false),
   ]);
-  rows.push(['', '', '', 'TOTAL', money(report.total, false)]);
+  rows.push(['', '', '', t.total, money(report.total, false)]);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-ink-muted">
-          {report.rows.length} voucher{report.rows.length === 1 ? '' : 's'} · {formatDate(date)}
+          {report.rows.length}{' '}
+          {report.rows.length === 1 ? t.voucherCountOne : t.voucherCountMany} · {formatDate(date)}
         </p>
         <ExportBar
           filename={`day-book-${date}`}
-          title="Day Book"
+          title={t.dbExportTitle}
           subtitle={`${branchTag} · ${formatDate(date)}`}
           headers={headers}
           rows={rows}
@@ -338,11 +362,11 @@ async function DayBookView({
       <TableWrap>
         <thead>
           <tr>
-            <th className={thClass}>Voucher</th>
-            <th className={thClass}>Dr — Account</th>
-            <th className={thClass}>Cr — Account</th>
-            <th className={thClass}>Narration</th>
-            <th className={`${thClass} text-right`}>Amount</th>
+            <th className={thClass}>{t.thVoucher}</th>
+            <th className={thClass}>{t.thDrAccount}</th>
+            <th className={thClass}>{t.thCrAccount}</th>
+            <th className={thClass}>{t.thNarration}</th>
+            <th className={`${thClass} text-right`}>{t.thAmount}</th>
           </tr>
         </thead>
         <tbody>
@@ -357,7 +381,7 @@ async function DayBookView({
           ))}
           <tr className="bg-muted/50 font-semibold">
             <td className={tdClass} colSpan={4}>
-              Total for the day
+              {t.totalForDay}
             </td>
             <td className={`${tdClass} text-right tabular-nums`}>{money(report.total, false)}</td>
           </tr>
@@ -374,11 +398,13 @@ async function IncomeExpenseView({
   branchTag,
   from,
   to,
+  t,
 }: {
   branch: string;
   branchTag: string;
   from: string;
   to: string;
+  t: Dict;
 }) {
   const [heads, transactions] = await Promise.all([
     fetchHeads(branch),
@@ -389,19 +415,22 @@ async function IncomeExpenseView({
   if (report.income.length === 0 && report.expense.length === 0) {
     return (
       <EmptyState
-        title="No income or expenses in this period"
-        hint={`Nothing was posted between ${formatDate(from)} and ${formatDate(to)} for ${branchTag.toLowerCase()}.`}
+        title={t.ieEmptyTitle}
+        hint={t.ieEmptyHint
+          .replace('{from}', formatDate(from))
+          .replace('{to}', formatDate(to))
+          .replace('{branch}', branchTag.toLowerCase())}
       />
     );
   }
 
-  const headers = ['Section', 'Head', 'Amount (৳)'];
+  const headers = [t.thType, t.thAccountHead, `${t.thAmount} (৳)`];
   const rows: (string | number)[][] = [];
-  report.income.forEach((l) => rows.push(['Income', l.name, money(l.amount, false)]));
-  rows.push(['Income', 'Total income', money(report.totalIncome, false)]);
-  report.expense.forEach((l) => rows.push(['Expense', l.name, money(l.amount, false)]));
-  rows.push(['Expense', 'Total expense', money(report.totalExpense, false)]);
-  rows.push(['', report.net >= 0 ? 'Net profit' : 'Net loss', money(Math.abs(report.net), false)]);
+  report.income.forEach((l) => rows.push([t.income, l.name, money(l.amount, false)]));
+  rows.push([t.income, `${t.total} ${t.income}`, money(report.totalIncome, false)]);
+  report.expense.forEach((l) => rows.push([t.expense, l.name, money(l.amount, false)]));
+  rows.push([t.expense, `${t.total} ${t.expense}`, money(report.totalExpense, false)]);
+  rows.push(['', report.net >= 0 ? t.netProfit : t.netLoss, money(Math.abs(report.net), false)]);
 
   return (
     <div className="space-y-4">
@@ -411,21 +440,33 @@ async function IncomeExpenseView({
         </p>
         <ExportBar
           filename={`income-expense-${from}_${to}`}
-          title="Income & Expense Statement"
-          subtitle={`${branchTag} · ${formatDate(from)} to ${formatDate(to)}`}
+          title={t.ieExportTitle}
+          subtitle={`${branchTag} · ${formatDate(from)} — ${formatDate(to)}`}
           headers={headers}
           rows={rows}
         />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <PnlColumn title="Income" lines={report.income} total={report.totalIncome} tone="emerald" />
-        <PnlColumn title="Expense" lines={report.expense} total={report.totalExpense} tone="red" />
+        <PnlColumn
+          title={t.income}
+          emptyLabel={t.noIncomeRecorded}
+          lines={report.income}
+          total={report.totalIncome}
+          tone="emerald"
+        />
+        <PnlColumn
+          title={t.expense}
+          emptyLabel={t.noExpenseRecorded}
+          lines={report.expense}
+          total={report.totalExpense}
+          tone="red"
+        />
       </div>
 
       <Card className="flex items-center justify-between">
         <span className="font-display text-lg font-semibold text-ink">
-          {report.net >= 0 ? 'Net Profit' : 'Net Loss'}
+          {report.net >= 0 ? t.netProfit : t.netLoss}
         </span>
         <span
           className={`font-display text-2xl font-semibold tabular-nums ${
@@ -441,11 +482,13 @@ async function IncomeExpenseView({
 
 function PnlColumn({
   title,
+  emptyLabel,
   lines,
   total,
   tone,
 }: {
   title: string;
+  emptyLabel: string;
   lines: { id: string; name: string; amount: number }[];
   total: number;
   tone: 'emerald' | 'red';
@@ -459,7 +502,7 @@ function PnlColumn({
         </span>
       </div>
       {lines.length === 0 ? (
-        <p className="px-5 py-6 text-center text-sm text-ink-muted">No {title.toLowerCase()} recorded.</p>
+        <p className="px-5 py-6 text-center text-sm text-ink-muted">{emptyLabel}</p>
       ) : (
         <ul className="divide-y divide-border/70">
           {lines.map((l) => (
@@ -480,10 +523,12 @@ async function BalanceSheetView({
   branch,
   branchTag,
   asOf,
+  t,
 }: {
   branch: string;
   branchTag: string;
   asOf: string;
+  t: Dict;
 }) {
   const heads = await fetchHeads(branch);
   const report = buildBalanceSheet(heads);
@@ -491,42 +536,37 @@ async function BalanceSheetView({
   const noData =
     report.assets.length === 0 && report.liabilities.length === 0 && report.equity.length === 0;
   if (noData && report.retainedEarnings === 0) {
-    return (
-      <EmptyState
-        title="Nothing on the balance sheet yet"
-        hint="Asset, liability and equity balances will appear here once vouchers are posted."
-      />
-    );
+    return <EmptyState title={t.bsEmptyTitle} hint={t.bsEmptyHint} />;
   }
 
-  const headers = ['Side', 'Item', 'Amount (৳)'];
+  const headers = [t.thType, t.thAccountHead, `${t.thAmount} (৳)`];
   const rows: (string | number)[][] = [];
-  report.assets.forEach((l) => rows.push(['Assets', l.name, money(l.amount, false)]));
-  rows.push(['Assets', 'Total assets', money(report.totalAssets, false)]);
-  report.liabilities.forEach((l) => rows.push(['Liabilities', l.name, money(l.amount, false)]));
-  report.equity.forEach((l) => rows.push(['Equity', l.name, money(l.amount, false)]));
+  report.assets.forEach((l) => rows.push([t.assets, l.name, money(l.amount, false)]));
+  rows.push([t.assets, `${t.total} ${t.assets}`, money(report.totalAssets, false)]);
+  report.liabilities.forEach((l) => rows.push([t.typeLiability, l.name, money(l.amount, false)]));
+  report.equity.forEach((l) => rows.push([t.typeEquity, l.name, money(l.amount, false)]));
   rows.push([
-    'Equity',
-    report.retainedEarnings >= 0 ? 'Retained earnings (profit)' : 'Retained earnings (loss)',
+    t.typeEquity,
+    report.retainedEarnings >= 0 ? t.retainedProfit : t.retainedLoss,
     money(report.retainedEarnings, false),
   ]);
-  rows.push(['', 'Total liabilities & equity', money(report.totalLiabEquity, false)]);
+  rows.push(['', `${t.total} ${t.liabilitiesAndEquity}`, money(report.totalLiabEquity, false)]);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <p className="text-sm text-ink-muted">
-            As of {formatDate(asOf)} · {branchTag}
+            {t.asOf} {formatDate(asOf)} · {branchTag}
           </p>
           <Badge tone={report.balanced ? 'emerald' : 'red'}>
-            {report.balanced ? 'Balanced' : 'Out of balance'}
+            {report.balanced ? t.balanced : t.outOfBalance}
           </Badge>
         </div>
         <ExportBar
           filename={`balance-sheet-${asOf}`}
-          title="Balance Sheet"
-          subtitle={`${branchTag} · as of ${formatDate(asOf)}`}
+          title={t.bsExportTitle}
+          subtitle={`${branchTag} · ${t.asOf} ${formatDate(asOf)}`}
           headers={headers}
           rows={rows}
         />
@@ -535,15 +575,15 @@ async function BalanceSheetView({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="p-0">
           <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-            <h3 className="font-display text-base font-semibold text-ink">Assets</h3>
+            <h3 className="font-display text-base font-semibold text-ink">{t.assets}</h3>
             <span className="font-semibold tabular-nums text-ink">{money(report.totalAssets, false)}</span>
           </div>
-          <BsList lines={report.assets} emptyLabel="assets" />
+          <BsList lines={report.assets} emptyLabel={t.noAssetsRecorded} />
         </Card>
 
         <Card className="p-0">
           <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-            <h3 className="font-display text-base font-semibold text-ink">Liabilities &amp; Equity</h3>
+            <h3 className="font-display text-base font-semibold text-ink">{t.liabilitiesAndEquity}</h3>
             <span className="font-semibold tabular-nums text-ink">
               {money(report.totalLiabEquity, false)}
             </span>
@@ -563,7 +603,7 @@ async function BalanceSheetView({
             ))}
             <li className="flex items-center justify-between gap-3 px-5 py-3 text-sm">
               <span className="text-ink">
-                {report.retainedEarnings >= 0 ? 'Retained earnings (profit)' : 'Retained earnings (loss)'}
+                {report.retainedEarnings >= 0 ? t.retainedProfit : t.retainedLoss}
               </span>
               <span className="tabular-nums text-ink">{money(report.retainedEarnings, false)}</span>
             </li>
@@ -571,7 +611,7 @@ async function BalanceSheetView({
               report.equity.length === 0 &&
               report.retainedEarnings === 0 && (
                 <li className="px-5 py-6 text-center text-sm text-ink-muted">
-                  No liabilities or equity recorded.
+                  {t.noLiabEquityRecorded}
                 </li>
               )}
           </ul>
@@ -589,7 +629,7 @@ function BsList({
   emptyLabel: string;
 }) {
   if (lines.length === 0) {
-    return <p className="px-5 py-6 text-center text-sm text-ink-muted">No {emptyLabel} recorded.</p>;
+    return <p className="px-5 py-6 text-center text-sm text-ink-muted">{emptyLabel}</p>;
   }
   return (
     <ul className="divide-y divide-border/70">
@@ -605,20 +645,15 @@ function BsList({
 
 /* ================================ Due / Aging =========================== */
 
-async function DueView({ branch, branchTag }: { branch: string; branchTag: string }) {
+async function DueView({ branch, branchTag, t }: { branch: string; branchTag: string; t: Dict }) {
   const heads = await fetchHeads(branch);
   const report = buildDueReport(heads);
 
   if (report.rows.length === 0) {
-    return (
-      <EmptyState
-        title="No outstanding dues"
-        hint="Customers with a remaining balance will be listed here, largest due first."
-      />
-    );
+    return <EmptyState title={t.dueEmptyTitle} hint={t.dueEmptyHint} />;
   }
 
-  const headers = ['Code', 'Customer', 'Phone', 'Branch', 'Due (৳)'];
+  const headers = [t.thCode, t.thCustomer, t.thPhone, t.thBranch, `${t.thDue} (৳)`];
   const rows = report.rows.map((r) => [
     r.code ?? '',
     r.name,
@@ -626,19 +661,20 @@ async function DueView({ branch, branchTag }: { branch: string; branchTag: strin
     branchLabel(r.branch),
     money(r.due, false),
   ]);
-  rows.push(['', 'TOTAL', '', '', money(report.total, false)]);
+  rows.push(['', t.total, '', '', money(report.total, false)]);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-ink-muted">
-          {report.rows.length} customer{report.rows.length === 1 ? '' : 's'} · total due{' '}
+          {report.rows.length}{' '}
+          {report.rows.length === 1 ? t.customerCountOne : t.customerCountMany} · {t.totalDue}{' '}
           <span className="font-semibold text-ink">{money(report.total)}</span>
         </p>
         <ExportBar
           filename={`customer-dues-${today()}`}
-          title="Customer Dues / Aging"
-          subtitle={`${branchTag} · as of ${formatDate(today())}`}
+          title={t.dueExportTitle}
+          subtitle={`${branchTag} · ${t.asOf} ${formatDate(today())}`}
           headers={headers}
           rows={rows}
         />
@@ -646,11 +682,11 @@ async function DueView({ branch, branchTag }: { branch: string; branchTag: strin
       <TableWrap>
         <thead>
           <tr>
-            <th className={thClass}>Code</th>
-            <th className={thClass}>Customer</th>
-            <th className={thClass}>Phone</th>
-            <th className={thClass}>Branch</th>
-            <th className={`${thClass} text-right`}>Due</th>
+            <th className={thClass}>{t.thCode}</th>
+            <th className={thClass}>{t.thCustomer}</th>
+            <th className={thClass}>{t.thPhone}</th>
+            <th className={thClass}>{t.thBranch}</th>
+            <th className={`${thClass} text-right`}>{t.thDue}</th>
           </tr>
         </thead>
         <tbody>
@@ -667,7 +703,7 @@ async function DueView({ branch, branchTag }: { branch: string; branchTag: strin
           ))}
           <tr className="bg-muted/50 font-semibold">
             <td className={tdClass} colSpan={4}>
-              Total outstanding
+              {t.totalOutstanding}
             </td>
             <td className={`${tdClass} text-right tabular-nums`}>{money(report.total, false)}</td>
           </tr>

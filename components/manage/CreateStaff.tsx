@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { UserPlus, Loader2, ChevronDown } from 'lucide-react';
 import { Field, inputClass } from '@/components/manage/ui';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminsystem';
 
 const ROLE_OPTIONS = [
-  { value: 'operator', label: 'Operator' },
-  { value: 'accountant', label: 'Accountant' },
-  { value: 'staff', label: 'Staff' },
-  { value: 'admin', label: 'Administrator' },
+  { value: 'operator', labelKey: 'roleOperator' },
+  { value: 'accountant', labelKey: 'roleAccountant' },
+  { value: 'staff', labelKey: 'roleStaff' },
+  { value: 'admin', labelKey: 'roleAdministrator' },
 ] as const;
 
 type Form = {
@@ -25,6 +27,7 @@ const EMPTY: Form = { full_name: '', email: '', phone: '', password: '', role: '
 
 /** Admin-only panel to create a staff login + profile in one step. */
 export function CreateStaff() {
+  const t = getDict(useLocale());
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Form>(EMPTY);
@@ -38,9 +41,9 @@ export function CreateStaff() {
     e.preventDefault();
     if (busy) return;
 
-    if (form.full_name.trim().length < 2) return toast.error('Please enter the full name.');
-    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) return toast.error('Enter a valid email address.');
-    if (form.password.length < 8) return toast.error('Password must be at least 8 characters.');
+    if (form.full_name.trim().length < 2) return toast.error(t.enterFullName);
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) return toast.error(t.enterValidEmail);
+    if (form.password.length < 8) return toast.error(t.passwordMin8);
 
     setBusy(true);
     try {
@@ -57,15 +60,15 @@ export function CreateStaff() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not create the staff account.');
+        toast.error(data?.error ?? t.couldNotCreateStaff);
         return;
       }
-      toast.success(`Staff account created for ${form.full_name.trim()}.`);
+      toast.success(t.staffCreatedFor(form.full_name.trim()));
       setForm(EMPTY);
       setOpen(false);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setBusy(false);
     }
@@ -83,9 +86,9 @@ export function CreateStaff() {
             <UserPlus className="h-5 w-5" />
           </span>
           <span>
-            <span className="block font-display text-base font-semibold text-ink">Create staff account</span>
+            <span className="block font-display text-base font-semibold text-ink">{t.createStaffAccount}</span>
             <span className="block text-sm text-ink-muted">
-              Add a colleague with a login and role. They can sign in immediately.
+              {t.createStaffSubtitle}
             </span>
           </span>
         </span>
@@ -95,49 +98,49 @@ export function CreateStaff() {
       {open && (
         <form onSubmit={submit} className="border-t border-border px-5 py-5 sm:px-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Full name" required>
+            <Field label={t.fullName} required>
               <input
                 className={inputClass}
                 value={form.full_name}
                 onChange={(e) => set('full_name', e.target.value)}
-                placeholder="e.g. Abdul Karim"
+                placeholder={t.fullNamePlaceholder}
                 autoComplete="off"
               />
             </Field>
-            <Field label="Email" required>
+            <Field label={t.email} required>
               <input
                 type="email"
                 className={inputClass}
                 value={form.email}
                 onChange={(e) => set('email', e.target.value)}
-                placeholder="name@example.com"
+                placeholder={t.emailPlaceholder}
                 autoComplete="off"
               />
             </Field>
-            <Field label="Phone">
+            <Field label={t.phone}>
               <input
                 className={inputClass}
                 value={form.phone}
                 onChange={(e) => set('phone', e.target.value)}
-                placeholder="Optional"
+                placeholder={t.optional}
                 autoComplete="off"
               />
             </Field>
-            <Field label="Temporary password" required hint="At least 8 characters">
+            <Field label={t.tempPassword} required hint={t.tempPasswordHint}>
               <input
                 type="text"
                 className={inputClass}
                 value={form.password}
                 onChange={(e) => set('password', e.target.value)}
-                placeholder="Set a password to share"
+                placeholder={t.tempPasswordPlaceholder}
                 autoComplete="new-password"
               />
             </Field>
-            <Field label="Role" required>
+            <Field label={t.role} required>
               <select className={inputClass} value={form.role} onChange={(e) => set('role', e.target.value)}>
                 {ROLE_OPTIONS.map((r) => (
                   <option key={r.value} value={r.value}>
-                    {r.label}
+                    {t[r.labelKey]}
                   </option>
                 ))}
               </select>
@@ -153,7 +156,7 @@ export function CreateStaff() {
               }}
               className="rounded-full border border-border px-4 py-2.5 text-sm font-medium text-ink-muted transition hover:text-ink"
             >
-              Cancel
+              {t.cancel}
             </button>
             <button
               type="submit"
@@ -161,7 +164,7 @@ export function CreateStaff() {
               className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-emerald transition hover:bg-brand-700 disabled:opacity-60"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-              Create account
+              {t.createAccount}
             </button>
           </div>
         </form>

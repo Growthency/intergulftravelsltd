@@ -5,11 +5,16 @@ import { PackageForm } from '@/components/manage/umrah/PackageForm';
 import { PackageRow } from '@/components/manage/umrah/PackageRow';
 import { PackageWiseList, type PkgPassenger } from '@/components/manage/umrah/PackageWiseList';
 import { loadUmrahPackages, loadPassengers } from '@/lib/management/umrah';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminumrah';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Umrah Packages' };
 
 export default async function UmrahPackagesPage() {
+  const locale = getLocale();
+  const t = getDict(locale);
   const [packages, passengers] = await Promise.all([loadUmrahPackages(), loadPassengers()]);
 
   // Aggregate per-package assigned counts and dues.
@@ -37,22 +42,22 @@ export default async function UmrahPackagesPage() {
   return (
     <>
       <Link
-        href="/admin/umrah"
+        href={localizedPath(locale, '/admin/umrah')}
         className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-ink-muted transition hover:text-brand-700"
       >
-        <ChevronLeft className="h-4 w-4" /> Back to passengers
+        <ChevronLeft className="h-4 w-4" /> {t.backToPassengers}
       </Link>
 
       <PageHeader
-        title="Umrah Packages"
-        subtitle="Create and manage Umrah packages, then view the passengers booked on each."
+        title={t.packagesTitle}
+        subtitle={t.packagesSubtitle}
         actions={<PackageForm />}
       />
 
       {packages.length === 0 ? (
         <EmptyState
-          title="No Umrah packages yet"
-          hint="Create your first package with its price and details. Passengers can then be assigned to it."
+          title={t.noPackagesYet}
+          hint={t.noPackagesHint}
           action={<PackageForm />}
         />
       ) : (
@@ -71,8 +76,8 @@ export default async function UmrahPackagesPage() {
                   <Layers className="h-5 w-5" />
                 </span>
                 <div>
-                  <h2 className="font-display text-lg font-semibold text-ink">Package-wise passenger list</h2>
-                  <p className="text-sm text-ink-muted">Choose a package to view its passengers with paid and due, then export or print.</p>
+                  <h2 className="font-display text-lg font-semibold text-ink">{t.packageWiseTitle}</h2>
+                  <p className="text-sm text-ink-muted">{t.packageWiseSubtitle}</p>
                 </div>
               </div>
               <PackageWiseList

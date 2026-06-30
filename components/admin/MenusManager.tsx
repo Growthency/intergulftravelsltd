@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Loader2, X, Menu as MenuIcon, CornerDownRight } from 'lucide-react';
 import { Card, Field, inputClass, AdminButton, EmptyState, Badge } from '@/components/admin/ui';
 import { confirmDialog } from '@/components/admin/confirm';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminsystem';
 
 export type MenuItem = {
   id: string;
@@ -34,6 +36,7 @@ const EMPTY: Draft = {
 };
 
 export function MenusManager({ items }: { items: MenuItem[] }) {
+  const t = getDict(useLocale());
   const router = useRouter();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
@@ -74,7 +77,7 @@ export function MenusManager({ items }: { items: MenuItem[] }) {
   async function save() {
     if (!draft) return;
     if (draft.label.trim().length < 1 || draft.href.trim().length < 1) {
-      toast.error('Label and link are both required.');
+      toast.error(t.labelLinkBothRequired);
       return;
     }
     setSaving(true);
@@ -94,14 +97,14 @@ export function MenusManager({ items }: { items: MenuItem[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not save the menu item.');
+        toast.error(data?.error ?? t.couldNotSaveItem);
         return;
       }
-      toast.success(draft.id ? 'Menu item updated.' : 'Menu item added.');
+      toast.success(draft.id ? t.menuItemUpdated : t.menuItemAdded);
       setDraft(null);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setSaving(false);
     }
@@ -110,9 +113,9 @@ export function MenusManager({ items }: { items: MenuItem[] }) {
   async function remove(item: MenuItem) {
     const childCount = childrenOf.get(item.id)?.length ?? 0;
     const msg = childCount
-      ? `Delete "${item.label}"? Its ${childCount} sub-item(s) will become top-level links.`
-      : `Delete "${item.label}"?`;
-    if (!(await confirmDialog({ message: msg, confirmText: 'Delete', danger: true }))) return;
+      ? t.confirmDeleteItemWithChildren(item.label, childCount)
+      : t.confirmDeleteItem(item.label);
+    if (!(await confirmDialog({ message: msg, confirmText: t.delete, danger: true }))) return;
     setDeletingId(item.id);
     try {
       const res = await fetch(`/api/admin/menus?id=${encodeURIComponent(item.id)}`, {
@@ -120,13 +123,13 @@ export function MenusManager({ items }: { items: MenuItem[] }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not delete the menu item.');
+        toast.error(data?.error ?? t.couldNotDeleteItem);
         return;
       }
-      toast.success('Menu item deleted.');
+      toast.success(t.menuItemDeleted);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setDeletingId(null);
     }
@@ -136,7 +139,7 @@ export function MenusManager({ items }: { items: MenuItem[] }) {
     <div className="space-y-5">
       <div className="flex justify-end">
         <AdminButton variant="primary" onClick={() => openNew(null)}>
-          <Plus className="h-4 w-4" /> Add menu item
+          <Plus className="h-4 w-4" /> {t.addMenuItem}
         </AdminButton>
       </div>
 
@@ -144,40 +147,40 @@ export function MenusManager({ items }: { items: MenuItem[] }) {
         <Card className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-ink">
-              {draft.id ? 'Edit menu item' : 'New menu item'}
+              {draft.id ? t.editMenuItem : t.newMenuItem}
             </p>
             <button
               onClick={() => setDraft(null)}
               className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition hover:bg-muted"
-              aria-label="Close"
+              aria-label={t.close}
             >
               <X className="h-4 w-4" />
             </button>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Label">
+            <Field label={t.label}>
               <input
                 className={inputClass}
                 value={draft.label}
-                placeholder="e.g. Hajj Packages"
+                placeholder={t.menuLabelPlaceholder}
                 onChange={(e) => setDraft({ ...draft, label: e.target.value })}
               />
             </Field>
-            <Field label="Link" hint="Path or full URL">
+            <Field label={t.link} hint={t.pathOrFullUrl}>
               <input
                 className={inputClass}
                 value={draft.href}
-                placeholder="/hajj/packages"
+                placeholder={t.menuHrefPlaceholder}
                 onChange={(e) => setDraft({ ...draft, href: e.target.value })}
               />
             </Field>
-            <Field label="Parent" hint="For submenus">
+            <Field label={t.parent} hint={t.forSubmenus}>
               <select
                 className={inputClass}
                 value={draft.parent_id ?? ''}
                 onChange={(e) => setDraft({ ...draft, parent_id: e.target.value || null })}
               >
-                <option value="">None (top level)</option>
+                <option value="">{t.noneTopLevel}</option>
                 {parents
                   .filter((p) => p.id !== draft.id)
                   .map((p) => (
@@ -188,18 +191,18 @@ export function MenusManager({ items }: { items: MenuItem[] }) {
               </select>
             </Field>
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Location">
+              <Field label={t.location}>
                 <select
                   className={inputClass}
                   value={draft.location}
                   onChange={(e) => setDraft({ ...draft, location: e.target.value })}
                 >
-                  <option value="header">Header</option>
-                  <option value="footer">Footer</option>
-                  <option value="mobile">Mobile</option>
+                  <option value="header">{t.header}</option>
+                  <option value="footer">{t.footer}</option>
+                  <option value="mobile">{t.mobile}</option>
                 </select>
               </Field>
-              <Field label="Sort" hint="Lower first">
+              <Field label={t.sort} hint={t.lowerFirst}>
                 <input
                   type="number"
                   className={inputClass}
@@ -211,11 +214,11 @@ export function MenusManager({ items }: { items: MenuItem[] }) {
           </div>
           <div className="flex justify-end gap-2">
             <AdminButton variant="ghost" onClick={() => setDraft(null)}>
-              Cancel
+              {t.cancel}
             </AdminButton>
             <AdminButton variant="primary" onClick={save} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {draft.id ? 'Save changes' : 'Add item'}
+              {draft.id ? t.saveChanges : t.addItem}
             </AdminButton>
           </div>
         </Card>
@@ -224,11 +227,11 @@ export function MenusManager({ items }: { items: MenuItem[] }) {
       {items.length === 0 ? (
         <EmptyState
           icon={<MenuIcon className="h-6 w-6" />}
-          title="No menu items yet"
-          description="Add navigation links to control the site header and menus."
+          title={t.noMenuItemsTitle}
+          description={t.noMenuItemsDesc}
           action={
             <AdminButton variant="primary" onClick={() => openNew(null)}>
-              <Plus className="h-4 w-4" /> Add menu item
+              <Plus className="h-4 w-4" /> {t.addMenuItem}
             </AdminButton>
           }
         />
@@ -245,6 +248,7 @@ export function MenusManager({ items }: { items: MenuItem[] }) {
               >
                 <Row
                   item={parent}
+                  labels={{ addChild: t.addSubItem, edit: t.edit, del: t.delete }}
                   onEdit={() => openEdit(parent)}
                   onDelete={() => remove(parent)}
                   onAddChild={() => openNew(parent.id)}
@@ -257,6 +261,7 @@ export function MenusManager({ items }: { items: MenuItem[] }) {
                         <Row
                           item={child}
                           child
+                          labels={{ addChild: t.addSubItem, edit: t.edit, del: t.delete }}
                           onEdit={() => openEdit(child)}
                           onDelete={() => remove(child)}
                           deleting={deletingId === child.id}
@@ -277,6 +282,7 @@ export function MenusManager({ items }: { items: MenuItem[] }) {
 function Row({
   item,
   child,
+  labels,
   onEdit,
   onDelete,
   onAddChild,
@@ -284,6 +290,7 @@ function Row({
 }: {
   item: MenuItem;
   child?: boolean;
+  labels: { addChild: string; edit: string; del: string };
   onEdit: () => void;
   onDelete: () => void;
   onAddChild?: () => void;
@@ -307,7 +314,7 @@ function Row({
           <button
             onClick={onAddChild}
             className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition hover:bg-brand-50 hover:text-brand-700"
-            aria-label="Add sub-item"
+            aria-label={labels.addChild}
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -315,7 +322,7 @@ function Row({
         <button
           onClick={onEdit}
           className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition hover:bg-brand-50 hover:text-brand-700"
-          aria-label="Edit"
+          aria-label={labels.edit}
         >
           <Pencil className="h-4 w-4" />
         </button>
@@ -323,7 +330,7 @@ function Row({
           onClick={onDelete}
           disabled={deleting}
           className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
-          aria-label="Delete"
+          aria-label={labels.del}
         >
           {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
         </button>

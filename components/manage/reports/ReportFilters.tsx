@@ -4,6 +4,8 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { CalendarDays, Building2 } from 'lucide-react';
 import { BRANCHES } from '@/lib/management/branches';
 import { inputClass } from '@/components/manage/ui';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminreports';
 
 type Mode = 'date' | 'range' | 'asof' | 'none';
 
@@ -30,6 +32,7 @@ export function ReportFilters({
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
+  const t = getDict(useLocale());
 
   function update(patch: Record<string, string>) {
     const next = new URLSearchParams(params.toString());
@@ -47,7 +50,7 @@ export function ReportFilters({
         <label className="block">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">
             <CalendarDays className="mr-1 inline h-3.5 w-3.5" />
-            {mode === 'asof' ? 'As of date' : 'Date'}
+            {mode === 'asof' ? t.filterAsOfDate : t.filterDate}
           </span>
           <input
             type="date"
@@ -62,7 +65,7 @@ export function ReportFilters({
         <>
           <label className="block">
             <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              <CalendarDays className="mr-1 inline h-3.5 w-3.5" /> From
+              <CalendarDays className="mr-1 inline h-3.5 w-3.5" /> {t.filterFrom}
             </span>
             <input
               type="date"
@@ -73,7 +76,7 @@ export function ReportFilters({
           </label>
           <label className="block">
             <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              To
+              {t.filterTo}
             </span>
             <input
               type="date"
@@ -88,14 +91,14 @@ export function ReportFilters({
       {mode !== 'none' && (
         <label className="block">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">
-            <Building2 className="mr-1 inline h-3.5 w-3.5" /> Branch
+            <Building2 className="mr-1 inline h-3.5 w-3.5" /> {t.filterBranch}
           </span>
           <select
             value={branch}
             onChange={(e) => update({ branch: e.target.value })}
             className={`${inputClass} sm:w-56`}
           >
-            <option value="">All branches</option>
+            <option value="">{t.allBranches}</option>
             {BRANCHES.map((b) => (
               <option key={b.value} value={b.value}>
                 {b.label}

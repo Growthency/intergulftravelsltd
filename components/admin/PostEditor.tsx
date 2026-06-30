@@ -19,6 +19,9 @@ import { slugify } from '@/lib/utils';
 import { Card, Field, inputClass, AdminButton } from '@/components/admin/ui';
 import { confirmDialog } from '@/components/admin/confirm';
 import { ImageUploader } from '@/components/admin/ImageUploader';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminwebsite';
 
 export type PostFormData = {
   id?: string;
@@ -59,12 +62,6 @@ const EMPTY: PostFormData = {
   published_at: null,
 };
 
-const toneOptions: { value: PostFormData['tone']; label: string }[] = [
-  { value: 'emerald', label: 'Emerald' },
-  { value: 'gold', label: 'Gold' },
-  { value: 'forest', label: 'Forest' },
-  { value: 'sand', label: 'Sand' },
-];
 
 /** Convert an ISO timestamp to a value the datetime-local input accepts. */
 function toLocalInput(iso: string | null): string {
@@ -79,6 +76,14 @@ function toLocalInput(iso: string | null): string {
 
 export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = getDict(locale).postEditor;
+  const toneOptions: { value: PostFormData['tone']; label: string }[] = [
+    { value: 'emerald', label: t.toneEmerald },
+    { value: 'gold', label: t.toneGold },
+    { value: 'forest', label: t.toneForest },
+    { value: 'sand', label: t.toneSand },
+  ];
   const isEdit = Boolean(initial?.id);
 
   const [form, setForm] = useState<PostFormData>({ ...EMPTY, ...initial });
@@ -98,7 +103,7 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
 
   async function save() {
     if (form.title.trim().length < 2) {
-      toast.error('Please add a title before saving.');
+      toast.error(t.addTitleError);
       return;
     }
     setSaving(true);
@@ -125,15 +130,15 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not save the post.');
+        toast.error(data?.error ?? t.couldNotSave);
         return;
       }
 
-      toast.success(isEdit ? 'Post updated.' : 'Post created.');
-      router.push('/admin/posts');
+      toast.success(isEdit ? t.postUpdated : t.postCreated);
+      router.push(localizedPath(locale, '/admin/posts'));
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setSaving(false);
     }
@@ -141,20 +146,20 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
 
   async function remove() {
     if (!isEdit) return;
-    if (!(await confirmDialog({ message: 'Delete this post permanently? This cannot be undone.', confirmText: 'Delete', danger: true }))) return;
+    if (!(await confirmDialog({ message: t.confirmDelete, confirmText: t.confirmText, danger: true }))) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/admin/posts/${initial!.id}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not delete the post.');
+        toast.error(data?.error ?? t.couldNotDelete);
         return;
       }
-      toast.success('Post deleted.');
-      router.push('/admin/posts');
+      toast.success(t.postDeleted);
+      router.push(localizedPath(locale, '/admin/posts'));
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.networkError);
     } finally {
       setDeleting(false);
     }
@@ -166,36 +171,36 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Link
-            href="/admin/posts"
+            href={localizedPath(locale, '/admin/posts')}
             className="grid h-10 w-10 place-items-center rounded-xl border border-border text-ink-muted transition hover:bg-muted"
-            aria-label="Back to posts"
+            aria-label={t.backToPosts}
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
             <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
-              {isEdit ? 'Edit post' : 'New post'}
+              {isEdit ? t.editPost : t.newPost}
             </h1>
             <p className="text-sm text-ink-muted">
-              {isEdit ? 'Update and re-publish this article.' : 'Compose a new blog article.'}
+              {isEdit ? t.editSubtitle : t.newSubtitle}
             </p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {isEdit && form.status === 'published' && form.slug && (
-            <AdminButton href={`/blog/${form.slug}`} variant="outline" size="sm">
-              <ExternalLink className="h-4 w-4" /> View live
+            <AdminButton href={localizedPath(locale, `/blog/${form.slug}`)} variant="outline" size="sm">
+              <ExternalLink className="h-4 w-4" /> {t.viewLive}
             </AdminButton>
           )}
           {isEdit && (
             <AdminButton variant="danger" size="sm" onClick={remove} disabled={deleting}>
               {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-              Delete
+              {t.delete}
             </AdminButton>
           )}
           <AdminButton variant="primary" onClick={save} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? 'Save changes' : 'Create post'}
+            {isEdit ? t.saveChanges : t.createPost}
           </AdminButton>
         </div>
       </div>
@@ -204,11 +209,11 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
         {/* Main column */}
         <div className="space-y-6">
           <Card className="space-y-4">
-            <Field label="Title">
+            <Field label={t.titleLabel}>
               <input
                 className={inputClass}
                 value={form.title}
-                placeholder="e.g. Preparing spiritually for your first Umrah"
+                placeholder={t.titlePlaceholder}
                 onChange={(e) => {
                   const title = e.target.value;
                   set('title', title);
@@ -217,11 +222,11 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
               />
             </Field>
 
-            <Field label="Slug" hint="URL path · /blog/your-slug">
+            <Field label={t.slugLabel} hint={t.slugHint}>
               <input
                 className={inputClass}
                 value={form.slug}
-                placeholder="auto-generated-from-title"
+                placeholder={t.slugPlaceholder}
                 onChange={(e) => {
                   setSlugTouched(true);
                   set('slug', slugify(e.target.value));
@@ -229,12 +234,12 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
               />
             </Field>
 
-            <Field label="Excerpt" hint="Shown on cards & meta">
+            <Field label={t.excerptLabel} hint={t.excerptHint}>
               <textarea
                 className={`${inputClass} resize-y`}
                 rows={2}
                 value={form.excerpt}
-                placeholder="A short, inviting summary of the article."
+                placeholder={t.excerptPlaceholder}
                 onChange={(e) => set('excerpt', e.target.value)}
               />
             </Field>
@@ -242,7 +247,7 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
 
           <Card className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-ink">Content</p>
+              <p className="text-sm font-semibold text-ink">{t.content}</p>
               <div className="flex rounded-full border border-border p-0.5">
                 <button
                   type="button"
@@ -251,7 +256,7 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
                     !preview ? 'bg-brand-600 text-white' : 'text-ink-muted hover:text-ink'
                   }`}
                 >
-                  <Pencil className="h-3.5 w-3.5" /> Write
+                  <Pencil className="h-3.5 w-3.5" /> {t.write}
                 </button>
                 <button
                   type="button"
@@ -260,7 +265,7 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
                     preview ? 'bg-brand-600 text-white' : 'text-ink-muted hover:text-ink'
                   }`}
                 >
-                  <Eye className="h-3.5 w-3.5" /> Preview
+                  <Eye className="h-3.5 w-3.5" /> {t.preview}
                 </button>
               </div>
             </div>
@@ -269,7 +274,8 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
               <div
                 className="prose-igt min-h-[20rem] rounded-2xl border border-border bg-background/40 px-5 py-4"
                 dangerouslySetInnerHTML={{
-                  __html: previewHtml || '<p class="text-ink-muted">Nothing to preview yet.</p>',
+                  __html:
+                    previewHtml || `<p class="text-ink-muted">${t.nothingToPreview}</p>`,
                 }}
               />
             ) : (
@@ -277,31 +283,29 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
                 className={`${inputClass} resize-y font-mono text-sm leading-relaxed`}
                 rows={20}
                 value={form.content}
-                placeholder={'Write in Markdown or HTML.\n\n## A heading\n\nA paragraph of body text, **bold**, _italic_ and [links](https://example.com).'}
+                placeholder={t.contentPlaceholder}
                 onChange={(e) => set('content', e.target.value)}
               />
             )}
-            <p className="text-xs text-ink-muted">
-              Markdown and HTML are both supported. Content is sanitised on save.
-            </p>
+            <p className="text-xs text-ink-muted">{t.contentHint}</p>
           </Card>
 
           <Card className="space-y-4">
-            <p className="text-sm font-semibold text-ink">Search appearance</p>
-            <Field label="Meta title" hint="Defaults to the post title">
+            <p className="text-sm font-semibold text-ink">{t.searchAppearance}</p>
+            <Field label={t.metaTitleLabel} hint={t.metaTitleHint}>
               <input
                 className={inputClass}
                 value={form.meta_title}
-                placeholder="Leave blank to use the title"
+                placeholder={t.metaTitlePlaceholder}
                 onChange={(e) => set('meta_title', e.target.value)}
               />
             </Field>
-            <Field label="Meta description" hint={`${form.meta_description.length}/160`}>
+            <Field label={t.metaDescLabel} hint={`${form.meta_description.length}/160`}>
               <textarea
                 className={`${inputClass} resize-y`}
                 rows={2}
                 value={form.meta_description}
-                placeholder="A concise description for search engines and social previews."
+                placeholder={t.metaDescPlaceholder}
                 onChange={(e) => set('meta_description', e.target.value)}
               />
             </Field>
@@ -311,23 +315,23 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
         {/* Sidebar */}
         <div className="space-y-6">
           <Card className="space-y-4">
-            <p className="text-sm font-semibold text-ink">Publishing</p>
-            <Field label="Status">
+            <p className="text-sm font-semibold text-ink">{t.publishing}</p>
+            <Field label={t.statusLabel}>
               <select
                 className={inputClass}
                 value={form.status}
                 onChange={(e) => set('status', e.target.value as PostFormData['status'])}
               >
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="scheduled">Scheduled</option>
+                <option value="draft">{t.statusDraft}</option>
+                <option value="published">{t.statusPublished}</option>
+                <option value="scheduled">{t.statusScheduled}</option>
               </select>
             </Field>
 
             {(form.status === 'scheduled' || form.status === 'published') && (
               <Field
-                label="Publish date"
-                hint={form.status === 'scheduled' ? 'Goes live at this time' : 'Optional'}
+                label={t.publishDateLabel}
+                hint={form.status === 'scheduled' ? t.publishDateHintScheduled : t.publishDateHintOptional}
               >
                 <input
                   type="datetime-local"
@@ -341,34 +345,34 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
             )}
 
             <label className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background/40 px-3.5 py-3">
-              <span className="text-sm font-medium text-ink">Feature this post</span>
+              <span className="text-sm font-medium text-ink">{t.featureThisPost}</span>
               <Toggle checked={form.featured} onChange={(v) => set('featured', v)} />
             </label>
           </Card>
 
           <Card className="space-y-3">
-            <p className="text-sm font-semibold text-ink">Featured image</p>
+            <p className="text-sm font-semibold text-ink">{t.featuredImage}</p>
             <ImageUploader
               folder="blog"
-              label="Featured image"
+              label={t.featuredImageLabel}
               value={form.featured_image}
               onChange={(url) => set('featured_image', url)}
             />
           </Card>
 
           <Card className="space-y-4">
-            <p className="text-sm font-semibold text-ink">Organisation</p>
-            <Field label="Category">
+            <p className="text-sm font-semibold text-ink">{t.organisation}</p>
+            <Field label={t.categoryLabel}>
               <select
                 className={inputClass}
                 value={form.category}
                 onChange={(e) => set('category', e.target.value as PostFormData['category'])}
               >
-                <option value="hajj-umrah">Hajj &amp; Umrah</option>
-                <option value="others">Others</option>
+                <option value="hajj-umrah">{t.catHajjUmrah}</option>
+                <option value="others">{t.catOthers}</option>
               </select>
             </Field>
-            <Field label="Card tone" hint="Cover gradient">
+            <Field label={t.cardToneLabel} hint={t.cardToneHint}>
               <select
                 className={inputClass}
                 value={form.tone}
@@ -381,34 +385,34 @@ export function PostEditor({ initial }: { initial?: Partial<PostFormData> }) {
                 ))}
               </select>
             </Field>
-            <Field label="Tags" hint="Comma-separated">
+            <Field label={t.tagsLabel} hint={t.tagsHint}>
               <input
                 className={inputClass}
                 value={tagsInput}
-                placeholder="umrah, guide, preparation"
+                placeholder={t.tagsPlaceholder}
                 onChange={(e) => setTagsInput(e.target.value)}
               />
             </Field>
-            <Field label="Read time" hint="Auto if blank">
+            <Field label={t.readTimeLabel} hint={t.readTimeHint}>
               <input
                 className={inputClass}
                 value={form.read_time}
-                placeholder="5 min read"
+                placeholder={t.readTimePlaceholder}
                 onChange={(e) => set('read_time', e.target.value)}
               />
             </Field>
           </Card>
 
           <Card className="space-y-4">
-            <p className="text-sm font-semibold text-ink">Author</p>
-            <Field label="Name">
+            <p className="text-sm font-semibold text-ink">{t.author}</p>
+            <Field label={t.nameLabel}>
               <input
                 className={inputClass}
                 value={form.author_name}
                 onChange={(e) => set('author_name', e.target.value)}
               />
             </Field>
-            <Field label="Role">
+            <Field label={t.roleLabel}>
               <input
                 className={inputClass}
                 value={form.author_role}

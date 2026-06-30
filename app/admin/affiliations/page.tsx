@@ -2,6 +2,8 @@ import { createAdminClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/admin/ui';
 import { AffiliationsManager } from '@/components/admin/AffiliationsManager';
 import type { Affiliation } from '@/lib/affiliations';
+import { getLocale } from '@/lib/i18n-server';
+import { getDict } from '@/lib/dictionaries/areas/adminwebsite';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Affiliations' };
@@ -29,13 +31,11 @@ async function loadAffiliations(): Promise<Affiliation[]> {
 
 export default async function AffiliationsPage() {
   const affiliations = await loadAffiliations();
+  const t = getDict(getLocale());
 
   return (
     <>
-      <PageHeader
-        title="Affiliations (Flight & Hotels)"
-        description="Manage the airline and hotel partners shown on the public site. Upload a logo for each partner — every image is stored as optimized WebP."
-      />
+      <PageHeader title={t.affiliations.title} description={t.affiliations.description} />
       <AffiliationsManager initial={affiliations} />
     </>
   );

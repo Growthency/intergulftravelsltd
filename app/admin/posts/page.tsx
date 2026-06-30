@@ -2,6 +2,9 @@ import { Plus } from 'lucide-react';
 import { createAdminClient } from '@/lib/supabase/server';
 import { PageHeader, AdminButton } from '@/components/admin/ui';
 import { PostsTable, type PostRow } from '@/components/admin/PostsTable';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminwebsite';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Blog Posts' };
@@ -27,15 +30,14 @@ async function loadPosts(): Promise<PostRow[]> {
 
 export default async function PostsPage() {
   const posts = await loadPosts();
+  const locale = getLocale();
+  const t = getDict(locale);
 
   return (
     <>
-      <PageHeader
-        title="Blog Posts"
-        description="Write, schedule and manage the articles published across the website."
-      >
-        <AdminButton href="/admin/posts/new" variant="primary">
-          <Plus className="h-4 w-4" /> New post
+      <PageHeader title={t.posts.title} description={t.posts.description}>
+        <AdminButton href={localizedPath(locale, '/admin/posts/new')} variant="primary">
+          <Plus className="h-4 w-4" /> {t.posts.newPost}
         </AdminButton>
       </PageHeader>
 

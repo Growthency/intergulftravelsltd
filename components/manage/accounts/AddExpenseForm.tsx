@@ -8,6 +8,8 @@ import { Card, Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
 import { BRANCHES } from '@/lib/management/branches';
 import type { HeadOption } from './VoucherForm';
+import { useLocale } from '@/components/providers/LocaleProvider';
+import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -20,6 +22,7 @@ export function AddExpenseForm({
   bankHeads: HeadOption[];
 }) {
   const router = useRouter();
+  const t = getDict(useLocale());
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -42,10 +45,10 @@ export function AddExpenseForm({
   }
 
   async function submit() {
-    if (!expenseId) return toast.error('Select an expense head.');
+    if (!expenseId) return toast.error(t.addExpense.errExpenseHead);
     const value = Number(amount);
-    if (!value || value <= 0) return toast.error('Enter an amount greater than zero.');
-    if (method === 'bank' && !bankId) return toast.error('Select the bank account.');
+    if (!value || value <= 0) return toast.error(t.addExpense.errAmount);
+    if (method === 'bank' && !bankId) return toast.error(t.addExpense.errBankAccount);
 
     setSaving(true);
     try {
@@ -65,15 +68,15 @@ export function AddExpenseForm({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        toast.error(data?.error ?? 'Could not record this expense.');
+        toast.error(data?.error ?? t.addExpense.errRecord);
         return;
       }
-      toast.success(`Expense posted — voucher ${data.voucher_no}.`);
+      toast.success(t.addExpense.posted(String(data.voucher_no)));
       reset();
       setOpen(false);
       router.refresh();
     } catch {
-      toast.error('Network error. Please try again.');
+      toast.error(t.common.networkError);
     } finally {
       setSaving(false);
     }
@@ -82,7 +85,7 @@ export function AddExpenseForm({
   if (!open) {
     return (
       <Button type="button" onClick={() => setOpen(true)} disabled={expenseHeads.length === 0}>
-        <Plus className="h-4 w-4" /> Add Expense
+        <Plus className="h-4 w-4" /> {t.addExpense.addExpense}
       </Button>
     );
   }
@@ -90,21 +93,21 @@ export function AddExpenseForm({
   return (
     <Card className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-lg font-semibold text-ink">Record an expense</h2>
+        <h2 className="font-display text-lg font-semibold text-ink">{t.addExpense.recordExpense}</h2>
         <button
           type="button"
           onClick={() => setOpen(false)}
           className="grid h-9 w-9 place-items-center rounded-full text-ink-muted transition hover:bg-muted"
-          aria-label="Close"
+          aria-label={t.common.close}
         >
           <X className="h-5 w-5" />
         </button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Expense head" required>
+        <Field label={t.addExpense.expenseHead} required>
           <select className={inputClass} value={expenseId} onChange={(e) => setExpenseId(e.target.value)}>
-            <option value="">Select expense head…</option>
+            <option value="">{t.addExpense.selectExpenseHead}</option>
             {expenseHeads.map((h) => (
               <option key={h.id} value={h.id}>
                 {h.name}
@@ -112,19 +115,19 @@ export function AddExpenseForm({
             ))}
           </select>
         </Field>
-        <Field label="Amount (৳)" required>
+        <Field label={t.addExpense.amount} required>
           <input
             type="number"
             min="0"
             step="0.01"
             className={inputClass}
             value={amount}
-            placeholder="0.00"
+            placeholder={t.addExpense.amountPlaceholder}
             onChange={(e) => setAmount(e.target.value)}
           />
         </Field>
 
-        <Field label="Paid from">
+        <Field label={t.addExpense.paidFrom}>
           <div className="flex gap-2">
             {(['cash', 'bank'] as const).map((m) => (
               <button
@@ -138,15 +141,15 @@ export function AddExpenseForm({
                     : 'border-border text-ink-muted hover:border-brand-600/40')
                 }
               >
-                {m}
+                {m === 'cash' ? t.addExpense.cash : t.addExpense.bank}
               </button>
             ))}
           </div>
         </Field>
         {method === 'bank' && (
-          <Field label="Bank account" required>
+          <Field label={t.addExpense.bankAccount} required>
             <select className={inputClass} value={bankId} onChange={(e) => setBankId(e.target.value)}>
-              <option value="">Select bank account…</option>
+              <option value="">{t.addExpense.selectBankAccount}</option>
               {bankHeads.map((h) => (
                 <option key={h.id} value={h.id}>
                   {h.name}
@@ -156,10 +159,10 @@ export function AddExpenseForm({
           </Field>
         )}
 
-        <Field label="Date" required>
+        <Field label={t.addExpense.date} required>
           <input type="date" className={inputClass} value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
-        <Field label="Branch">
+        <Field label={t.addExpense.branch}>
           <select className={inputClass} value={branch} onChange={(e) => setBranch(e.target.value)}>
             {BRANCHES.map((b) => (
               <option key={b.value} value={b.value}>
@@ -169,11 +172,11 @@ export function AddExpenseForm({
           </select>
         </Field>
 
-        <Field label="Narration" className="sm:col-span-2">
+        <Field label={t.addExpense.narration} className="sm:col-span-2">
           <input
             className={inputClass}
             value={narration}
-            placeholder="Vendor, bill reference, purpose…"
+            placeholder={t.addExpense.narrationPlaceholder}
             onChange={(e) => setNarration(e.target.value)}
           />
         </Field>
@@ -181,11 +184,11 @@ export function AddExpenseForm({
 
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-          Cancel
+          {t.addExpense.cancel}
         </Button>
         <Button type="button" onClick={submit} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Post expense
+          {t.addExpense.postExpense}
         </Button>
       </div>
     </Card>

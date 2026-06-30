@@ -7,6 +7,9 @@ import { loadActiveHeads, loadTransactions, headMap, headName } from '@/lib/mana
 import { naturalBalance } from '@/lib/management/types';
 import { branchShort } from '@/lib/management/branches';
 import { money } from '@/lib/management/format';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Accounts' };
@@ -20,7 +23,18 @@ const TYPE_TONE: Record<string, 'emerald' | 'gold' | 'red' | 'blue' | 'slate'> =
   journal: 'slate',
 };
 
+const TYPE_LABEL_KEY: Record<string, keyof ReturnType<typeof getDict>['typeLabels']> = {
+  receipt: 'receipt',
+  income: 'income',
+  payment: 'payment',
+  expense: 'expense',
+  contra: 'contra',
+  journal: 'journal',
+};
+
 export default async function AccountsHomePage() {
+  const locale = getLocale();
+  const tt = getDict(locale);
   const today = new Date().toISOString().slice(0, 10);
   const heads = await loadActiveHeads();
   const [recent, todays] = await Promise.all([
@@ -55,46 +69,46 @@ export default async function AccountsHomePage() {
   return (
     <>
       <PageHeader
-        title="Accounts"
-        subtitle="Double-entry overview — cash position, dues and the day's movements."
+        title={tt.home.title}
+        subtitle={tt.home.subtitle}
         actions={
           <>
-            <Button href="/admin/accounts/entry" variant="primary" size="sm">
-              <NotebookPen className="h-4 w-4" /> Daily Entry
+            <Button href={localizedPath(locale, '/admin/accounts/entry')} variant="primary" size="sm">
+              <NotebookPen className="h-4 w-4" /> {tt.home.dailyEntry}
             </Button>
-            <Button href="/admin/accounts/vouchers" variant="outline" size="sm">
-              <Receipt className="h-4 w-4" /> Vouchers
+            <Button href={localizedPath(locale, '/admin/accounts/vouchers')} variant="outline" size="sm">
+              <Receipt className="h-4 w-4" /> {tt.home.vouchers}
             </Button>
-            <Button href="/admin/accounts/heads" variant="outline" size="sm">
-              <Landmark className="h-4 w-4" /> Heads
+            <Button href={localizedPath(locale, '/admin/accounts/heads')} variant="outline" size="sm">
+              <Landmark className="h-4 w-4" /> {tt.home.heads}
             </Button>
           </>
         }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard label="Cash in Hand" value={<Money value={cashBalance} />} icon={Wallet} accent="emerald" />
-        <StatCard label="Bank Balance" value={<Money value={bankBalance} />} icon={Banknote} accent="gold" />
-        <StatCard label="Total Receivable" value={<Money value={totalDue} />} icon={HandCoins} accent="red" hint="Across all customers" />
-        <StatCard label="Income Today" value={<Money value={todaysIncome} />} icon={ArrowDownToLine} accent="emerald" />
-        <StatCard label="Expense Today" value={<Money value={todaysExpense} />} icon={ArrowUpFromLine} accent="slate" />
+        <StatCard label={tt.home.cashInHand} value={<Money value={cashBalance} />} icon={Wallet} accent="emerald" />
+        <StatCard label={tt.home.bankBalance} value={<Money value={bankBalance} />} icon={Banknote} accent="gold" />
+        <StatCard label={tt.home.totalReceivable} value={<Money value={totalDue} />} icon={HandCoins} accent="red" hint={tt.home.acrossAllCustomers} />
+        <StatCard label={tt.home.incomeToday} value={<Money value={todaysIncome} />} icon={ArrowDownToLine} accent="emerald" />
+        <StatCard label={tt.home.expenseToday} value={<Money value={todaysExpense} />} icon={ArrowUpFromLine} accent="slate" />
       </div>
 
       <div className="mt-8">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold text-ink">Recent vouchers</h2>
-          <Link href="/admin/accounts/vouchers" className="text-sm font-semibold text-brand-700 hover:underline">
-            View all
+          <h2 className="font-display text-lg font-semibold text-ink">{tt.home.recentVouchers}</h2>
+          <Link href={localizedPath(locale, '/admin/accounts/vouchers')} className="text-sm font-semibold text-brand-700 hover:underline">
+            {tt.home.viewAll}
           </Link>
         </div>
 
         {recent.length === 0 ? (
           <EmptyState
-            title="No vouchers yet"
-            hint="Once you post income, expenses or transfers, the latest entries will appear here."
+            title={tt.home.noVouchersTitle}
+            hint={tt.home.noVouchersHint}
             action={
-              <Button href="/admin/accounts/entry" size="sm">
-                <NotebookPen className="h-4 w-4" /> Post your first entry
+              <Button href={localizedPath(locale, '/admin/accounts/entry')} size="sm">
+                <NotebookPen className="h-4 w-4" /> {tt.home.postFirstEntry}
               </Button>
             }
           />
@@ -102,14 +116,14 @@ export default async function AccountsHomePage() {
           <TableWrap>
             <thead>
               <tr>
-                <th className={thClass}>Voucher</th>
-                <th className={thClass}>Date</th>
-                <th className={thClass}>Type</th>
-                <th className={thClass}>Debit</th>
-                <th className={thClass}>Credit</th>
-                <th className={`${thClass} text-right`}>Amount</th>
-                <th className={thClass}>Branch</th>
-                <th className={`${thClass} text-right`}>Manage</th>
+                <th className={thClass}>{tt.home.thVoucher}</th>
+                <th className={thClass}>{tt.home.thDate}</th>
+                <th className={thClass}>{tt.home.thType}</th>
+                <th className={thClass}>{tt.home.thDebit}</th>
+                <th className={thClass}>{tt.home.thCredit}</th>
+                <th className={`${thClass} text-right`}>{tt.home.thAmount}</th>
+                <th className={thClass}>{tt.home.thBranch}</th>
+                <th className={`${thClass} text-right`}>{tt.home.thManage}</th>
               </tr>
             </thead>
             <tbody>
@@ -118,7 +132,7 @@ export default async function AccountsHomePage() {
                   <td className={`${tdClass} font-mono text-xs`}>{t.voucher_no ?? '—'}</td>
                   <td className={tdClass}>{t.date}</td>
                   <td className={tdClass}>
-                    <Badge tone={TYPE_TONE[t.type] ?? 'slate'}>{t.type}</Badge>
+                    <Badge tone={TYPE_TONE[t.type] ?? 'slate'}>{tt.typeLabels[TYPE_LABEL_KEY[t.type]] ?? t.type}</Badge>
                   </td>
                   <td className={tdClass}>{headName(map, t.debit_account_id)}</td>
                   <td className={tdClass}>{headName(map, t.credit_account_id)}</td>
@@ -148,9 +162,9 @@ export default async function AccountsHomePage() {
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <QuickLink href="/admin/accounts/entry" icon={NotebookPen} title="Daily Entry" hint="Post income, expenses, transfers & journals." />
-        <QuickLink href="/admin/accounts/vouchers" icon={Receipt} title="Vouchers" hint="Search and export every transaction." />
-        <QuickLink href="/admin/accounts/heads" icon={Landmark} title="Account Heads" hint="Manage the chart of accounts." />
+        <QuickLink href={localizedPath(locale, '/admin/accounts/entry')} icon={NotebookPen} title={tt.home.quickDailyEntryTitle} hint={tt.home.quickDailyEntryHint} />
+        <QuickLink href={localizedPath(locale, '/admin/accounts/vouchers')} icon={Receipt} title={tt.home.quickVouchersTitle} hint={tt.home.quickVouchersHint} />
+        <QuickLink href={localizedPath(locale, '/admin/accounts/heads')} icon={Landmark} title={tt.home.quickHeadsTitle} hint={tt.home.quickHeadsHint} />
       </div>
     </>
   );

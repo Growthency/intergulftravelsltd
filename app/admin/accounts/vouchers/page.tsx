@@ -4,6 +4,18 @@ import { VoucherRowActions } from '@/components/manage/accounts/VoucherRowAction
 import { loadActiveHeads, loadTransactions, headMap, headName } from '@/lib/management/accounts-data';
 import { BRANCHES, branchShort } from '@/lib/management/branches';
 import { money } from '@/lib/management/format';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
+
+const TYPE_LABEL_KEY: Record<string, keyof ReturnType<typeof getDict>['typeLabels']> = {
+  receipt: 'receipt',
+  income: 'income',
+  payment: 'payment',
+  expense: 'expense',
+  contra: 'contra',
+  journal: 'journal',
+};
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Vouchers' };
@@ -25,6 +37,8 @@ const ctrl =
   'w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-ink outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20';
 
 export default async function VouchersPage({ searchParams }: { searchParams: SP }) {
+  const locale = getLocale();
+  const tt = getDict(locale);
   const filters = {
     from: searchParams.from || undefined,
     to: searchParams.to || undefined,
@@ -53,16 +67,16 @@ export default async function VouchersPage({ searchParams }: { searchParams: SP 
   return (
     <>
       <PageHeader
-        title="Vouchers"
-        subtitle="Every posted transaction. Filter by date, branch or type, then export."
+        title={tt.vouchers.title}
+        subtitle={tt.vouchers.subtitle}
         actions={
           txns.length > 0 ? (
             <ExportBar
               filename="vouchers"
-              title="Voucher Register"
-              subtitle={filterSubtitle(searchParams)}
+              title={tt.vouchers.exportTitle}
+              subtitle={filterSubtitle(searchParams, tt)}
               orientation="l"
-              headers={['Voucher', 'Date', 'Type', 'Debit', 'Credit', 'Amount', 'Branch', 'Narration']}
+              headers={[tt.vouchers.exHVoucher, tt.vouchers.exHDate, tt.vouchers.exHType, tt.vouchers.exHDebit, tt.vouchers.exHCredit, tt.vouchers.exHAmount, tt.vouchers.exHBranch, tt.vouchers.exHNarration]}
               rows={exportRows}
             />
           ) : undefined
@@ -73,17 +87,17 @@ export default async function VouchersPage({ searchParams }: { searchParams: SP 
       <Card className="mb-5">
         <form method="get" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <label>
-            <span className={labelStyle}>From</span>
+            <span className={labelStyle}>{tt.vouchers.from}</span>
             <input type="date" name="from" defaultValue={searchParams.from} className={ctrl} />
           </label>
           <label>
-            <span className={labelStyle}>To</span>
+            <span className={labelStyle}>{tt.vouchers.to}</span>
             <input type="date" name="to" defaultValue={searchParams.to} className={ctrl} />
           </label>
           <label>
-            <span className={labelStyle}>Branch</span>
+            <span className={labelStyle}>{tt.common.branch}</span>
             <select name="branch" defaultValue={searchParams.branch ?? 'all'} className={ctrl}>
-              <option value="all">All branches</option>
+              <option value="all">{tt.common.allBranches}</option>
               {BRANCHES.map((b) => (
                 <option key={b.value} value={b.value}>
                   {b.label}
@@ -92,12 +106,12 @@ export default async function VouchersPage({ searchParams }: { searchParams: SP 
             </select>
           </label>
           <label>
-            <span className={labelStyle}>Type</span>
+            <span className={labelStyle}>{tt.vouchers.typeFilter}</span>
             <select name="type" defaultValue={searchParams.type ?? 'all'} className={ctrl}>
-              <option value="all">All types</option>
+              <option value="all">{tt.vouchers.allTypes}</option>
               {TYPES.map((t) => (
                 <option key={t} value={t} className="capitalize">
-                  {t}
+                  {tt.typeLabels[TYPE_LABEL_KEY[t]] ?? t}
                 </option>
               ))}
             </select>
@@ -107,13 +121,13 @@ export default async function VouchersPage({ searchParams }: { searchParams: SP 
               type="submit"
               className="h-[42px] flex-1 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700"
             >
-              Apply
+              {tt.vouchers.apply}
             </button>
             <a
-              href="/admin/accounts/vouchers"
+              href={localizedPath(locale, '/admin/accounts/vouchers')}
               className="grid h-[42px] place-items-center rounded-xl border border-border px-4 text-sm font-semibold text-ink-muted transition hover:border-brand-600/40"
             >
-              Reset
+              {tt.vouchers.reset}
             </a>
           </div>
         </form>
@@ -121,28 +135,28 @@ export default async function VouchersPage({ searchParams }: { searchParams: SP 
 
       {txns.length === 0 ? (
         <EmptyState
-          title="No vouchers found"
-          hint="No transactions match the current filters. Adjust the range or post a new entry from Daily Entry."
+          title={tt.vouchers.noVouchersTitle}
+          hint={tt.vouchers.noVouchersHint}
         />
       ) : (
         <>
           <p className="mb-3 text-sm text-ink-muted">
-            Showing <span className="font-semibold text-ink">{txns.length}</span> voucher
-            {txns.length === 1 ? '' : 's'} · total{' '}
+            {tt.vouchers.showing} <span className="font-semibold text-ink">{txns.length}</span> {tt.vouchers.voucherWord}
+            {locale === 'en' ? (txns.length === 1 ? '' : 's') : ''} · {tt.vouchers.total}{' '}
             <span className="font-semibold text-ink">{money(total)}</span>
           </p>
           <TableWrap>
             <thead>
               <tr>
-                <th className={thClass}>Voucher</th>
-                <th className={thClass}>Date</th>
-                <th className={thClass}>Type</th>
-                <th className={thClass}>Debit head</th>
-                <th className={thClass}>Credit head</th>
-                <th className={`${thClass} text-right`}>Amount</th>
-                <th className={thClass}>Branch</th>
-                <th className={thClass}>Narration</th>
-                <th className={`${thClass} text-right`}>Manage</th>
+                <th className={thClass}>{tt.vouchers.thVoucher}</th>
+                <th className={thClass}>{tt.vouchers.thDate}</th>
+                <th className={thClass}>{tt.vouchers.thType}</th>
+                <th className={thClass}>{tt.vouchers.thDebitHead}</th>
+                <th className={thClass}>{tt.vouchers.thCreditHead}</th>
+                <th className={`${thClass} text-right`}>{tt.vouchers.thAmount}</th>
+                <th className={thClass}>{tt.vouchers.thBranch}</th>
+                <th className={thClass}>{tt.vouchers.thNarration}</th>
+                <th className={`${thClass} text-right`}>{tt.vouchers.thManage}</th>
               </tr>
             </thead>
             <tbody>
@@ -151,7 +165,7 @@ export default async function VouchersPage({ searchParams }: { searchParams: SP 
                   <td className={`${tdClass} whitespace-nowrap font-mono text-xs`}>{t.voucher_no ?? '—'}</td>
                   <td className={`${tdClass} whitespace-nowrap`}>{t.date}</td>
                   <td className={tdClass}>
-                    <Badge tone={TYPE_TONE[t.type] ?? 'slate'}>{t.type}</Badge>
+                    <Badge tone={TYPE_TONE[t.type] ?? 'slate'}>{tt.typeLabels[TYPE_LABEL_KEY[t.type]] ?? t.type}</Badge>
                   </td>
                   <td className={tdClass}>{headName(map, t.debit_account_id)}</td>
                   <td className={tdClass}>{headName(map, t.credit_account_id)}</td>
@@ -186,11 +200,14 @@ export default async function VouchersPage({ searchParams }: { searchParams: SP 
   );
 }
 
-function filterSubtitle(sp: SP): string {
+function filterSubtitle(sp: SP, tt: ReturnType<typeof getDict>): string {
   const parts: string[] = [];
-  if (sp.from) parts.push(`From ${sp.from}`);
-  if (sp.to) parts.push(`To ${sp.to}`);
+  if (sp.from) parts.push(`${tt.vouchers.subFrom} ${sp.from}`);
+  if (sp.to) parts.push(`${tt.vouchers.subTo} ${sp.to}`);
   if (sp.branch && sp.branch !== 'all') parts.push(branchShort(sp.branch));
-  if (sp.type && sp.type !== 'all') parts.push(`Type: ${sp.type}`);
-  return parts.length ? parts.join(' · ') : 'All vouchers';
+  if (sp.type && sp.type !== 'all') {
+    const label = tt.typeLabels[TYPE_LABEL_KEY[sp.type]] ?? sp.type;
+    parts.push(`${tt.vouchers.subType}: ${label}`);
+  }
+  return parts.length ? parts.join(' · ') : tt.vouchers.allVouchers;
 }

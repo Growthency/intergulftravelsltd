@@ -7,15 +7,30 @@ import { loadHead, loadActiveHeads, loadTransactions, headMap, headName } from '
 import { naturalBalance, isDebitNormal } from '@/lib/management/types';
 import { branchShort } from '@/lib/management/branches';
 import { money } from '@/lib/management/format';
+import { getLocale } from '@/lib/i18n-server';
+import { localizedPath } from '@/lib/i18n';
+import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
 
 export const dynamic = 'force-dynamic';
 
+const TYPE_LABEL_KEY: Record<string, keyof ReturnType<typeof getDict>['typeLabels']> = {
+  receipt: 'receipt',
+  income: 'income',
+  payment: 'payment',
+  expense: 'expense',
+  contra: 'contra',
+  journal: 'journal',
+};
+
 export async function generateMetadata({ params }: { params: { id: string } }) {
   const head = await loadHead(params.id);
-  return { title: head ? `${head.name} · Ledger` : 'Account Ledger' };
+  const t = getDict(getLocale());
+  return { title: head ? `${head.name} · ${t.ledger.ledgerSuffix}` : t.ledger.accountLedger };
 }
 
 export default async function AccountLedgerPage({ params }: { params: { id: string } }) {
+  const locale = getLocale();
+  const t = getDict(locale);
   const head = await loadHead(params.id);
   if (!head) notFound();
 
@@ -69,7 +84,7 @@ export default async function AccountLedgerPage({ params }: { params: { id: stri
   const sideLabel = debitNormal ? 'Dr' : 'Cr';
 
   const exportRows = [
-    ['', 'Opening balance', '', '', '', '', money(Math.abs(openingSigned), false)],
+    ['', t.ledger.openingBalance, '', '', '', '', money(Math.abs(openingSigned), false)],
     ...rows.map((r) => [
       r.date,
       r.voucher,
@@ -79,16 +94,16 @@ export default async function AccountLedgerPage({ params }: { params: { id: stri
       r.credit ? money(r.credit, false) : '',
       money(Math.abs(r.balance), false),
     ]),
-    ['', 'Totals', '', '', money(totalDebit, false), money(totalCredit, false), `${money(Math.abs(closing), false)} ${sideLabel}`],
+    ['', t.ledger.totals, '', '', money(totalDebit, false), money(totalCredit, false), `${money(Math.abs(closing), false)} ${sideLabel}`],
   ];
 
   return (
     <>
       <Link
-        href="/admin/accounts/heads"
+        href={localizedPath(locale, '/admin/accounts/heads')}
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted transition hover:text-brand-700"
       >
-        <ArrowLeft className="h-4 w-4" /> All account heads
+        <ArrowLeft className="h-4 w-4" /> {t.ledger.allAccountHeads}
       </Link>
 
       <PageHeader
@@ -98,10 +113,10 @@ export default async function AccountLedgerPage({ params }: { params: { id: stri
           rows.length > 0 ? (
             <ExportBar
               filename={`ledger-${head.code ?? head.name}`}
-              title={`Ledger — ${head.name}`}
-              subtitle={`Closing balance: ${money(Math.abs(closing))} ${sideLabel}`}
+              title={`${t.ledger.ledgerExportTitle} — ${head.name}`}
+              subtitle={`${t.ledger.closingBalance}: ${money(Math.abs(closing))} ${sideLabel}`}
               orientation="l"
-              headers={['Date', 'Voucher', 'Type', 'Against', 'Debit', 'Credit', 'Balance']}
+              headers={[t.ledger.exHDate, t.ledger.exHVoucher, t.ledger.exHType, t.ledger.exHAgainst, t.ledger.exHDebit, t.ledger.exHCredit, t.ledger.exHBalance]}
               rows={exportRows}
             />
           ) : undefined
@@ -109,11 +124,11 @@ export default async function AccountLedgerPage({ params }: { params: { id: stri
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-4">
-        <StatCard label="Opening" value={<Money value={Math.abs(openingSigned)} />} accent="slate" />
-        <StatCard label="Total Debit" value={<Money value={totalDebit} />} accent="emerald" />
-        <StatCard label="Total Credit" value={<Money value={totalCredit} />} accent="gold" />
+        <StatCard label={t.ledger.opening} value={<Money value={Math.abs(openingSigned)} />} accent="slate" />
+        <StatCard label={t.ledger.totalDebit} value={<Money value={totalDebit} />} accent="emerald" />
+        <StatCard label={t.ledger.totalCredit} value={<Money value={totalCredit} />} accent="gold" />
         <StatCard
-          label={`Closing (${sideLabel})`}
+          label={`${t.ledger.closing} (${sideLabel})`}
           value={<Money value={Math.abs(closing)} />}
           accent={closing < 0 ? 'red' : 'emerald'}
         />
@@ -121,26 +136,26 @@ export default async function AccountLedgerPage({ params }: { params: { id: stri
 
       {rows.length === 0 ? (
         <EmptyState
-          title="No movements yet"
-          hint="This account has no posted transactions. Entries against it will build the statement here."
+          title={t.ledger.noMovementsTitle}
+          hint={t.ledger.noMovementsHint}
         />
       ) : (
         <TableWrap>
           <thead>
             <tr>
-              <th className={thClass}>Date</th>
-              <th className={thClass}>Voucher</th>
-              <th className={thClass}>Type</th>
-              <th className={thClass}>Against</th>
-              <th className={`${thClass} text-right`}>Debit</th>
-              <th className={`${thClass} text-right`}>Credit</th>
-              <th className={`${thClass} text-right`}>Balance</th>
+              <th className={thClass}>{t.ledger.thDate}</th>
+              <th className={thClass}>{t.ledger.thVoucher}</th>
+              <th className={thClass}>{t.ledger.thType}</th>
+              <th className={thClass}>{t.ledger.thAgainst}</th>
+              <th className={`${thClass} text-right`}>{t.ledger.thDebit}</th>
+              <th className={`${thClass} text-right`}>{t.ledger.thCredit}</th>
+              <th className={`${thClass} text-right`}>{t.ledger.thBalance}</th>
             </tr>
           </thead>
           <tbody>
             <tr className="bg-muted/40">
               <td className={tdClass} colSpan={4}>
-                <span className="font-semibold text-ink">Opening balance</span>
+                <span className="font-semibold text-ink">{t.ledger.openingBalance}</span>
               </td>
               <td className={tdClass} />
               <td className={tdClass} />
@@ -153,7 +168,7 @@ export default async function AccountLedgerPage({ params }: { params: { id: stri
                 <td className={`${tdClass} whitespace-nowrap`}>{r.date}</td>
                 <td className={`${tdClass} whitespace-nowrap font-mono text-xs`}>{r.voucher}</td>
                 <td className={tdClass}>
-                  <Badge tone="slate">{r.type}</Badge>
+                  <Badge tone="slate">{t.typeLabels[TYPE_LABEL_KEY[r.type]] ?? r.type}</Badge>
                 </td>
                 <td className={tdClass}>{r.contra}</td>
                 <td className={`${tdClass} text-right tabular-nums`}>{r.debit ? money(r.debit) : '—'}</td>
@@ -163,7 +178,7 @@ export default async function AccountLedgerPage({ params }: { params: { id: stri
             ))}
             <tr className="bg-muted/60">
               <td className={`${tdClass} font-semibold`} colSpan={4}>
-                Totals
+                {t.ledger.totals}
               </td>
               <td className={`${tdClass} text-right font-semibold tabular-nums`}>{money(totalDebit)}</td>
               <td className={`${tdClass} text-right font-semibold tabular-nums`}>{money(totalCredit)}</td>
