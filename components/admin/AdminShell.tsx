@@ -276,9 +276,14 @@ function SidebarContent({
                 type="button"
                 onClick={() => toggle(section.groupKey)}
                 aria-expanded={isOpen}
-                className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-[0.65rem] font-semibold uppercase tracking-[0.22em] transition hover:bg-white/5"
+                className={cn(
+                  'flex w-full items-center justify-between rounded-lg px-3 py-2 font-semibold transition hover:bg-white/5',
+                  locale === 'bn'
+                    ? 'text-[0.95rem] tracking-wide'
+                    : 'text-[0.65rem] uppercase tracking-[0.22em]',
+                )}
               >
-                <span className={cn(hasActive ? 'text-gold-300' : 'text-white/45')}>{t.groups[section.groupKey]}</span>
+                <span className={cn(hasActive ? 'text-gold-300' : 'text-white/70')}>{t.groups[section.groupKey]}</span>
                 <ChevronDown
                   className={cn('h-3.5 w-3.5 text-white/40 transition-transform', isOpen && 'rotate-180')}
                 />

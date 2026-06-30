@@ -7,8 +7,37 @@ export const en = {
     branches: 'Branches',
     gallery: 'Gallery',
     blog: 'Blog',
-    about: 'About Us',
-    contact: 'Contact Us',
+    about: 'About',
+    contact: 'Contact',
+  },
+  navChildren: {
+    '/hajj/benefit': { label: 'Benefit of Hajj', description: 'Why the fifth pillar transforms a life' },
+    '/hajj/packages': { label: 'Hajj Packages', description: '2025–2026 economy to premium plans' },
+    '/hajj/guide': { label: 'Hajj Guide', description: 'Step-by-step rites of pilgrimage' },
+    '/hajj/guideline': { label: 'Hajj Guideline', description: 'Documents, dates & preparation' },
+    '/hajj/faq': { label: 'FAQ of Hajj', description: 'Your questions, answered' },
+    '/umrah/benefit': { label: 'Benefit of Umrah', description: 'The reward of the lesser pilgrimage' },
+    '/umrah/packages': { label: 'Umrah Packages', description: 'Year-round 10 to 21-day plans' },
+    '/umrah/guide': { label: 'Umrah Guide', description: 'How to perform Umrah correctly' },
+    '/umrah/guideline': { label: 'Umrah Guideline', description: 'Visa, travel & checklist' },
+    '/umrah/faq': { label: 'FAQ of Umrah', description: 'Common queries explained' },
+    '/services/visa': { label: 'Visa Service', description: 'Saudi, UAE, Schengen & more' },
+    '/services/air-ticket': { label: 'Air Ticket', description: 'Worldwide fares, 40+ airlines' },
+    '/services/hotel-booking': { label: 'Hotel Booking', description: 'Steps from the Haramain' },
+    '/services/tour': { label: 'Tour Packages', description: 'Curated holidays abroad' },
+    '/branches/inter-gulf-travels': { label: 'Inter Gulf Travels Ltd.', description: 'Hajj License No. 071 · flagship' },
+    '/branches/mokbul-hajj-overseas': { label: 'Mokbul Hajj Overseas Service', description: 'Govt-approved Hajj & overseas' },
+    '/branches/inter-gulf-air-travels': { label: 'Inter Gulf Air Travels', description: 'Air tickets · tours · hotels' },
+    '/gallery': { label: 'Photo Gallery', description: 'Moments from our journeys' },
+    '/videos': { label: 'Videos', description: 'Watch our video guides' },
+    '/blog?category=hajj-umrah': { label: 'Hajj & Umrah', description: 'Guides & spiritual reflections' },
+    '/blog?category=others': { label: 'Others', description: 'Travel tips & destinations' },
+    '/about': { label: 'About Us', description: 'Our story since 2002' },
+    '/about/associates': { label: 'Business Associates', description: 'Partners & affiliations' },
+    '/about/career': { label: 'Career Opportunity', description: 'Join the Inter Gulf family' },
+    '/about/reviews': { label: 'Customer Reviews', description: 'Pilgrim experiences' },
+    '/about/awards': { label: 'Awards & Affiliations', description: 'Recognition & memberships' },
+    '/about/team': { label: 'Management Team', description: 'The people behind the journey' },
   },
   cta: {
     getEstimate: 'Get Free Estimate',
@@ -269,6 +298,7 @@ export const en = {
 // own values. English is the reference for the key structure.
 export type Dictionary = {
   nav: Record<'home' | 'hajj' | 'umrah' | 'services' | 'branches' | 'gallery' | 'blog' | 'about' | 'contact', string>;
+  navChildren: Record<string, { label: string; description: string }>;
   cta: { getEstimate: string; explorePackages: string };
   utility: { hours: string; license: string };
   langToggle: { label: string; en: string; bn: string };

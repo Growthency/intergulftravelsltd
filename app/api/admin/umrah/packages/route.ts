@@ -160,8 +160,14 @@ export async function DELETE(request: Request) {
   const { guard, res } = await guardOrFail();
   if (res) return res;
 
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get('id');
+  // The delete button sends the id in the JSON body; fall back to a query param.
+  let id: string | null = null;
+  try {
+    const body = await request.json();
+    id = typeof body?.id === 'string' ? body.id : null;
+  } catch {
+    id = new URL(request.url).searchParams.get('id');
+  }
   if (!id) {
     return NextResponse.json({ ok: false, error: 'A package id is required.' }, { status: 400 });
   }

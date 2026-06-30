@@ -99,7 +99,7 @@ export function MobileMenu({
                                       <Icon name={child.icon} className="h-4 w-4" />
                                     </span>
                                   ) : null}
-                                  {child.label}
+                                  {t.navChildren[child.href]?.label ?? child.label}
                                 </Link>
                               ))}
                             </div>

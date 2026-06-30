@@ -109,7 +109,11 @@ export function Navbar({ menu }: { menu?: NavItem[] }) {
                   {item.children && (
                     <div className="invisible absolute left-1/2 top-full z-50 w-[20.5rem] -translate-x-1/2 translate-y-2 pt-2 opacity-0 transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                       <div className="overflow-hidden rounded-2xl border border-border bg-card p-2 shadow-glow">
-                        {item.children.map((child) => (
+                        {item.children.map((child) => {
+                          const tc = t.navChildren[child.href];
+                          const childLabel = tc?.label ?? child.label;
+                          const childDesc = tc?.description ?? child.description;
+                          return (
                           <Link
                             key={child.href}
                             href={localizedPath(locale, child.href)}
@@ -125,13 +129,14 @@ export function Navbar({ menu }: { menu?: NavItem[] }) {
                               </span>
                             ) : null}
                             <span className="min-w-0">
-                              <span className="block text-[0.92rem] font-semibold text-ink dark:text-white">{child.label}</span>
-                              {child.description && (
-                                <span className="mt-0.5 block text-xs text-ink-muted">{child.description}</span>
+                              <span className="block text-[0.92rem] font-semibold text-ink dark:text-white">{childLabel}</span>
+                              {childDesc && (
+                                <span className="mt-0.5 block text-xs text-ink-muted">{childDesc}</span>
                               )}
                             </span>
                           </Link>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -142,7 +147,7 @@ export function Navbar({ menu }: { menu?: NavItem[] }) {
 
           <div className="flex items-center gap-2">
             <LangToggle />
-            <Button href={localizedPath(locale, '/estimate')} variant="gold" size="sm" className="hidden sm:inline-flex">
+            <Button href={localizedPath(locale, '/estimate')} variant="gold" size="sm" className="hidden whitespace-nowrap shrink-0 sm:inline-flex">
               {t.cta.getEstimate}
             </Button>
             <button
