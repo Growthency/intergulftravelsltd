@@ -1,14 +1,18 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLocale } from '@/components/providers/LocaleProvider';
 import { localizedPath, stripLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 /**
- * EN / BN switch. Links to the same page in the other language version
- * (server-rendered — a real navigation, not a client text-swap).
+ * EN / BN switch. Swaps to the same page in the other language version.
+ *
+ * Uses a plain full-page navigation (a real <a>, not next/link) on purpose:
+ * /en/* is served via a middleware rewrite onto the same underlying route as
+ * the Bangla version, so a soft client navigation would hit Next's router
+ * cache and keep showing the old language. A hard navigation forces the server
+ * to re-render in the chosen locale (fonts, <html lang> and all text included).
  */
 export function LangToggle({ className, tone = 'dark' }: { className?: string; tone?: 'dark' | 'light' }) {
   const locale = useLocale();
@@ -33,7 +37,7 @@ export function LangToggle({ className, tone = 'dark' }: { className?: string; t
       {items.map((it) => {
         const active = locale === it.code;
         return (
-          <Link
+          <a
             key={it.code}
             href={it.href}
             aria-current={active ? 'true' : undefined}
@@ -47,7 +51,7 @@ export function LangToggle({ className, tone = 'dark' }: { className?: string; t
             )}
           >
             {it.label}
-          </Link>
+          </a>
         );
       })}
     </div>
