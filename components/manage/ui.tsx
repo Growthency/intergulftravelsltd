@@ -22,9 +22,26 @@ export function PageHeader({
   );
 }
 
-export function Card({ className, children }: { className?: string; children: React.ReactNode }) {
+export function Card({
+  className,
+  children,
+  hover = false,
+}: {
+  className?: string;
+  children: React.ReactNode;
+  /** Adds a smooth lift + shadow on hover (for interactive/stat cards). */
+  hover?: boolean;
+}) {
   return (
-    <div className={cn('rounded-2xl border border-border bg-card p-5 shadow-soft', className)}>{children}</div>
+    <div
+      className={cn(
+        'rounded-2xl border border-border bg-card p-5 shadow-soft transition-all duration-300',
+        hover && 'hover:-translate-y-1 hover:border-brand-600/30 hover:shadow-emerald',
+        className,
+      )}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -48,15 +65,22 @@ export function StatCard({
     slate: 'bg-muted text-ink-muted',
   }[accent];
   return (
-    <Card className="flex items-center gap-4">
+    <Card hover className="group flex items-center gap-4">
       {Icon && (
-        <span className={cn('grid h-12 w-12 shrink-0 place-items-center rounded-xl', ring)}>
+        <span
+          className={cn(
+            'grid h-12 w-12 shrink-0 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-110',
+            ring,
+          )}
+        >
           <Icon className="h-6 w-6" />
         </span>
       )}
       <div className="min-w-0">
         <p className="truncate text-xs font-medium uppercase tracking-wide text-ink-muted">{label}</p>
-        <p className="mt-0.5 font-display text-xl font-semibold text-ink">{value}</p>
+        <p className="mt-0.5 font-display text-xl font-semibold text-ink transition-colors duration-300 group-hover:text-brand-700">
+          {value}
+        </p>
         {hint && <p className="text-xs text-ink-muted">{hint}</p>}
       </div>
     </Card>

@@ -15,18 +15,8 @@ export function Packages({ data }: { data: { hajj: Pkg[]; umrah: Pkg[] } }) {
   const t = useDictionary().home.packages;
   const locale = useLocale();
   const [tab, setTab] = useState<'hajj' | 'umrah'>('hajj');
-  const list = data[tab]
-    .map((p) => {
-      const tr = t.items.find((it) => it.id === p.id);
-      return {
-        ...p,
-        name: tr?.name ?? p.name,
-        badge: tr?.badge ?? p.badge,
-        priceNote: tr?.priceNote ?? p.priceNote,
-        duration: tr?.duration ?? p.duration,
-        highlights: tr?.highlights ?? p.highlights,
-      };
-    });
+  // Text is already resolved to the active locale server-side.
+  const list = data[tab];
 
   return (
     <Section className="relative overflow-hidden bg-brand-900 text-white">

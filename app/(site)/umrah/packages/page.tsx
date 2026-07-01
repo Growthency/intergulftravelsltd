@@ -24,7 +24,7 @@ const bookingIcons = [CreditCard, CalendarClock, FileText, ShieldCheck];
 export default async function UmrahPackagesPage() {
   const locale = getLocale();
   const t = getDict(locale);
-  const { umrah: umrahPackages } = await getSitePackages();
+  const { umrah: umrahPackages } = await getSitePackages(locale);
   const compareRows = t.packages.compareRows;
   const included = t.packages.included;
   const notIncluded = t.packages.notIncluded;

@@ -24,7 +24,7 @@ const bookingNoteIcons = [CreditCard, CalendarClock, FileText, ShieldCheck];
 export default async function HajjPackagesPage() {
   const locale = getLocale();
   const t = getDict(locale);
-  const { hajj: hajjPackages } = await getSitePackages();
+  const { hajj: hajjPackages } = await getSitePackages(locale);
   const compareRows = t.packages.compareRows;
   const included = t.packages.included;
   const notIncluded = t.packages.notIncluded;

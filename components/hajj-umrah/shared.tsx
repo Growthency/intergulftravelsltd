@@ -17,13 +17,12 @@ import { localizedPath } from '@/lib/i18n';
 export function PackageCard({ pkg }: { pkg: Pkg }) {
   const locale = getLocale();
   const pk = getDictionary(locale).home.packages;
-  // Reuse the translated package copy (keyed by id); fall back to the raw data.
-  const tr = pk.items.find((i) => i.id === pkg.id);
-  const name = tr?.name ?? pkg.name;
-  const duration = tr?.duration ?? pkg.duration;
-  const priceNote = tr?.priceNote ?? pkg.priceNote;
-  const highlights = tr?.highlights ?? pkg.highlights;
-  const badge = tr?.badge ?? pkg.badge;
+  // Text is already resolved to the active locale (getSitePackages).
+  const name = pkg.name;
+  const duration = pkg.duration;
+  const priceNote = pkg.priceNote;
+  const highlights = pkg.highlights;
+  const badge = pkg.badge;
 
   return (
     <div

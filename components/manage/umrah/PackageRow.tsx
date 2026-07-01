@@ -26,7 +26,7 @@ export function PackageRow({
   const [editing, setEditing] = useState(false);
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-soft transition-all duration-300 hover:border-brand-600/30 hover:shadow-emerald">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">

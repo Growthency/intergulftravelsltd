@@ -53,10 +53,7 @@ type NavGroup = { groupKey: keyof AdminDict['groups']; items: NavLink[]; adminOn
 const NAV: NavGroup[] = [
   {
     groupKey: 'overview',
-    items: [
-      { labelKey: 'dashboard', href: '/admin', icon: LayoutDashboard },
-      { labelKey: 'myAccount', href: '/admin/account', icon: UserCog },
-    ],
+    items: [{ labelKey: 'dashboard', href: '/admin', icon: LayoutDashboard }],
   },
   {
     groupKey: 'accounting',
@@ -93,6 +90,7 @@ const NAV: NavGroup[] = [
     groupKey: 'website',
     adminOnly: true,
     items: [
+      { labelKey: 'sitePackages', href: '/admin/packages', icon: Package },
       { labelKey: 'blogPosts', href: '/admin/posts', icon: FileText },
       { labelKey: 'mediaLibrary', href: '/admin/media', icon: Images },
       { labelKey: 'gallery', href: '/admin/gallery', icon: GalleryHorizontalEnd },
@@ -246,6 +244,7 @@ function SidebarContent({
     stripLocale(pathname),
     visibleGroups.flatMap((g) => g.items.map((i) => i.href)),
   );
+  const accountActive = stripLocale(pathname) === '/admin/account';
   const groupOf = () => visibleGroups.find((g) => g.items.some((i) => i.href === activeHref))?.groupKey;
   const [openGroups, setOpenGroups] = useState<string[]>(() => {
     const g = groupOf();
@@ -328,6 +327,29 @@ function SidebarContent({
           );
         })}
       </nav>
+
+      {/* My Account — pinned to the very bottom, above the footer. */}
+      <div className="border-t border-white/10 px-3 py-3">
+        <Link
+          href={localizedPath(locale, '/admin/account')}
+          onClick={onNavigate}
+          aria-current={accountActive ? 'page' : undefined}
+          className={cn(
+            'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
+            accountActive
+              ? 'bg-white/10 text-white shadow-[inset_3px_0_0_0_theme(colors.gold.400)]'
+              : 'text-white/65 hover:bg-white/5 hover:text-white',
+          )}
+        >
+          <UserCog
+            className={cn(
+              'h-[18px] w-[18px] shrink-0 transition',
+              accountActive ? 'text-gold-300' : 'text-white/55 group-hover:text-white',
+            )}
+          />
+          {t.nav.myAccount}
+        </Link>
+      </div>
 
       <div className="border-t border-white/10 px-5 py-4">
         <p className="text-[0.7rem] leading-relaxed text-white/40">

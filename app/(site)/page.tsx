@@ -12,9 +12,10 @@ import { Affiliations } from '@/components/home/Affiliations';
 import { BlogPreview } from '@/components/home/BlogPreview';
 import { CTA } from '@/components/home/CTA';
 import { getSitePackages } from '@/lib/site-packages';
+import { getLocale } from '@/lib/i18n-server';
 
 export default async function HomePage() {
-  const sitePackages = await getSitePackages();
+  const sitePackages = await getSitePackages(getLocale());
   return (
     <>
       <JsonLd data={[organizationSchema(), websiteSchema(), localBusinessSchema()]} />
