@@ -6,8 +6,10 @@ import { toast } from 'sonner';
 import { Loader2, Plus, Pencil, Trash2 } from 'lucide-react';
 import { Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
+import { PackageCostFields } from '@/components/manage/PackageCostFields';
 import { BRANCHES } from '@/lib/management/branches';
 import type { MgmtPackage } from '@/lib/management/types';
+import { parsePackageMeta, serializePackageMeta, type CostItem } from '@/lib/management/package-meta';
 import { useLocale } from '@/components/providers/LocaleProvider';
 import { useLockedBranch } from '@/components/providers/BranchScope';
 import { getDict } from '@/lib/dictionaries/areas/adminumrah';
@@ -23,7 +25,8 @@ const empty = {
   year: String(new Date().getFullYear()),
   seats: '',
   branch: 'inter-gulf-travels',
-  description: '',
+  note: '',
+  costs: [] as CostItem[],
   active: true,
 };
 
@@ -33,22 +36,25 @@ export function PackageForm({ editing, assignedCount = 0 }: { editing?: EditTarg
   const [open, setOpen] = useState(!!editing);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [form, setForm] = useState(
-    editing
-      ? {
-          name: editing.name ?? '',
-          price: String(editing.price ?? ''),
-          year: editing.year ? String(editing.year) : '',
-          seats: editing.seats != null ? String(editing.seats) : '',
-          branch: editing.branch ?? 'inter-gulf-travels',
-          description: editing.description ?? '',
-          active: editing.active ?? true,
-        }
-      : empty,
-  );
+  const [form, setForm] = useState(() => {
+    if (!editing) return empty;
+    const meta = parsePackageMeta(editing.description);
+    return {
+      name: editing.name ?? '',
+      price: String(editing.price ?? ''),
+      year: editing.year ? String(editing.year) : '',
+      seats: editing.seats != null ? String(editing.seats) : '',
+      branch: editing.branch ?? 'inter-gulf-travels',
+      note: meta.note,
+      costs: meta.costs,
+      active: editing.active ?? true,
+    };
+  });
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
+  const setCosts = (costs: CostItem[]) => setForm((f) => ({ ...f, costs }));
+  const setNote = (note: string) => setForm((f) => ({ ...f, note }));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -65,7 +71,7 @@ export function PackageForm({ editing, assignedCount = 0 }: { editing?: EditTarg
         year: form.year ? Number(form.year) : null,
         seats: form.seats ? Number(form.seats) : null,
         branch: form.branch,
-        description: form.description,
+        description: serializePackageMeta({ note: form.note, costs: form.costs }),
         active: form.active,
       };
       const res = await fetch('/api/admin/umrah/packages', {
@@ -115,7 +121,7 @@ export function PackageForm({ editing, assignedCount = 0 }: { editing?: EditTarg
     // Inline edit panel (always expanded).
     return (
       <form onSubmit={submit} className="space-y-4">
-        <Fields t={t} form={form} set={set} setActive={(v) => setForm((f) => ({ ...f, active: v }))} />
+        <Fields t={t} form={form} set={set} setCosts={setCosts} setNote={setNote} setActive={(v) => setForm((f) => ({ ...f, active: v }))} />
         <div className="flex items-center justify-between gap-3">
           <Button
             type="button"
@@ -145,7 +151,7 @@ export function PackageForm({ editing, assignedCount = 0 }: { editing?: EditTarg
         </Button>
       ) : (
         <form onSubmit={submit} className="space-y-4">
-          <Fields t={t} form={form} set={set} setActive={(v) => setForm((f) => ({ ...f, active: v }))} />
+          <Fields t={t} form={form} set={set} setCosts={setCosts} setNote={setNote} setActive={(v) => setForm((f) => ({ ...f, active: v }))} />
           <div className="flex items-center justify-end gap-3">
             <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)} disabled={saving}>
               {t.cancel}
@@ -165,11 +171,15 @@ function Fields({
   t,
   form,
   set,
+  setCosts,
+  setNote,
   setActive,
 }: {
   t: ReturnType<typeof getDict>;
   form: typeof empty;
   set: (key: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  setCosts: (c: CostItem[]) => void;
+  setNote: (n: string) => void;
   setActive: (v: boolean) => void;
 }) {
   const lockedBranch = useLockedBranch();
@@ -198,9 +208,13 @@ function Fields({
           </select>
         </Field>
       )}
-      <Field label={t.descriptionLabel} className="sm:col-span-2" hint={t.descriptionHint}>
-        <textarea className={inputClass} rows={2} value={form.description} onChange={set('description')} />
-      </Field>
+      <PackageCostFields
+        className="sm:col-span-2"
+        costs={form.costs}
+        note={form.note}
+        onCosts={setCosts}
+        onNote={setNote}
+      />
       <label className="flex items-center gap-2 sm:col-span-2">
         <input
           type="checkbox"

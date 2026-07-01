@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Loader2, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { Field, inputClass } from '@/components/manage/ui';
+import { PackageCostFields } from '@/components/manage/PackageCostFields';
 import { confirmDialog } from '@/components/admin/confirm';
 import { Button } from '@/components/ui/Button';
 import { BRANCHES } from '@/lib/management/branches';
 import type { MgmtPackage } from '@/lib/management/types';
+import { parsePackageMeta, serializePackageMeta, type CostItem } from '@/lib/management/package-meta';
 import { useLocale } from '@/components/providers/LocaleProvider';
 import { getDict } from '@/lib/dictionaries/areas/adminhajj';
 import { useLockedBranch } from '@/components/providers/BranchScope';
@@ -29,6 +31,8 @@ export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [costs, setCosts] = useState<CostItem[]>(() => parsePackageMeta(pkg?.description).costs);
+  const [note, setNote] = useState<string>(() => parsePackageMeta(pkg?.description).note);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -41,7 +45,7 @@ export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
       price: Number(fd.get('price') ?? 0),
       seats: fd.get('seats') ? Number(fd.get('seats')) : null,
       branch: String(fd.get('branch') ?? 'general'),
-      description: String(fd.get('description') ?? ''),
+      description: serializePackageMeta({ note, costs }),
       active: fd.get('active') === 'on',
     };
     if (isEdit && pkg) payload.id = pkg.id;
@@ -165,9 +169,13 @@ export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
               </select>
             </Field>
           )}
-          <Field label={t.description} className="sm:col-span-2">
-            <textarea name="description" rows={2} defaultValue={pkg?.description ?? ''} className={inputClass} />
-          </Field>
+          <PackageCostFields
+            className="sm:col-span-2"
+            costs={costs}
+            note={note}
+            onCosts={setCosts}
+            onNote={setNote}
+          />
           <label className="flex items-center gap-2 sm:col-span-2">
             <input type="checkbox" name="active" defaultChecked={pkg?.active ?? true} className="h-4 w-4 rounded border-border" />
             <span className="text-sm text-ink">{t.activeForAssignment}</span>

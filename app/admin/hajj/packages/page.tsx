@@ -13,6 +13,8 @@ import {
 import { ExportBar } from '@/components/manage/ExportBar';
 import { PackageForm } from '@/components/manage/hajj/PackageForm';
 import { PackageDelete } from '@/components/manage/PackageDelete';
+import { PackageStats } from '@/components/manage/PackageStats';
+import { parsePackageMeta } from '@/lib/management/package-meta';
 import { mgmtDb } from '@/lib/management/server';
 import { getStaffScope } from '@/lib/management/scope';
 import { loadHeadMap, dueForHead, loadHajjPackages } from '@/lib/management/hajj';
@@ -121,8 +123,8 @@ export default async function HajjPackagesPage({
                 <tr key={pkg.id} className="transition hover:bg-muted/40">
                   <td className={tdClass}>
                     <span className="font-medium text-ink">{pkg.name}</span>
-                    {pkg.description && (
-                      <span className="block text-xs text-ink-muted">{pkg.description}</span>
+                    {parsePackageMeta(pkg.description).note && (
+                      <span className="block text-xs text-ink-muted">{parsePackageMeta(pkg.description).note}</span>
                     )}
                   </td>
                   <td className={tdClass}>{pkg.year ?? '—'}</td>
@@ -186,6 +188,15 @@ export default async function HajjPackagesPage({
             </form>
           )}
         </div>
+
+        {selectedPkg && (
+          <PackageStats
+            price={selectedPkg.price}
+            description={selectedPkg.description}
+            seats={selectedPkg.seats}
+            assignedCount={assigned.length}
+          />
+        )}
 
         {!selectedPkg ? (
           <p className="py-8 text-center text-sm text-ink-muted">

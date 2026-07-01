@@ -6,7 +6,9 @@ import { Pencil, Users, X } from 'lucide-react';
 import { Money, Badge } from '@/components/manage/ui';
 import { PackageForm } from '@/components/manage/umrah/PackageForm';
 import { PackageDelete } from '@/components/manage/PackageDelete';
+import { PackageStats } from '@/components/manage/PackageStats';
 import { branchShort } from '@/lib/management/branches';
+import { parsePackageMeta } from '@/lib/management/package-meta';
 import type { MgmtPackage } from '@/lib/management/types';
 import { useLocale } from '@/components/providers/LocaleProvider';
 import { getDict } from '@/lib/dictionaries/areas/adminumrah';
@@ -24,6 +26,7 @@ export function PackageRow({
   const locale = useLocale();
   const t = getDict(locale);
   const [editing, setEditing] = useState(false);
+  const note = parsePackageMeta(pkg.description).note;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-soft transition-all duration-300 hover:border-brand-600/30 hover:shadow-emerald">
@@ -35,7 +38,7 @@ export function PackageRow({
             <Badge>{branchShort(pkg.branch)}</Badge>
             {pkg.year && <Badge tone="gold">{pkg.year}</Badge>}
           </div>
-          {pkg.description && <p className="mt-1 text-sm text-ink-muted">{pkg.description}</p>}
+          {note && <p className="mt-1 text-sm text-ink-muted">{note}</p>}
           <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
             <span className="font-semibold text-ink"><Money value={pkg.price} /></span>
             <span className="inline-flex items-center gap-1 text-ink-muted">
@@ -65,6 +68,8 @@ export function PackageRow({
           <PackageDelete id={pkg.id} name={pkg.name} endpoint="/api/admin/umrah/packages" />
         </div>
       </div>
+
+      <PackageStats price={pkg.price} description={pkg.description} seats={pkg.seats} assignedCount={assignedCount} />
 
       {editing && (
         <div className="mt-5 border-t border-border pt-5">
