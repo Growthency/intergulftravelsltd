@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/admin';
 
@@ -15,10 +16,11 @@ export type StaffScope = { isAdmin: boolean; branch: string | null; email: strin
 
 /**
  * Resolve the current user's access scope. `branch === null` means "see
- * everything" (administrators / head office). Cached per request so the many
- * loaders that call it only hit auth once.
+ * everything" (administrators / head office). Wrapped in React `cache()` so the
+ * many loaders that call it during one request share a single auth round-trip
+ * instead of hitting Supabase auth once per loader.
  */
-export async function getStaffScope(): Promise<StaffScope> {
+export const getStaffScope = cache(async function getStaffScope(): Promise<StaffScope> {
   try {
     const supabase = createClient();
     const {
@@ -42,7 +44,7 @@ export async function getStaffScope(): Promise<StaffScope> {
   } catch {
     return { isAdmin: false, branch: null, email: null };
   }
-}
+});
 
 /** The branch a new record/voucher must be tagged with: forced for branch staff. */
 export async function enforceBranch(requested?: string | null): Promise<string> {

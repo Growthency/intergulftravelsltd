@@ -60,6 +60,9 @@ const dict = {
       title: 'Management Dashboard',
       subtitle:
         'A live financial and operational overview across Inter Gulf Travels, Mokbul Hajj Overseas and Inter Gulf Air.',
+      branchGlance: 'Everything at your branch, at a glance.',
+      periodIncome: 'Income',
+      periodExpense: 'Expense',
       newEntry: 'New Entry',
       setupNotice:
         'The accounting tables are not set up yet. Figures will populate automatically once the management database migration has been applied.',
@@ -227,6 +230,9 @@ const dict = {
       title: 'ম্যানেজমেন্ট ড্যাশবোর্ড',
       subtitle:
         'ইন্টার গালফ ট্রাভেলস, মকবুল হজ ওভারসিজ এবং ইন্টার গালফ এয়ার জুড়ে একটি লাইভ আর্থিক ও পরিচালনাগত সারসংক্ষেপ।',
+      branchGlance: 'এক নজরে আপনার শাখার সবকিছু।',
+      periodIncome: 'আয়',
+      periodExpense: 'ব্যয়',
       newEntry: 'নতুন এন্ট্রি',
       setupNotice:
         'হিসাব টেবিল এখনও সেটআপ করা হয়নি। ম্যানেজমেন্ট ডাটাবেস মাইগ্রেশন প্রয়োগ করা হলে পরিসংখ্যান স্বয়ংক্রিয়ভাবে যুক্ত হবে।',

@@ -1,6 +1,7 @@
 import { ScrollText } from 'lucide-react';
 import { PageHeader, StatCard, Card, Money, EmptyState, TableWrap, thClass, tdClass } from '@/components/manage/ui';
 import { ExportBar } from '@/components/manage/ExportBar';
+import { DateRangeFilter } from '@/components/manage/DateRangeFilter';
 import { AddExpenseForm } from '@/components/manage/accounts/AddExpenseForm';
 import type { HeadOption } from '@/components/manage/accounts/VoucherForm';
 import { loadActiveHeads, loadTransactions, headMap, headName } from '@/lib/management/accounts-data';
@@ -16,7 +17,11 @@ function toOption(h: { id: string; name: string; type: string; subtype: string; 
   return { id: h.id, name: h.name, type: h.type, subtype: h.subtype, code: h.code };
 }
 
-export default async function ExpensesPage() {
+export default async function ExpensesPage({
+  searchParams,
+}: {
+  searchParams: { from?: string; to?: string; range?: string };
+}) {
   const tt = getDict(getLocale());
   const heads = await loadActiveHeads();
   const map = headMap(heads);
@@ -25,7 +30,11 @@ export default async function ExpensesPage() {
   const expenseIds = new Set(expenseHeads.map((h) => h.id));
   const bankHeads = heads.filter((h) => h.subtype === 'bank');
 
-  const txns = await loadTransactions({ limit: 2000 });
+  const txns = await loadTransactions({
+    from: searchParams.from || undefined,
+    to: searchParams.to || undefined,
+    limit: 2000,
+  });
   // An expense voucher debits an expense head.
   const expenseTxns = txns.filter((t) => expenseIds.has(t.debit_account_id));
 
@@ -68,6 +77,10 @@ export default async function ExpensesPage() {
           ) : undefined
         }
       />
+
+      <Card className="mb-5">
+        <DateRangeFilter from={searchParams.from ?? ''} to={searchParams.to ?? ''} range={searchParams.range ?? ''} />
+      </Card>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <StatCard label={tt.expenses.totalExpenses} value={<Money value={total} />} icon={ScrollText} accent="red" />

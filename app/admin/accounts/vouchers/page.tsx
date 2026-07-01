@@ -1,7 +1,9 @@
 import { PageHeader, Card, Badge, EmptyState, TableWrap, thClass, tdClass } from '@/components/manage/ui';
 import { ExportBar } from '@/components/manage/ExportBar';
+import { DateRangeFilter } from '@/components/manage/DateRangeFilter';
 import { VoucherRowActions } from '@/components/manage/accounts/VoucherRowActions';
 import { loadActiveHeads, loadTransactions, headMap, headName } from '@/lib/management/accounts-data';
+import { getStaffScope } from '@/lib/management/scope';
 import { BRANCHES, branchShort } from '@/lib/management/branches';
 import { money } from '@/lib/management/format';
 import { getLocale } from '@/lib/i18n-server';
@@ -30,7 +32,7 @@ const TYPE_TONE: Record<string, 'emerald' | 'gold' | 'red' | 'blue' | 'slate'> =
   journal: 'slate',
 };
 
-type SP = { from?: string; to?: string; branch?: string; type?: string };
+type SP = { from?: string; to?: string; branch?: string; type?: string; range?: string };
 
 const labelStyle = 'mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted';
 const ctrl =
@@ -47,7 +49,11 @@ export default async function VouchersPage({ searchParams }: { searchParams: SP 
     limit: 1000,
   };
 
-  const [heads, txns] = await Promise.all([loadActiveHeads(), loadTransactions(filters)]);
+  const [heads, txns, scope] = await Promise.all([
+    loadActiveHeads(),
+    loadTransactions(filters),
+    getStaffScope(),
+  ]);
   const map = headMap(heads);
   const headOptions = heads.map((h) => ({ id: h.id, name: h.name }));
 
@@ -83,6 +89,10 @@ export default async function VouchersPage({ searchParams }: { searchParams: SP 
         }
       />
 
+      <Card className="mb-4">
+        <DateRangeFilter from={searchParams.from ?? ''} to={searchParams.to ?? ''} range={searchParams.range ?? ''} />
+      </Card>
+
       {/* Filters */}
       <Card className="mb-5">
         <form method="get" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -94,17 +104,19 @@ export default async function VouchersPage({ searchParams }: { searchParams: SP 
             <span className={labelStyle}>{tt.vouchers.to}</span>
             <input type="date" name="to" defaultValue={searchParams.to} className={ctrl} />
           </label>
-          <label>
-            <span className={labelStyle}>{tt.common.branch}</span>
-            <select name="branch" defaultValue={searchParams.branch ?? 'all'} className={ctrl}>
-              <option value="all">{tt.common.allBranches}</option>
-              {BRANCHES.map((b) => (
-                <option key={b.value} value={b.value}>
-                  {b.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          {!scope.branch && (
+            <label>
+              <span className={labelStyle}>{tt.common.branch}</span>
+              <select name="branch" defaultValue={searchParams.branch ?? 'all'} className={ctrl}>
+                <option value="all">{tt.common.allBranches}</option>
+                {BRANCHES.map((b) => (
+                  <option key={b.value} value={b.value}>
+                    {b.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label>
             <span className={labelStyle}>{tt.vouchers.typeFilter}</span>
             <select name="type" defaultValue={searchParams.type ?? 'all'} className={ctrl}>

@@ -5,6 +5,7 @@ import { siteConfig } from '@/lib/site';
 import { getBaseUrl } from '@/lib/utils';
 import { getLocale } from '@/lib/i18n-server';
 import { LocaleProvider } from '@/components/providers/LocaleProvider';
+import { TopProgress } from '@/components/layout/TopProgress';
 import './globals.css';
 
 const inter = Inter({
@@ -122,6 +123,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </>
         )}
         <link rel="preconnect" href="https://i.ytimg.com" crossOrigin="anonymous" />
+        <TopProgress />
         <LocaleProvider locale={locale}>{children}</LocaleProvider>
         <Toaster
           position="top-center"

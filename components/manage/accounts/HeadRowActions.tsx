@@ -11,6 +11,7 @@ import { BRANCHES } from '@/lib/management/branches';
 import type { AccountHead, AccountType, AccountSubtype } from '@/lib/management/types';
 import { useLocale } from '@/components/providers/LocaleProvider';
 import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
+import { useLockedBranch } from '@/components/providers/BranchScope';
 
 const TYPES: AccountType[] = ['asset', 'liability', 'income', 'expense', 'equity'];
 const SUBTYPES: AccountSubtype[] = [
@@ -38,6 +39,7 @@ const SUBTYPE_LABEL_KEY: Record<AccountSubtype, keyof ReturnType<typeof getDict>
 /** Edit (modal) or deactivate a non-system account head. */
 export function HeadRowActions({ head }: { head: AccountHead }) {
   const router = useRouter();
+  const lockedBranch = useLockedBranch();
   const tt = getDict(useLocale());
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
@@ -181,14 +183,18 @@ export function HeadRowActions({ head }: { head: AccountHead }) {
                   ))}
                 </select>
               </Field>
-              <Field label={tt.headRowActions.branchConcern}>
-                <select name="branch" defaultValue={head.branch} className={inputClass}>
-                  <option value="general">{tt.headRowActions.generalHeadOffice}</option>
-                  {BRANCHES.map((b) => (
-                    <option key={b.value} value={b.value}>{b.label}</option>
-                  ))}
-                </select>
-              </Field>
+              {lockedBranch ? (
+                <input type="hidden" name="branch" value={lockedBranch} />
+              ) : (
+                <Field label={tt.headRowActions.branchConcern}>
+                  <select name="branch" defaultValue={head.branch} className={inputClass}>
+                    <option value="general">{tt.headRowActions.generalHeadOffice}</option>
+                    {BRANCHES.map((b) => (
+                      <option key={b.value} value={b.value}>{b.label}</option>
+                    ))}
+                  </select>
+                </Field>
+              )}
               <Field label={tt.headRowActions.contactPhone}>
                 <input name="party_phone" defaultValue={head.party_phone ?? ''} className={inputClass} placeholder={tt.headRowActions.contactPhonePlaceholder} />
               </Field>

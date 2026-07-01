@@ -6,11 +6,13 @@ import { inputClass } from '@/components/manage/ui';
 import { BRANCHES } from '@/lib/management/branches';
 import { useLocale } from '@/components/providers/LocaleProvider';
 import { getDict } from '@/lib/dictionaries/areas/adminumrah';
+import { useLockedBranch } from '@/components/providers/BranchScope';
 
 type PackageOpt = { id: string; name: string };
 
 export function PassengerFilters({ packages }: { packages: PackageOpt[] }) {
   const t = getDict(useLocale());
+  const lockedBranch = useLockedBranch();
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -44,12 +46,14 @@ export function PassengerFilters({ packages }: { packages: PackageOpt[] }) {
         ))}
       </select>
 
-      <select className={inputClass} value={params.get('branch') ?? ''} onChange={(e) => update('branch', e.target.value)}>
-        <option value="">{t.allBranches}</option>
-        {BRANCHES.map((b) => (
-          <option key={b.value} value={b.value}>{b.short}</option>
-        ))}
-      </select>
+      {!lockedBranch && (
+        <select className={inputClass} value={params.get('branch') ?? ''} onChange={(e) => update('branch', e.target.value)}>
+          <option value="">{t.allBranches}</option>
+          {BRANCHES.map((b) => (
+            <option key={b.value} value={b.value}>{b.short}</option>
+          ))}
+        </select>
+      )}
 
       <select className={inputClass} value={params.get('status') ?? ''} onChange={(e) => update('status', e.target.value)}>
         <option value="">{t.allStatuses}</option>

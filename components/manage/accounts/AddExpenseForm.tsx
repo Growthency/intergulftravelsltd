@@ -10,6 +10,7 @@ import { BRANCHES } from '@/lib/management/branches';
 import type { HeadOption } from './VoucherForm';
 import { useLocale } from '@/components/providers/LocaleProvider';
 import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
+import { useLockedBranch } from '@/components/providers/BranchScope';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -23,6 +24,7 @@ export function AddExpenseForm({
 }) {
   const router = useRouter();
   const t = getDict(useLocale());
+  const lockedBranch = useLockedBranch();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -162,15 +164,19 @@ export function AddExpenseForm({
         <Field label={t.addExpense.date} required>
           <input type="date" className={inputClass} value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
-        <Field label={t.addExpense.branch}>
-          <select className={inputClass} value={branch} onChange={(e) => setBranch(e.target.value)}>
-            {BRANCHES.map((b) => (
-              <option key={b.value} value={b.value}>
-                {b.label}
-              </option>
-            ))}
-          </select>
-        </Field>
+        {lockedBranch ? (
+          <input type="hidden" name="branch" value={lockedBranch} />
+        ) : (
+          <Field label={t.addExpense.branch}>
+            <select className={inputClass} value={branch} onChange={(e) => setBranch(e.target.value)}>
+              {BRANCHES.map((b) => (
+                <option key={b.value} value={b.value}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
 
         <Field label={t.addExpense.narration} className="sm:col-span-2">
           <input

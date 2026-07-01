@@ -11,6 +11,7 @@ import { BRANCHES } from '@/lib/management/branches';
 import type { MgmtPackage } from '@/lib/management/types';
 import { useLocale } from '@/components/providers/LocaleProvider';
 import { getDict } from '@/lib/dictionaries/areas/adminhajj';
+import { useLockedBranch } from '@/components/providers/BranchScope';
 
 type Props = {
   /** When editing, the existing package; otherwise undefined for a new one. */
@@ -23,6 +24,7 @@ type Props = {
 export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
   const router = useRouter();
   const t = getDict(useLocale());
+  const lockedBranch = useLockedBranch();
   const isEdit = Boolean(pkg);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -150,15 +152,19 @@ export function PackageForm({ pkg, defaultYear, variant = 'create' }: Props) {
           <Field label={t.seats}>
             <input name="seats" type="number" min={0} defaultValue={pkg?.seats ?? ''} className={inputClass} />
           </Field>
-          <Field label={t.branchConcern} required>
-            <select name="branch" className={inputClass} defaultValue={pkg?.branch ?? 'inter-gulf-travels'}>
-              {BRANCHES.map((b) => (
-                <option key={b.value} value={b.value}>
-                  {b.label}
-                </option>
-              ))}
-            </select>
-          </Field>
+          {lockedBranch ? (
+            <input type="hidden" name="branch" value={lockedBranch} />
+          ) : (
+            <Field label={t.branchConcern} required>
+              <select name="branch" className={inputClass} defaultValue={pkg?.branch ?? 'inter-gulf-travels'}>
+                {BRANCHES.map((b) => (
+                  <option key={b.value} value={b.value}>
+                    {b.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
           <Field label={t.description} className="sm:col-span-2">
             <textarea name="description" rows={2} defaultValue={pkg?.description ?? ''} className={inputClass} />
           </Field>

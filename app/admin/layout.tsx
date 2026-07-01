@@ -7,6 +7,7 @@ import { AuthShell } from '@/components/auth/AuthShell';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { getLocale } from '@/lib/i18n-server';
 import { getDict } from '@/lib/dictionaries/areas/auth';
+import { getStaffScope } from '@/lib/management/scope';
 import { signOut } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -69,10 +70,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // them to the public site.
   if (!isStaff) redirect('/');
 
+  // Branch this user is locked to (null = super admin, sees every branch).
+  const { branch } = await getStaffScope();
+
   return (
     <AdminShell
       user={{ email: user.email ?? '', name: fullName, avatarUrl, role }}
       isAdmin={isAdmin}
+      lockedBranch={branch}
       signOutAction={signOut}
     >
       {children}

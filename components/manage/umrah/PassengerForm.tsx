@@ -11,6 +11,7 @@ import type { MgmtPackage, UmrahPassenger } from '@/lib/management/types';
 import { money } from '@/lib/management/format';
 import { cn } from '@/lib/utils';
 import { useLocale } from '@/components/providers/LocaleProvider';
+import { useLockedBranch } from '@/components/providers/BranchScope';
 import { getDict } from '@/lib/dictionaries/areas/adminumrah';
 import { localizedPath } from '@/lib/i18n';
 
@@ -29,6 +30,7 @@ export function PassengerForm({
 }) {
   const locale = useLocale();
   const t = getDict(locale);
+  const lockedBranch = useLockedBranch();
   const router = useRouter();
   const isEdit = mode === 'edit';
   const [saving, setSaving] = useState(false);
@@ -170,13 +172,17 @@ export function PassengerForm({
             {t.booking}
           </h3>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={t.branchConcern} required>
-              <select className={inputClass} value={form.branch} onChange={set('branch')} disabled={isEdit}>
-                {BRANCHES.map((b) => (
-                  <option key={b.value} value={b.value}>{b.label}</option>
-                ))}
-              </select>
-            </Field>
+            {lockedBranch ? (
+              <input type="hidden" name="branch" value={lockedBranch} />
+            ) : (
+              <Field label={t.branchConcern} required>
+                <select className={inputClass} value={form.branch} onChange={set('branch')} disabled={isEdit}>
+                  {BRANCHES.map((b) => (
+                    <option key={b.value} value={b.value}>{b.label}</option>
+                  ))}
+                </select>
+              </Field>
+            )}
             {!isEdit && (
               <Field label={t.umrahPackage} hint={t.packageOptionalHint}>
                 <select className={inputClass} value={form.package_id} onChange={set('package_id')}>

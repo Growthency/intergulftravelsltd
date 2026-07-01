@@ -40,6 +40,7 @@ import {
 import { LogoMark } from '@/components/brand/Logo';
 import { ConfirmHost } from '@/components/admin/confirm';
 import { LangToggle } from '@/components/layout/LangToggle';
+import { BranchScopeProvider } from '@/components/providers/BranchScope';
 import { useLocale } from '@/components/providers/LocaleProvider';
 import { getDict } from '@/lib/dictionaries/areas/adminshell';
 import { localizedPath, stripLocale, type Locale } from '@/lib/i18n';
@@ -118,11 +119,13 @@ const NAV: NavGroup[] = [
 export function AdminShell({
   user,
   isAdmin,
+  lockedBranch = null,
   signOutAction,
   children,
 }: {
   user: { email: string; name: string | null; avatarUrl: string | null; role?: string };
   isAdmin: boolean;
+  lockedBranch?: string | null;
   signOutAction: () => void;
   children: React.ReactNode;
 }) {
@@ -215,7 +218,9 @@ export function AdminShell({
         </header>
 
         {/* Page content */}
-        <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+        <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <BranchScopeProvider branch={lockedBranch}>{children}</BranchScopeProvider>
+        </main>
       </div>
     </div>
   );

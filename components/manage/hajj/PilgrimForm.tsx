@@ -11,6 +11,7 @@ import { BRANCHES } from '@/lib/management/branches';
 import type { HajjPilgrim, MgmtPackage } from '@/lib/management/types';
 import { useLocale } from '@/components/providers/LocaleProvider';
 import { getDict } from '@/lib/dictionaries/areas/adminhajj';
+import { useLockedBranch } from '@/components/providers/BranchScope';
 
 type PkgOption = Pick<MgmtPackage, 'id' | 'name' | 'price' | 'year'>;
 
@@ -28,6 +29,7 @@ export function PilgrimForm({
   initial?: Partial<HajjPilgrim>;
 }) {
   const router = useRouter();
+  const lockedBranch = useLockedBranch();
   const t = getDict(useLocale());
   const isEdit = mode === 'edit';
   const fileRef = useRef<HTMLInputElement>(null);
@@ -185,15 +187,19 @@ export function PilgrimForm({
               <option value="registered">{t.optRegistered}</option>
             </select>
           </Field>
-          <Field label={t.branchConcern} required>
-            <select name="branch" className={inputClass} defaultValue={initial?.branch ?? 'inter-gulf-travels'}>
-              {BRANCHES.map((b) => (
-                <option key={b.value} value={b.value}>
-                  {b.label}
-                </option>
-              ))}
-            </select>
-          </Field>
+          {lockedBranch ? (
+            <input type="hidden" name="branch" value={lockedBranch} />
+          ) : (
+            <Field label={t.branchConcern} required>
+              <select name="branch" className={inputClass} defaultValue={initial?.branch ?? 'inter-gulf-travels'}>
+                {BRANCHES.map((b) => (
+                  <option key={b.value} value={b.value}>
+                    {b.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
           <Field label={t.preRegistrationNo}>
             <input name="pre_reg_no" defaultValue={initial?.pre_reg_no ?? ''} className={inputClass} autoComplete="off" />
           </Field>

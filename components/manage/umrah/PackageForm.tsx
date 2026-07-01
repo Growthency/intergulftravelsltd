@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { BRANCHES } from '@/lib/management/branches';
 import type { MgmtPackage } from '@/lib/management/types';
 import { useLocale } from '@/components/providers/LocaleProvider';
+import { useLockedBranch } from '@/components/providers/BranchScope';
 import { getDict } from '@/lib/dictionaries/areas/adminumrah';
 
 type EditTarget = Pick<
@@ -171,6 +172,7 @@ function Fields({
   set: (key: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   setActive: (v: boolean) => void;
 }) {
+  const lockedBranch = useLockedBranch();
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <Field label={t.packageName} required className="sm:col-span-2">
@@ -185,13 +187,17 @@ function Fields({
       <Field label={t.seatsCapacity}>
         <input type="number" min={0} className={inputClass} value={form.seats} onChange={set('seats')} placeholder={t.seatsOptional} />
       </Field>
-      <Field label={t.branchConcern} required>
-        <select className={inputClass} value={form.branch} onChange={set('branch')}>
-          {BRANCHES.map((b) => (
-            <option key={b.value} value={b.value}>{b.label}</option>
-          ))}
-        </select>
-      </Field>
+      {lockedBranch ? (
+        <input type="hidden" name="branch" value={lockedBranch} />
+      ) : (
+        <Field label={t.branchConcern} required>
+          <select className={inputClass} value={form.branch} onChange={set('branch')}>
+            {BRANCHES.map((b) => (
+              <option key={b.value} value={b.value}>{b.label}</option>
+            ))}
+          </select>
+        </Field>
+      )}
       <Field label={t.descriptionLabel} className="sm:col-span-2" hint={t.descriptionHint}>
         <textarea className={inputClass} rows={2} value={form.description} onChange={set('description')} />
       </Field>

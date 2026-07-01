@@ -20,6 +20,8 @@ import { money } from '@/lib/management/format';
 import { branchLabel } from '@/lib/management/branches';
 import { formatDate } from '@/lib/utils';
 import { PageHeader, Card, StatCard, EmptyState, TableWrap, thClass, tdClass, Money, Badge } from '@/components/manage/ui';
+import { DateRangeFilter } from '@/components/manage/DateRangeFilter';
+import { presetRange, type RangeKey } from '@/lib/date-range';
 import { getLocale } from '@/lib/i18n-server';
 import { localizedPath } from '@/lib/i18n';
 import { getDict } from '@/lib/dictionaries/areas/adminshell';
@@ -27,14 +29,12 @@ import { getDict } from '@/lib/dictionaries/areas/adminshell';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Dashboard' };
 
-const today = () => new Date().toISOString().slice(0, 10);
-
 type DashData = {
   cash: number;
   bank: number;
   receivable: number;
-  todayIncome: number;
-  todayExpense: number;
+  periodIncome: number;
+  periodExpense: number;
   hajjThisYear: number;
   umrahThisYear: number;
   newContacts: number;
@@ -44,13 +44,13 @@ type DashData = {
   hasManagement: boolean;
 };
 
-async function loadDashboard(): Promise<DashData> {
+async function loadDashboard(range: { from: string; to: string }): Promise<DashData> {
   const d: DashData = {
     cash: 0,
     bank: 0,
     receivable: 0,
-    todayIncome: 0,
-    todayExpense: 0,
+    periodIncome: 0,
+    periodExpense: 0,
     hajjThisYear: 0,
     umrahThisYear: 0,
     newContacts: 0,
@@ -61,7 +61,6 @@ async function loadDashboard(): Promise<DashData> {
   };
 
   const year = new Date().getFullYear();
-  const t = today();
   const scope = await getStaffScope();
 
   // --- account heads: cash / bank / receivable balances ---
@@ -87,20 +86,22 @@ async function loadDashboard(): Promise<DashData> {
     // management tables not present yet
   }
 
-  // --- today's income & expense from today's vouchers ---
+  // --- income & expense over the selected period ---
   try {
     const db = mgmtDb();
-    let tq = db.from('transactions').select('*').eq('date', t);
+    let tq = db.from('transactions').select('*');
+    if (range.from) tq = tq.gte('date', range.from);
+    if (range.to) tq = tq.lte('date', range.to);
     if (scope.branch) tq = tq.eq('branch', scope.branch);
     const { data } = await tq;
-    const todays = (data ?? []) as Transaction[];
+    const periodTx = (data ?? []) as Transaction[];
     if (heads.length) {
       const byId = new Map(heads.map((h) => [h.id, h]));
-      for (const tx of todays) {
+      for (const tx of periodTx) {
         const credited = byId.get(tx.credit_account_id);
         const debited = byId.get(tx.debit_account_id);
-        if (credited?.type === 'income') d.todayIncome += Number(tx.amount);
-        if (debited?.type === 'expense') d.todayExpense += Number(tx.amount);
+        if (credited?.type === 'income') d.periodIncome += Number(tx.amount);
+        if (debited?.type === 'expense') d.periodExpense += Number(tx.amount);
       }
     }
   } catch {
@@ -176,11 +177,26 @@ async function loadDashboard(): Promise<DashData> {
   return d;
 }
 
-export default async function ManagementDashboard() {
-  const d = await loadDashboard();
+export default async function ManagementDashboard({
+  searchParams,
+}: {
+  searchParams: { from?: string; to?: string; range?: string };
+}) {
+  const from = searchParams.from ?? '';
+  const to = searchParams.to ?? '';
+  // The money view defaults to the current month; a preset or custom range
+  // (Lifetime clears both dates) overrides it. rangeKey drives the highlight.
+  const rangeKey = (searchParams.range || (from || to ? 'custom' : 'this-month')) as RangeKey;
+  const range = rangeKey === 'custom' ? { from, to } : presetRange(rangeKey);
+  const d = await loadDashboard(range);
   const year = new Date().getFullYear();
   const locale = getLocale();
   const t = getDict(locale);
+  // Branch admins see their branch name as a welcome; the super admin keeps the
+  // group-wide heading.
+  const scope = await getStaffScope();
+  const branchName = scope.branch ? branchLabel(scope.branch) : null;
+  const periodHint = range.from && range.to ? `${formatDate(range.from)} — ${formatDate(range.to)}` : '';
 
   const quickActions = [
     { label: t.dash.qaDailyEntry, href: '/admin/accounts/entry', icon: NotebookPen },
@@ -192,8 +208,8 @@ export default async function ManagementDashboard() {
   return (
     <>
       <PageHeader
-        title={t.dash.title}
-        subtitle={t.dash.subtitle}
+        title={branchName ?? t.dash.title}
+        subtitle={branchName ? t.dash.branchGlance : t.dash.subtitle}
         actions={
           <Link
             href={localizedPath(locale, '/admin/accounts/entry')}
@@ -210,6 +226,10 @@ export default async function ManagementDashboard() {
         </div>
       )}
 
+      <Card className="mb-4">
+        <DateRangeFilter from={range.from} to={range.to} range={rangeKey} />
+      </Card>
+
       {/* Money stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard label={t.dash.cashInHand} value={<Money value={d.cash} />} icon={Wallet} accent="emerald" />
@@ -222,18 +242,18 @@ export default async function ManagementDashboard() {
           hint={t.dash.totalReceivableHint}
         />
         <StatCard
-          label={t.dash.todaysIncome}
-          value={<Money value={d.todayIncome} />}
+          label={t.dash.periodIncome}
+          value={<Money value={d.periodIncome} />}
           icon={TrendingUp}
           accent="emerald"
-          hint={formatDate(today())}
+          hint={periodHint}
         />
         <StatCard
-          label={t.dash.todaysExpense}
-          value={<Money value={d.todayExpense} />}
+          label={t.dash.periodExpense}
+          value={<Money value={d.periodExpense} />}
           icon={TrendingDown}
           accent="red"
-          hint={formatDate(today())}
+          hint={periodHint}
         />
         <StatCard
           label={t.dash.hajjPilgrimsYear(year)}

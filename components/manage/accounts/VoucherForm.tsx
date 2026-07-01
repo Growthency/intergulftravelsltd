@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { BRANCHES } from '@/lib/management/branches';
 import { money } from '@/lib/management/format';
 import { useLocale } from '@/components/providers/LocaleProvider';
+import { useLockedBranch } from '@/components/providers/BranchScope';
 import { getDict } from '@/lib/dictionaries/areas/adminaccounting';
 
 export type HeadOption = {
@@ -47,6 +48,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 export function VoucherForm({ heads }: { heads: HeadOption[] }) {
   const router = useRouter();
   const t = getDict(useLocale());
+  const lockedBranch = useLockedBranch();
   const [mode, setMode] = useState<Mode>('income');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(today());
@@ -272,15 +274,19 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
             </>
           )}
 
-          <Field label={t.voucherForm.branch}>
-            <select className={inputClass} value={branch} onChange={(e) => setBranch(e.target.value)}>
-              {BRANCHES.map((b) => (
-                <option key={b.value} value={b.value}>
-                  {b.label}
-                </option>
-              ))}
-            </select>
-          </Field>
+          {lockedBranch ? (
+            <input type="hidden" name="branch" value={lockedBranch} />
+          ) : (
+            <Field label={t.voucherForm.branch}>
+              <select className={inputClass} value={branch} onChange={(e) => setBranch(e.target.value)}>
+                {BRANCHES.map((b) => (
+                  <option key={b.value} value={b.value}>
+                    {b.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
 
           <Field label={t.voucherForm.narration} className="sm:col-span-2">
             <input

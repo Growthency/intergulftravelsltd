@@ -5,6 +5,7 @@ import { CalendarDays, Building2 } from 'lucide-react';
 import { BRANCHES } from '@/lib/management/branches';
 import { inputClass } from '@/components/manage/ui';
 import { useLocale } from '@/components/providers/LocaleProvider';
+import { useLockedBranch } from '@/components/providers/BranchScope';
 import { getDict } from '@/lib/dictionaries/areas/adminreports';
 
 type Mode = 'date' | 'range' | 'asof' | 'none';
@@ -33,6 +34,7 @@ export function ReportFilters({
   const pathname = usePathname();
   const params = useSearchParams();
   const t = getDict(useLocale());
+  const locked = useLockedBranch();
 
   function update(patch: Record<string, string>) {
     const next = new URLSearchParams(params.toString());
@@ -88,7 +90,7 @@ export function ReportFilters({
         </>
       )}
 
-      {mode !== 'none' && (
+      {mode !== 'none' && !locked && (
         <label className="block">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">
             <Building2 className="mr-1 inline h-3.5 w-3.5" /> {t.filterBranch}
