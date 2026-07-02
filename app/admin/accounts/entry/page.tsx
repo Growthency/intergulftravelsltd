@@ -16,6 +16,7 @@ export default async function DailyEntryPage() {
     type: h.type,
     subtype: h.subtype,
     code: h.code,
+    party_phone: h.party_phone,
   }));
 
   return (

@@ -270,6 +270,9 @@ export default async function HajjPilgrimsPage({ searchParams }: { searchParams:
                     {p.name}
                   </Link>
                   {p.name_bn && <span className="block text-xs text-ink-muted">{p.name_bn}</span>}
+                  {(p.phone || p.district) && (
+                    <span className="block text-xs text-ink-muted">{[p.phone, p.district].filter(Boolean).join(' · ')}</span>
+                  )}
                 </td>
                 <td className={tdClass}>{p.phone ?? '—'}</td>
                 <td className={tdClass}>

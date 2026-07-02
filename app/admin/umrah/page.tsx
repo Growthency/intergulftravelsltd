@@ -158,6 +158,9 @@ export default async function UmrahPassengersPage({
                       {r.name}
                     </Link>
                     {r.name_bn && <p className="text-xs text-ink-muted">{r.name_bn}</p>}
+                    {(r.phone || r.address) && (
+                      <p className="text-xs text-ink-muted">{[r.phone, r.address].filter(Boolean).join(' · ')}</p>
+                    )}
                     {r.status !== 'active' && (
                       <span className="mt-1 inline-block">
                         <Badge tone={r.status === 'cancelled' ? 'red' : 'emerald'}>{statusLabel(r.status)}</Badge>

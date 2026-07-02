@@ -105,6 +105,7 @@ export function PackageWiseList({
                     <Link href={localizedPath(locale, `/admin/umrah/${r.id}`)} className="font-semibold text-ink hover:text-brand-700">
                       {r.name}
                     </Link>
+                    {r.phone && <p className="text-xs text-ink-muted">{r.phone}</p>}
                   </td>
                   <td className={`${tdClass} tabular-nums`}>{r.passport_no ?? '—'}</td>
                   <td className={`${tdClass} tabular-nums`}>{r.phone ?? '—'}</td>

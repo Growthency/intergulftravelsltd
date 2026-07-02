@@ -18,7 +18,13 @@ export type HeadOption = {
   type: string;
   subtype: string;
   code: string | null;
+  party_phone?: string | null;
 };
+
+/** Name + phone so two people with the same name can be told apart. */
+export function headLabel(h: HeadOption): string {
+  return h.party_phone ? `${h.name} · ${h.party_phone}` : h.name;
+}
 
 type Mode = 'income' | 'expense' | 'transfer' | 'journal';
 
@@ -256,7 +262,7 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
                   <option value="">{t.voucherForm.selectDebitHead}</option>
                   {heads.map((h) => (
                     <option key={h.id} value={h.id}>
-                      {h.name}
+                      {headLabel(h)}
                     </option>
                   ))}
                 </select>
@@ -266,7 +272,7 @@ export function VoucherForm({ heads }: { heads: HeadOption[] }) {
                   <option value="">{t.voucherForm.selectCreditHead}</option>
                   {heads.map((h) => (
                     <option key={h.id} value={h.id}>
-                      {h.name}
+                      {headLabel(h)}
                     </option>
                   ))}
                 </select>

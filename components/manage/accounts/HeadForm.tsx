@@ -47,7 +47,8 @@ export function HeadForm({
   buttonLabel?: string;
 }) {
   const router = useRouter();
-  const t = getDict(useLocale());
+  const locale = useLocale();
+  const t = getDict(locale);
   const lockedBranch = useLockedBranch();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -89,8 +90,10 @@ export function HeadForm({
           type,
           subtype,
           branch,
-          opening_balance: openingBalance ? Number(openingBalance) : 0,
-          opening_is_debit: openingIsDebit,
+          // A negative bank balance is an overdraft/loan → stored on the credit
+          // (liability) side. The magnitude is always sent as a positive number.
+          opening_balance: Math.abs(Number(openingBalance) || 0),
+          opening_is_debit: bankOnly ? (Number(openingBalance) || 0) >= 0 : openingIsDebit,
           bank_name: showBank ? bankName.trim() || null : null,
           account_no: showBank ? accountNo.trim() || null : null,
         }),
@@ -213,10 +216,18 @@ export function HeadForm({
           </Field>
         )}
 
-        <Field label={t.headForm.openingBalance} hint={t.headForm.openingHint}>
+        <Field
+          label={t.headForm.openingBalance}
+          hint={
+            bankOnly
+              ? locale === 'bn'
+                ? 'ঋণাত্মক অঙ্ক দিলে ওভারড্রাফট / ঋণ হিসেবে গণ্য হবে।'
+                : 'A negative amount is treated as an overdraft / loan.'
+              : t.headForm.openingHint
+          }
+        >
           <input
             type="number"
-            min="0"
             step="0.01"
             className={inputClass}
             value={openingBalance}
@@ -225,7 +236,7 @@ export function HeadForm({
           />
         </Field>
 
-        {Number(openingBalance) > 0 && (
+        {!bankOnly && Number(openingBalance) !== 0 && (
           <Field label={t.headForm.openingSide}>
             <div className="flex gap-2">
               <button

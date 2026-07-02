@@ -247,6 +247,9 @@ export default async function HajjPackagesPage({
                       <Link href={localizedPath(locale, `/admin/hajj/${p.id}`)} className="font-medium text-ink hover:text-brand-700">
                         {p.name}
                       </Link>
+                      {(p.phone || p.district) && (
+                        <p className="text-xs text-ink-muted">{[p.phone, p.district].filter(Boolean).join(' · ')}</p>
+                      )}
                     </td>
                     <td className={tdClass}>{p.phone ?? '—'}</td>
                     <td className={tdClass}>
