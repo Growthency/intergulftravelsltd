@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Users, UserCheck, HandCoins, CalendarClock, Plus, Plane } from 'lucide-react';
+import { Users, UserCheck, HandCoins, CalendarClock, Plus, Plane, Printer } from 'lucide-react';
 import {
   PageHeader,
   StatCard,
@@ -199,12 +199,22 @@ export default async function UmrahPassengersPage({
                     <Badge>{branchShort(r.branch)}</Badge>
                   </td>
                   <td className={`${tdClass} whitespace-nowrap text-right`}>
-                    <RecordRowActions
-                      editHref={localizedPath(locale, `/admin/umrah/${r.id}/edit`)}
-                      deleteEndpoint={`/api/admin/umrah/${r.id}`}
-                      name={r.name}
-                      confirmMessage={t.confirmDelete.replace('{name}', r.name)}
-                    />
+                    <div className="inline-flex items-center gap-2">
+                      <Link
+                        href={localizedPath(locale, `/admin/receipt/passenger/umrah/${r.id}`)}
+                        target="_blank"
+                        title={locale === 'bn' ? 'রসিদ প্রিন্ট' : 'Print receipt'}
+                        className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-ink-muted transition hover:border-brand-600/40 hover:text-brand-700"
+                      >
+                        <Printer className="h-3.5 w-3.5" />
+                      </Link>
+                      <RecordRowActions
+                        editHref={localizedPath(locale, `/admin/umrah/${r.id}/edit`)}
+                        deleteEndpoint={`/api/admin/umrah/${r.id}`}
+                        name={r.name}
+                        confirmMessage={t.confirmDelete.replace('{name}', r.name)}
+                      />
+                    </div>
                   </td>
                 </tr>
               );

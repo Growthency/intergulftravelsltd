@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Users, UserPlus, BadgeCheck, Wallet } from 'lucide-react';
+import { Users, UserPlus, BadgeCheck, Wallet, Printer } from 'lucide-react';
 import {
   PageHeader,
   StatCard,
@@ -295,14 +295,24 @@ export default async function HajjPilgrimsPage({ searchParams }: { searchParams:
                   {p.status === 'cancelled' && <Badge tone="red">{t.badgeCancelled}</Badge>}
                 </td>
                 <td className={`${tdClass} whitespace-nowrap text-right`}>
-                  <RecordRowActions
-                    editHref={localizedPath(locale, `/admin/hajj/${p.id}/edit`)}
-                    deleteEndpoint={`/api/admin/hajj/${p.id}`}
-                    name={p.name}
-                    confirmMessage={t.confirmDelete
-                      .replace('{name}', p.name)
-                      .replace('{suffix}', p.tracking_no ? ` (${p.tracking_no})` : '')}
-                  />
+                  <div className="inline-flex items-center gap-2">
+                    <Link
+                      href={localizedPath(locale, `/admin/receipt/passenger/hajj/${p.id}`)}
+                      target="_blank"
+                      title={locale === 'bn' ? 'রসিদ প্রিন্ট' : 'Print receipt'}
+                      className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-ink-muted transition hover:border-brand-600/40 hover:text-brand-700"
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                    </Link>
+                    <RecordRowActions
+                      editHref={localizedPath(locale, `/admin/hajj/${p.id}/edit`)}
+                      deleteEndpoint={`/api/admin/hajj/${p.id}`}
+                      name={p.name}
+                      confirmMessage={t.confirmDelete
+                        .replace('{name}', p.name)
+                        .replace('{suffix}', p.tracking_no ? ` (${p.tracking_no})` : '')}
+                    />
+                  </div>
                 </td>
               </tr>
             ))}

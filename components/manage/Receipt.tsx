@@ -21,6 +21,8 @@ export type ReceiptData = {
   paid: string;
   due: string;
   isRefund: boolean;
+  /** When present, the receipt is a full statement listing every payment. */
+  payments?: { date: string; type: string; method: string; amount: string }[];
 };
 
 const L = {
@@ -48,6 +50,13 @@ const L = {
     print: 'Print / Save PDF',
     back: 'Back',
     only: 'only',
+    colDate: 'Date',
+    colType: 'Type',
+    colMethod: 'Method',
+    colAmount: 'Amount',
+    paymentsHeading: 'Payments received',
+    noPayments: 'No payments recorded yet.',
+    grandTotal: 'Total received',
   },
   bn: {
     receipt: 'অর্থ রসিদ',
@@ -73,6 +82,13 @@ const L = {
     print: 'প্রিন্ট / PDF সেভ',
     back: 'ফিরুন',
     only: 'মাত্র',
+    colDate: 'তারিখ',
+    colType: 'ধরন',
+    colMethod: 'মাধ্যম',
+    colAmount: 'পরিমাণ',
+    paymentsHeading: 'গৃহীত পেমেন্ট',
+    noPayments: 'এখনও কোনো পেমেন্ট নেই।',
+    grandTotal: 'মোট গৃহীত',
   },
 };
 
@@ -165,27 +181,75 @@ export function Receipt({ data, locale }: { data: ReceiptData; locale: 'en' | 'b
           {data.packageName && <Row label={t.package} value={data.packageName} />}
         </div>
 
-        {/* Amount */}
-        <div className="my-5 flex items-center justify-between rounded-xl border-2 border-emerald-700 bg-emerald-50 px-5 py-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{t.amount}</p>
-            {data.amountWords && (
-              <p className="mt-0.5 text-sm text-gray-600">
-                {t.inWords}: {data.amountWords} {t.only}
-              </p>
+        {data.payments ? (
+          /* Statement mode — every payment for this person + totals. */
+          <div className="my-5">
+            <p className="mb-2 text-sm font-semibold text-gray-700">{t.paymentsHeading}</p>
+            {data.payments.length === 0 ? (
+              <p className="rounded-xl bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">{t.noPayments}</p>
+            ) : (
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="border-b-2 border-gray-300 text-left text-gray-500">
+                    <th className="py-2">{t.colDate}</th>
+                    <th className="py-2">{t.colType}</th>
+                    <th className="py-2">{t.colMethod}</th>
+                    <th className="py-2 text-right">{t.colAmount}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.payments.map((p, i) => (
+                    <tr key={i} className="border-b border-gray-200">
+                      <td className="py-2 text-gray-800">{p.date}</td>
+                      <td className="py-2 text-gray-800">{p.type}</td>
+                      <td className="py-2 text-gray-800">{p.method}</td>
+                      <td className="py-2 text-right font-medium text-gray-900">৳ {p.amount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-emerald-700 font-bold text-emerald-800">
+                    <td className="py-2" colSpan={3}>
+                      {t.grandTotal}
+                    </td>
+                    <td className="py-2 text-right">৳ {data.paid}</td>
+                  </tr>
+                </tfoot>
+              </table>
             )}
+            <div className="mt-3 flex flex-wrap justify-end gap-6 text-sm">
+              <span className="text-gray-600">
+                {t.totalPaid}: <span className="font-semibold text-gray-900">৳ {data.paid}</span>
+              </span>
+              <span className="text-gray-600">
+                {t.balanceDue}: <span className="font-semibold text-gray-900">৳ {data.due}</span>
+              </span>
+            </div>
           </div>
-          <p className="text-3xl font-extrabold text-emerald-800">৳ {data.amount}</p>
-        </div>
+        ) : (
+          <>
+            {/* Single-payment amount */}
+            <div className="my-5 flex items-center justify-between rounded-xl border-2 border-emerald-700 bg-emerald-50 px-5 py-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{t.amount}</p>
+                {data.amountWords && (
+                  <p className="mt-0.5 text-sm text-gray-600">
+                    {t.inWords}: {data.amountWords} {t.only}
+                  </p>
+                )}
+              </div>
+              <p className="text-3xl font-extrabold text-emerald-800">৳ {data.amount}</p>
+            </div>
 
-        {/* Details */}
-        <div className="grid grid-cols-2 gap-x-6">
-          <Row label={t.method} value={data.method} />
-          <Row label={t.type} value={data.type} />
-          <Row label={t.totalPaid} value={`৳ ${data.paid}`} />
-          <Row label={t.balanceDue} value={`৳ ${data.due}`} />
-        </div>
-        {data.narration && <Row label={t.note} value={data.narration} />}
+            <div className="grid grid-cols-2 gap-x-6">
+              <Row label={t.method} value={data.method} />
+              <Row label={t.type} value={data.type} />
+              <Row label={t.totalPaid} value={`৳ ${data.paid}`} />
+              <Row label={t.balanceDue} value={`৳ ${data.due}`} />
+            </div>
+            {data.narration && <Row label={t.note} value={data.narration} />}
+          </>
+        )}
 
         {/* Footer */}
         <div className="mt-10 flex items-end justify-between">
