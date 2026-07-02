@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, User, Pencil } from 'lucide-react';
+import { ArrowLeft, User, Pencil, Printer } from 'lucide-react';
 import {
   PageHeader,
   Card,
@@ -244,6 +244,7 @@ export default async function PilgrimProfilePage({ params }: { params: { id: str
                     <th className={thClass}>{t.exMethod}</th>
                     <th className={`${thClass} text-right`}>{t.exAmount}</th>
                     <th className={thClass}>{t.exNarration}</th>
+                    <th className={`${thClass} text-right`}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -257,6 +258,15 @@ export default async function PilgrimProfilePage({ params }: { params: { id: str
                         <Money value={p.amount} />
                       </td>
                       <td className={tdClass}>{p.narration ?? '—'}</td>
+                      <td className={`${tdClass} whitespace-nowrap text-right`}>
+                        <Link
+                          href={localizedPath(locale, `/admin/receipt/${p.id}`)}
+                          target="_blank"
+                          className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-xs font-semibold text-ink-muted transition hover:border-brand-600/40 hover:text-brand-700"
+                        >
+                          <Printer className="h-3.5 w-3.5" /> {locale === 'bn' ? 'রসিদ' : 'Receipt'}
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

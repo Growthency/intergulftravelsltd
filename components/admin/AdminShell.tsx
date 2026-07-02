@@ -66,6 +66,7 @@ const NAV: NavGroup[] = [
       { labelKey: 'customerDues', href: '/admin/accounts/due', icon: HandCoins },
       { labelKey: 'expenses', href: '/admin/accounts/expenses', icon: ScrollText },
       { labelKey: 'loans', href: '/admin/accounts/loans', icon: ArrowLeftRight },
+      { labelKey: 'receipts', href: '/admin/receipts', icon: Receipt },
     ],
   },
   {

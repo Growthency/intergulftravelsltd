@@ -1,0 +1,200 @@
+'use client';
+
+import { useEffect } from 'react';
+import { Printer, ArrowLeft } from 'lucide-react';
+
+export type ReceiptData = {
+  company: { name: string; address: string; phone: string; email: string; license: string };
+  program: string; // "Umrah" / "Hajj" (already localized)
+  receiptNo: string;
+  date: string;
+  branch: string;
+  partyName: string;
+  partyPhone: string;
+  partyAddress: string;
+  packageName: string;
+  amount: string;
+  amountWords: string;
+  method: string;
+  type: string;
+  narration: string;
+  paid: string;
+  due: string;
+  isRefund: boolean;
+};
+
+const L = {
+  en: {
+    receipt: 'Money Receipt',
+    refund: 'Refund Voucher',
+    no: 'Receipt No',
+    date: 'Date',
+    branch: 'Branch',
+    receivedFrom: 'Received with thanks from',
+    refundTo: 'Refunded to',
+    phone: 'Phone',
+    address: 'Address',
+    forProgram: 'For',
+    package: 'Package',
+    amount: 'Amount',
+    inWords: 'In words',
+    method: 'Payment method',
+    type: 'Payment type',
+    note: 'Note',
+    totalPaid: 'Total paid',
+    balanceDue: 'Balance due',
+    signature: 'Authorised signature',
+    thanks: 'Thank you for choosing us.',
+    print: 'Print / Save PDF',
+    back: 'Back',
+    only: 'only',
+  },
+  bn: {
+    receipt: 'অর্থ রসিদ',
+    refund: 'রিফান্ড ভাউচার',
+    no: 'রসিদ নং',
+    date: 'তারিখ',
+    branch: 'শাখা',
+    receivedFrom: 'ধন্যবাদসহ গ্রহণ করা হলো',
+    refundTo: 'ফেরত দেওয়া হলো',
+    phone: 'ফোন',
+    address: 'ঠিকানা',
+    forProgram: 'কীসের জন্য',
+    package: 'প্যাকেজ',
+    amount: 'পরিমাণ',
+    inWords: 'কথায়',
+    method: 'পেমেন্ট মাধ্যম',
+    type: 'পেমেন্টের ধরন',
+    note: 'নোট',
+    totalPaid: 'মোট পরিশোধিত',
+    balanceDue: 'বাকি',
+    signature: 'অনুমোদিত স্বাক্ষর',
+    thanks: 'আমাদের বেছে নেওয়ার জন্য ধন্যবাদ।',
+    print: 'প্রিন্ট / PDF সেভ',
+    back: 'ফিরুন',
+    only: 'মাত্র',
+  },
+};
+
+export function Receipt({ data, locale }: { data: ReceiptData; locale: 'en' | 'bn' }) {
+  const t = L[locale];
+
+  // Open the print dialog automatically once the receipt has painted.
+  useEffect(() => {
+    const id = setTimeout(() => window.print(), 500);
+    return () => clearTimeout(id);
+  }, []);
+
+  const Row = ({ label, value }: { label: string; value: string }) => (
+    <div className="flex gap-2 py-1 text-[0.92rem]">
+      <span className="w-40 shrink-0 text-gray-500">{label}</span>
+      <span className="font-medium text-gray-900">: {value}</span>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-[100] overflow-auto bg-neutral-100 p-4 text-black sm:p-8">
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #receipt, #receipt * { visibility: visible !important; }
+          #receipt { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none !important; border: 0 !important; }
+          .no-print { display: none !important; }
+          @page { margin: 14mm; }
+        }
+      `}</style>
+
+      <div className="no-print mx-auto mb-4 flex max-w-2xl items-center justify-between">
+        <button
+          type="button"
+          onClick={() => window.history.back()}
+          className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          <ArrowLeft className="h-4 w-4" /> {t.back}
+        </button>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="inline-flex items-center gap-1.5 rounded-full bg-emerald-700 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+        >
+          <Printer className="h-4 w-4" /> {t.print}
+        </button>
+      </div>
+
+      <div id="receipt" className="mx-auto max-w-2xl rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+        {/* Company header */}
+        <div className="border-b-2 border-emerald-700 pb-4 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-emerald-800">{data.company.name}</h1>
+          <p className="mt-1 text-sm text-gray-600">{data.company.address}</p>
+          <p className="text-sm text-gray-600">
+            {data.company.phone} · {data.company.email}
+          </p>
+          <p className="mt-0.5 text-xs font-semibold text-gray-500">{data.company.license}</p>
+        </div>
+
+        {/* Title */}
+        <div className="my-5 text-center">
+          <span className="inline-block rounded-full border border-emerald-700 px-5 py-1 text-lg font-bold uppercase tracking-wide text-emerald-800">
+            {data.isRefund ? t.refund : t.receipt}
+          </span>
+        </div>
+
+        {/* Meta */}
+        <div className="mb-4 flex flex-wrap justify-between gap-2 text-sm">
+          <span>
+            <span className="text-gray-500">{t.no}:</span>{' '}
+            <span className="font-semibold text-gray-900">{data.receiptNo}</span>
+          </span>
+          <span>
+            <span className="text-gray-500">{t.branch}:</span>{' '}
+            <span className="font-semibold text-gray-900">{data.branch}</span>
+          </span>
+          <span>
+            <span className="text-gray-500">{t.date}:</span>{' '}
+            <span className="font-semibold text-gray-900">{data.date}</span>
+          </span>
+        </div>
+
+        {/* Party */}
+        <div className="rounded-xl bg-gray-50 p-4">
+          <p className="text-sm text-gray-500">{data.isRefund ? t.refundTo : t.receivedFrom}</p>
+          <p className="text-lg font-bold text-gray-900">{data.partyName}</p>
+          <Row label={t.phone} value={data.partyPhone} />
+          {data.partyAddress && <Row label={t.address} value={data.partyAddress} />}
+          <Row label={t.forProgram} value={data.program} />
+          {data.packageName && <Row label={t.package} value={data.packageName} />}
+        </div>
+
+        {/* Amount */}
+        <div className="my-5 flex items-center justify-between rounded-xl border-2 border-emerald-700 bg-emerald-50 px-5 py-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{t.amount}</p>
+            {data.amountWords && (
+              <p className="mt-0.5 text-sm text-gray-600">
+                {t.inWords}: {data.amountWords} {t.only}
+              </p>
+            )}
+          </div>
+          <p className="text-3xl font-extrabold text-emerald-800">৳ {data.amount}</p>
+        </div>
+
+        {/* Details */}
+        <div className="grid grid-cols-2 gap-x-6">
+          <Row label={t.method} value={data.method} />
+          <Row label={t.type} value={data.type} />
+          <Row label={t.totalPaid} value={`৳ ${data.paid}`} />
+          <Row label={t.balanceDue} value={`৳ ${data.due}`} />
+        </div>
+        {data.narration && <Row label={t.note} value={data.narration} />}
+
+        {/* Footer */}
+        <div className="mt-10 flex items-end justify-between">
+          <p className="text-xs text-gray-400">{t.thanks}</p>
+          <div className="text-center">
+            <div className="w-48 border-t border-gray-400 pt-1 text-sm font-medium text-gray-700">{t.signature}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

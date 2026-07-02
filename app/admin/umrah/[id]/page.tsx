@@ -11,6 +11,7 @@ import {
   HandCoins,
   Wallet,
   Receipt,
+  Printer,
   AlertTriangle,
   Pencil,
 } from 'lucide-react';
@@ -256,6 +257,7 @@ export default async function PassengerProfilePage({ params }: { params: { id: s
                     <th className={thClass}>{t.thMethod}</th>
                     <th className={`${thClass} text-right`}>{t.thAmount}</th>
                     <th className={thClass}>{t.thNarration}</th>
+                    <th className={`${thClass} text-right`}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -271,6 +273,15 @@ export default async function PassengerProfilePage({ params }: { params: { id: s
                         <Money value={p.type === 'refund' ? -Number(p.amount) : Number(p.amount)} />
                       </td>
                       <td className={`${tdClass} text-ink-muted`}>{p.narration ?? '—'}</td>
+                      <td className={`${tdClass} whitespace-nowrap text-right`}>
+                        <Link
+                          href={localizedPath(locale, `/admin/receipt/${p.id}`)}
+                          target="_blank"
+                          className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-xs font-semibold text-ink-muted transition hover:border-brand-600/40 hover:text-brand-700"
+                        >
+                          <Printer className="h-3.5 w-3.5" /> {locale === 'bn' ? 'রসিদ' : 'Receipt'}
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
