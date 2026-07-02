@@ -4,17 +4,22 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { toast } from 'sonner';
-import { Loader2, Upload, X, User, Mail, KeyRound } from 'lucide-react';
+import { Loader2, Upload, X, User, Mail, KeyRound, Phone, MapPin } from 'lucide-react';
 import { Card, Field, inputClass } from '@/components/manage/ui';
 import { Button } from '@/components/ui/Button';
 import { useLocale } from '@/components/providers/LocaleProvider';
 import { getDict } from '@/lib/dictionaries/areas/adminshell';
 
-type Initial = { email: string; full_name: string; avatar_url: string | null };
+type Initial = { email: string; full_name: string; avatar_url: string | null; phone: string; address: string };
 
 export function AccountSettings({ initial, canEditEmail = true }: { initial: Initial; canEditEmail?: boolean }) {
   const router = useRouter();
-  const t = getDict(useLocale()).account;
+  const locale = useLocale();
+  const t = getDict(locale).account;
+  const L =
+    locale === 'bn'
+      ? { phone: 'ফোন', address: 'ঠিকানা', phonePh: 'যেমন 01711 000000', addressPh: 'যেমন ৩১, পুরানা পল্টন, ঢাকা' }
+      : { phone: 'Phone', address: 'Address', phonePh: 'e.g. 01711 000000', addressPh: 'e.g. 31, Purana Paltan, Dhaka' };
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -57,6 +62,8 @@ export function AccountSettings({ initial, canEditEmail = true }: { initial: Ini
     const payload: Record<string, unknown> = {
       full_name: String(fd.get('full_name') ?? '').trim(),
       avatar_url: avatarUrl,
+      phone: String(fd.get('phone') ?? '').trim(),
+      address: String(fd.get('address') ?? '').trim(),
     };
     // The email input is disabled for branch accounts (so it submits nothing).
     // Only send it when it actually has a value — an empty string would fail
@@ -129,6 +136,20 @@ export function AccountSettings({ initial, canEditEmail = true }: { initial: Ini
         <Field label={t.fullName}>
           <input name="full_name" defaultValue={initial.full_name} className={inputClass} placeholder={t.yourName} autoComplete="name" />
         </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label={L.phone}>
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3">
+              <Phone className="h-4 w-4 shrink-0 text-ink-muted" />
+              <input name="phone" defaultValue={initial.phone} className="w-full bg-transparent py-2.5 text-sm text-ink outline-none" placeholder={L.phonePh} autoComplete="tel" />
+            </div>
+          </Field>
+          <Field label={L.address}>
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3">
+              <MapPin className="h-4 w-4 shrink-0 text-ink-muted" />
+              <input name="address" defaultValue={initial.address} className="w-full bg-transparent py-2.5 text-sm text-ink outline-none" placeholder={L.addressPh} autoComplete="street-address" />
+            </div>
+          </Field>
+        </div>
       </Card>
 
       {/* Sign-in */}

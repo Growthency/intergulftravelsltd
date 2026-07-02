@@ -30,10 +30,13 @@ export const getStaffScope = cache(async function getStaffScope(): Promise<Staff
 
     const email = (user.email ?? '').toLowerCase();
 
-    // A branch-mapped email is ALWAYS locked to its branch for data, even if the
-    // account is an admin — so branch admins get the full toolset (Website,
-    // System, Vault, Staff…) while their Hajj/Umrah/accounts stay isolated.
-    const branch = BRANCH_BY_EMAIL[email] ?? null;
+    // Branch lock resolves off the stable auth user_metadata first (so a branch
+    // admin can safely change their sign-in email), then the built-in email map.
+    // Branch admins keep the full toolset (Website, System, Vault, Staff…) while
+    // their Hajj/Umrah/accounts stay isolated.
+    const metaBranch = (user.user_metadata as { branch?: unknown } | null)?.branch;
+    const branch =
+      (typeof metaBranch === 'string' && metaBranch ? metaBranch : null) ?? BRANCH_BY_EMAIL[email] ?? null;
 
     let isAdmin = isAdminEmail(email);
     if (!isAdmin) {

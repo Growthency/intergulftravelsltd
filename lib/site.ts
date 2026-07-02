@@ -237,6 +237,37 @@ export const branches: Branch[] = [
   },
 ];
 
+/**
+ * Company header for a receipt/invoice, resolved to the branch that owns the
+ * record. Branch logins get their own concern's name, office address, phones
+ * and email; head office / unknown falls back to the group details.
+ */
+export function branchCompany(branch?: string | null): {
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  license: string;
+} {
+  const b = branches.find((x) => x.slug === branch);
+  if (b) {
+    return {
+      name: b.name,
+      address: b.offices[0]?.address ?? contact.address.full,
+      phone: (b.offices[0]?.phones ?? contact.phones).join(', '),
+      email: b.email,
+      license: b.role,
+    };
+  }
+  return {
+    name: siteConfig.name,
+    address: contact.address.full,
+    phone: contact.phones.join(', '),
+    email: contact.emails[0],
+    license: siteConfig.license,
+  };
+}
+
 export const footerLinks = {
   helpSupport: [
     { label: 'Hajj Packages', href: '/hajj/packages' },

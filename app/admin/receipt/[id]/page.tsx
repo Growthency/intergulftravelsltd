@@ -4,7 +4,7 @@ import { getStaffScope } from '@/lib/management/scope';
 import { naturalBalance, type AccountHead, type Payment } from '@/lib/management/types';
 import { money } from '@/lib/management/format';
 import { branchLabel } from '@/lib/management/branches';
-import { siteConfig, contact } from '@/lib/site';
+import { branchCompany } from '@/lib/site';
 import { getLocale } from '@/lib/i18n-server';
 import { Receipt, type ReceiptData } from '@/components/manage/Receipt';
 
@@ -79,13 +79,7 @@ export default async function ReceiptPage({ params }: { params: { id: string } }
       : { advance: 'Advance', installment: 'Installment', token: 'Token', full: 'Full', refund: 'Refund' };
 
   const data: ReceiptData = {
-    company: {
-      name: siteConfig.name,
-      address: contact.address.full,
-      phone: contact.phones.join(', '),
-      email: contact.emails[0],
-      license: siteConfig.license,
-    },
+    company: branchCompany(payment.branch),
     program,
     receiptNo: payment.voucher_no ?? payment.id.slice(0, 8).toUpperCase(),
     date: fmt(payment.date),

@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireStaff } from '@/lib/management/guard';
-import { getStaffScope } from '@/lib/management/scope';
 import { logActivity } from '@/lib/management/server';
 
 export const runtime = 'nodejs';
@@ -22,6 +21,8 @@ const schema = z.object({
     (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
     z.string().min(8, 'Password must be at least 8 characters.').optional(),
   ),
+  phone: z.string().trim().max(40).optional(),
+  address: z.string().trim().max(300).optional(),
 });
 
 /** Self-service: any signed-in staff member edits their OWN account here. */
@@ -51,14 +52,19 @@ export async function PATCH(request: Request) {
   const d = parsed.data;
   const userId = guard.user.id;
   const admin = createAdminClient();
-  const scope = await getStaffScope();
 
-  // Email / password — applied through the admin API so no confirmation email
-  // round-trip is needed for the account holder. A branch-scoped account can't
-  // change its own email (it's the key its branch isolation is built on).
-  const authPatch: { email?: string; password?: string } = {};
-  if (d.email && d.email !== guard.user.email && !scope.branch) authPatch.email = d.email;
+  // Email / password / address — applied through the admin API so no
+  // confirmation-email round-trip is needed. Branch access is keyed on the
+  // stable auth user_metadata (see getStaffScope), so changing the sign-in
+  // email is safe; address is merged into user_metadata to keep the branch.
+  const authPatch: { email?: string; password?: string; user_metadata?: Record<string, unknown> } = {};
+  if (d.email && d.email !== guard.user.email) authPatch.email = d.email;
   if (d.password) authPatch.password = d.password;
+  if (d.address !== undefined) {
+    // Merge into existing metadata so the branch key is preserved.
+    const { data: existing } = await admin.auth.admin.getUserById(userId);
+    authPatch.user_metadata = { ...(existing?.user?.user_metadata ?? {}), address: d.address || null };
+  }
   if (Object.keys(authPatch).length > 0) {
     const { error } = await admin.auth.admin.updateUserById(userId, authPatch);
     if (error) {
@@ -75,6 +81,7 @@ export async function PATCH(request: Request) {
   const profilePatch: Record<string, unknown> = {};
   if (d.full_name !== undefined) profilePatch.full_name = d.full_name || null;
   if (d.avatar_url !== undefined) profilePatch.avatar_url = d.avatar_url ?? null;
+  if (d.phone !== undefined) profilePatch.phone = d.phone || null;
   if (authPatch.email) profilePatch.email = authPatch.email;
   if (guard.isAdmin) profilePatch.role = 'admin';
   if (Object.keys(profilePatch).length > 0) {
